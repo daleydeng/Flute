@@ -4,7 +4,7 @@
 CC = gcc
 
 elf_to_hex: elf_to_hex.c
-	gcc -g  -o elf_to_hex  elf_to_hex.c  -lelf
+	gcc -g  -mcmodel=medium -o elf_to_hex  elf_to_hex.c  -lelf
 
 # ================================================================
 
