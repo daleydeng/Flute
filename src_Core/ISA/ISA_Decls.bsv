@@ -1,60 +1,19 @@
-// Copyright (c) 2013-2022 Bluespec, Inc. All Rights Reserved
-
-// ================================================================
-// ISA defs for UC Berkeley RISC V
-//
-// References (from riscv.org):
-//     The RISC-V Instruction Set Manual
-//     Volume I: Unprivileged ISA
-//     Document Version 20181106-Base-Ratification
-//     November 6, 2018
-//
-//     The RISC-V Instruction Set Manual
-//     Volume II: Privileged Architecture
-//     Document Version 20181203-Base-Ratification
-//     December 3, 2018
-//
-// ================================================================
-
 package ISA_Decls;
 
-// ================================================================
-// BSV library imports
-
-import DefaultValue :: *;
 import Vector       :: *;
-import BuildVector  :: *;
-
-// ================================================================
-// BSV project imports
-
-// None
-
-// ================================================================
-
-typedef 3 NO_OF_PRIVMODES;
-
-// ================================================================
-// XLEN and related constants
 
 `ifdef RV32
-
 typedef 32 XLEN;
-
 `elsif RV64
-
 typedef 64 XLEN;
-
 `endif
 
-typedef TMul #(2, XLEN)  XLEN_2;      // Double-width for multiplications
-typedef TSub #(XLEN, 2)  XLEN_MINUS_2;// XLEN-2 for MTVEC base width
-
+typedef TMul#(2, XLEN)  XLEN_2;
+typedef TSub#(XLEN, 2)  XLEN_MINUS_2;
 Integer xlen = valueOf (XLEN);
 
-typedef enum { RV32, RV64 } RV_Version deriving (Eq, Bits);
-
-RV_Version rv_version = ( (valueOf (XLEN) == 32) ? RV32 : RV64 );
+typedef enum { RV32, RV64 } RVVersion deriving (Eq, Bits);
+RVVersion rv_version = xlen == 32 ? RV32 : RV64;
 
 // ----------------
 // We're evolving the code to use WordXL/IntXL instead of Word/Word_S
@@ -66,8 +25,8 @@ RV_Version rv_version = ( (valueOf (XLEN) == 32) ? RV32 : RV64 );
 typedef  Bit #(XLEN)  WordXL;    // Raw (unsigned) register data
 typedef  Int #(XLEN)  IntXL;     // Signed register data
 
-typedef  Bit #(XLEN)  Word;      // Raw (unsigned) register data    // OLD: migrate to WordXL
-typedef  Int #(XLEN)  Word_S;    // Signed register data            // OLD: migrate to IntXL
+// typedef  Bit #(XLEN)  Word;      // Raw (unsigned) register data    // OLD: migrate to WordXL
+// typedef  Int #(XLEN)  Word_S;    // Signed register data            // OLD: migrate to IntXL
 
 typedef  WordXL       Addr;      // addresses/pointers
 

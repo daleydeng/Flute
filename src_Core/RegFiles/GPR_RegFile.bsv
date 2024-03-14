@@ -36,15 +36,15 @@ interface GPR_RegFile_IFC;
 
    // GPR read
    (* always_ready *)
-   method Word read_rs1 (RegName rs1);
+   method WordXL read_rs1 (RegName rs1);
    (* always_ready *)
-   method Word read_rs1_port2 (RegName rs1);    // For debugger access only
+   method WordXL read_rs1_port2 (RegName rs1);    // For debugger access only
    (* always_ready *)
-   method Word read_rs2 (RegName rs2);
+   method WordXL read_rs2 (RegName rs2);
 
    // GPR write
    (* always_ready *)
-   method Action write_rd (RegName rd, Word rd_val);
+   method Action write_rd (RegName rd, WordXL rd_val);
 
 endinterface
 
@@ -66,7 +66,7 @@ module mkGPR_RegFile (GPR_RegFile_IFC);
 
    // General Purpose Registers
    // TODO: can we use Reg [0] for some other purpose?
-   RegFile #(RegName, Word) regfile <- mkRegFileFull;
+   RegFile #(RegName, WordXL) regfile <- mkRegFileFull;
 
    // ----------------------------------------------------------------
    // Reset.
@@ -119,21 +119,21 @@ module mkGPR_RegFile (GPR_RegFile_IFC);
    endinterface
 
    // GPR read
-   method Word read_rs1 (RegName rs1);
+   method WordXL read_rs1 (RegName rs1);
       return ((rs1 == 0) ? 0 : regfile.sub (rs1));
    endmethod
 
    // GPR read
-   method Word read_rs1_port2 (RegName rs1);        // For debugger access only
+   method WordXL read_rs1_port2 (RegName rs1);        // For debugger access only
       return ((rs1 == 0) ? 0 : regfile.sub (rs1));
    endmethod
 
-   method Word read_rs2 (RegName rs2);
+   method WordXL read_rs2 (RegName rs2);
       return ((rs2 == 0) ? 0 : regfile.sub (rs2));
    endmethod
 
    // GPR write
-   method Action write_rd (RegName rd, Word rd_val);
+   method Action write_rd (RegName rd, WordXL rd_val);
       if (rd != 0) regfile.upd (rd, rd_val);
    endmethod
 

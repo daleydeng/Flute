@@ -62,13 +62,13 @@ interface CSR_RegFile_IFC;
 
    // CSR read (w.o. side effect)
    (* always_ready *)
-   method Maybe #(Word) read_csr (CSR_Addr csr_addr);
+   method Maybe #(WordXL) read_csr (CSR_Addr csr_addr);
    (* always_ready *)
-   method Maybe #(Word) read_csr_port2 (CSR_Addr csr_addr);
+   method Maybe #(WordXL) read_csr_port2 (CSR_Addr csr_addr);
 
    // CSR read (w. side effect)
    (* always_ready *)
-   method ActionValue #(Maybe #(Word)) mav_read_csr (CSR_Addr csr_addr);
+   method ActionValue #(Maybe #(WordXL)) mav_read_csr (CSR_Addr csr_addr);
 
    // CSR write (returning new value)
    (* always_ready *)
@@ -123,14 +123,14 @@ interface CSR_RegFile_IFC;
    // CSR trap actions
    method ActionValue #(Trap_Info)
           csr_trap_actions (Priv_Mode  from_priv,
-			    Word       pc,
+			    WordXL       pc,
 			    Bool       nmi,          // non-maskable interrupt
 			    Bool       interrupt,    // other interrupt
 			    Exc_Code   exc_code,
-			    Word       xtval);
+			    WordXL       xtval);
 
    // CSR RET actions (return from exception)
-   method ActionValue #(Tuple3 #(Addr, Priv_Mode, Word)) csr_ret_actions (Priv_Mode from_priv);
+   method ActionValue #(Tuple3 #(Addr, Priv_Mode, WordXL)) csr_ret_actions (Priv_Mode from_priv);
 
    // Read MINSTRET
    (* always_ready *)
@@ -200,7 +200,7 @@ interface CSR_RegFile_IFC;
 
 `ifdef INCLUDE_GDB_CONTROL
    // Read dpc
-   method Word read_dpc ();
+   method WordXL read_dpc ();
 
    // Update dpc
    method Action write_dpc (Addr pc);
@@ -337,10 +337,10 @@ module mkCSR_RegFile (CSR_RegFile_IFC);
 `endif
 
    // Machine-mode CSRs
-   Word mvendorid   = 0;    // Not implemented
-   Word marchid     = 0;    // Not implemented
-   Word mimpid      = 0;    // Not implemented
-   Word mhartid     = 0;
+   WordXL mvendorid   = 0;    // Not implemented
+   WordXL marchid     = 0;    // Not implemented
+   WordXL mimpid      = 0;    // Not implemented
+   WordXL mhartid     = 0;
 
    CSR_MSTATUS_IFC  csr_mstatus <- mkCSR_MSTATUS (misa_reset_value);
 
@@ -351,10 +351,10 @@ module mkCSR_RegFile (CSR_RegFile_IFC);
    Reg #(MTVec)      rg_mtvec      <- mkRegU;
    Reg #(MCounteren) rg_mcounteren <- mkRegU;
 
-   Reg #(Word)       rg_mscratch <- mkRegU;
-   Reg #(Word)       rg_mepc     <- mkRegU;
+   Reg #(WordXL)       rg_mscratch <- mkRegU;
+   Reg #(WordXL)       rg_mepc     <- mkRegU;
    Reg #(MCause)     rg_mcause   <- mkRegU;
-   Reg #(Word)       rg_mtval    <- mkRegU;
+   Reg #(WordXL)       rg_mtval    <- mkRegU;
 
    // RegFile #(Bit #(2), WordXL)  rf_pmpcfg   <- mkRegFileFull;
    // Vector #(16, Reg #(WordXL))  vrg_pmpaddr <- replicateM (mkRegU);
@@ -600,8 +600,8 @@ module mkCSR_RegFile (CSR_RegFile_IFC);
    // CSR reads (no side effect)
    // Returns Invalid for invalid CSR addresses or access-mode violations
 
-   function Maybe #(Word) fv_csr_read (CSR_Addr csr_addr);
-      Maybe #(Word)  m_csr_value = tagged Invalid;
+   function Maybe #(WordXL) fv_csr_read (CSR_Addr csr_addr);
+      Maybe #(WordXL)  m_csr_value = tagged Invalid;
 
       if ((csr_addr_hpmcounter3 <= csr_addr) && (csr_addr <= csr_addr_hpmcounter31))
 	 m_csr_value = tagged Valid 0;
@@ -1105,17 +1105,17 @@ module mkCSR_RegFile (CSR_RegFile_IFC);
    endinterface
 
    // CSR read (w.o. side effect)
-   method Maybe #(Word) read_csr (CSR_Addr csr_addr);
+   method Maybe #(WordXL) read_csr (CSR_Addr csr_addr);
       return fv_csr_read (csr_addr);
    endmethod
 
    // CSR read (w.o. side effect)
-   method Maybe #(Word) read_csr_port2 (CSR_Addr csr_addr);
+   method Maybe #(WordXL) read_csr_port2 (CSR_Addr csr_addr);
       return fv_csr_read (csr_addr);
    endmethod
 
    // CSR read (w. side effect)
-   method ActionValue #(Maybe #(Word)) mav_read_csr (CSR_Addr csr_addr);
+   method ActionValue #(Maybe #(WordXL)) mav_read_csr (CSR_Addr csr_addr);
       return fv_csr_read (csr_addr);
    endmethod
 
@@ -1275,7 +1275,7 @@ module mkCSR_RegFile (CSR_RegFile_IFC);
    endmethod: csr_trap_actions
 
    // CSR RET actions (return from exception)
-   method ActionValue #(Tuple3 #(Addr, Priv_Mode, Word)) csr_ret_actions (Priv_Mode from_priv);
+   method ActionValue #(Tuple3 #(Addr, Priv_Mode, WordXL)) csr_ret_actions (Priv_Mode from_priv);
       match { .new_mstatus, .to_priv } = fv_new_mstatus_on_ret (misa, csr_mstatus.mv_read, from_priv);
       csr_mstatus.ma_write (misa, new_mstatus);
       WordXL next_pc = rg_mepc;
@@ -1396,7 +1396,7 @@ module mkCSR_RegFile (CSR_RegFile_IFC);
 
 `ifdef INCLUDE_GDB_CONTROL
    // Read dpc
-   method Word read_dpc ();
+   method WordXL read_dpc ();
       return rg_dpc;
    endmethod
 

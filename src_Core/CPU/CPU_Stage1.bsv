@@ -114,7 +114,7 @@ module mkCPU_Stage1 #(Bit #(4)         verbosity,
    match { .busy1a, .rs1a } = fn_gpr_bypass (bypass_from_stage3, rs1, rs1_val);
    match { .busy1b, .rs1b } = fn_gpr_bypass (bypass_from_stage2, rs1, rs1a);
    Bool rs1_busy = (busy1a || busy1b);
-   Word rs1_val_bypassed = ((rs1 == 0) ? 0 : rs1b);
+   WordXL rs1_val_bypassed = ((rs1 == 0) ? 0 : rs1b);
 
    // Register rs2 read and bypass
    let rs2 = decoded_instr.rs2;
@@ -122,7 +122,7 @@ module mkCPU_Stage1 #(Bit #(4)         verbosity,
    match { .busy2a, .rs2a } = fn_gpr_bypass (bypass_from_stage3, rs2, rs2_val);
    match { .busy2b, .rs2b } = fn_gpr_bypass (bypass_from_stage2, rs2, rs2a);
    Bool rs2_busy = (busy2a || busy2b);
-   Word rs2_val_bypassed = ((rs2 == 0) ? 0 : rs2b);
+   WordXL rs2_val_bypassed = ((rs2 == 0) ? 0 : rs2b);
 
 `ifdef ISA_F
    // FP Register rs1 read and bypass
