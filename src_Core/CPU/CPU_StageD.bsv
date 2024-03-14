@@ -93,7 +93,7 @@ module mkCPU_StageD #(Bit #(4)  verbosity, MISA misa)
    // Combinational output function
 
    function Output_StageD fv_out;
-      let decoded_instr = fv_decode (instr);
+      let decoded_instr = decode_instr (instr);
 
       Output_StageD  output_stageD = ?;
 

@@ -45,7 +45,7 @@ typedef struct {
    WordXL     pc;
    ISize      instr_sz;
    Bit #(32)  instr;
-   RegName    rd;
+   RegIdx    rd;
    WordXL     word1;
    WordXL     word2;
    Bit #(64)  word3;    // Wider than WordXL because can contain paddr (in RV32, paddr can be 34 bits)
@@ -68,7 +68,7 @@ endfunction
 // GPR_WRITE
 // op    pc    instr_sz    instr    rd    word1    word2    word3    word4
 // x                                 x    rdval
-function Trace_Data mkTrace_GPR_WRITE (RegName rd, WordXL rdval);
+function Trace_Data mkTrace_GPR_WRITE (RegIdx rd, WordXL rdval);
    Trace_Data td = ?;
    td.op       = TRACE_GPR_WRITE;
    td.rd       = rd;
@@ -81,7 +81,7 @@ endfunction
 // FPR_WRITE
 // op    pc    instr_sz    instr    rd    word1    word2    word3    word4   word5
 // x                                 x                                       rdval
-function Trace_Data mkTrace_FPR_WRITE (RegName rd, WordFL rdval);
+function Trace_Data mkTrace_FPR_WRITE (RegIdx rd, WordFL rdval);
    Trace_Data td = ?;
    td.op       = TRACE_FPR_WRITE;
    td.rd       = rd;
@@ -94,7 +94,7 @@ endfunction
 // CSR_WRITE
 // op    pc    instr_sz    instr    rd    word1    word2    word3    word4
 // x                                                        csraddr  csrval
-function Trace_Data mkTrace_CSR_WRITE (CSR_Addr csraddr, WordXL csrval);
+function Trace_Data mkTrace_CSR_WRITE (CSRAddr csraddr, WordXL csrval);
    Trace_Data td = ?;
    td.op       = TRACE_CSR_WRITE;
    td.word3    = zeroExtend (csraddr);
@@ -129,7 +129,7 @@ endfunction
 // I_RD
 // op    pc    instr_sz    instr    rd    word1    word2    word3    word4
 // x     x     x           x        x     rdval
-function Trace_Data mkTrace_I_RD (WordXL pc, ISize isize, Bit #(32) instr, RegName rd, WordXL rdval);
+function Trace_Data mkTrace_I_RD (WordXL pc, ISize isize, Bit #(32) instr, RegIdx rd, WordXL rdval);
    Trace_Data td = ?;
    td.op       = TRACE_I_RD;
    td.pc       = pc;
@@ -144,7 +144,7 @@ endfunction
 // F_FRD
 // op    pc    instr_sz    instr    rd    word1    word2    word3    word4    word5
 // x     x     x           x        x              fflags            mstatus  rdval
-function Trace_Data mkTrace_F_FRD (WordXL pc, ISize isize, Bit #(32) instr, RegName rd, WordFL rdval, Bit#(5) fflags, WordXL mstatus);
+function Trace_Data mkTrace_F_FRD (WordXL pc, ISize isize, Bit #(32) instr, RegIdx rd, WordFL rdval, Bit#(5) fflags, WordXL mstatus);
    Trace_Data td = ?;
    td.op       = TRACE_F_FRD;
    td.pc       = pc;
@@ -164,7 +164,7 @@ endfunction
 // F_GRD
 // op    pc    instr_sz    instr    rd    word1    word2    word3    word4    word5
 // x     x     x           x        x     rdval    fflags            mstatus
-function Trace_Data mkTrace_F_GRD (WordXL pc, ISize isize, Bit #(32) instr, RegName rd, WordXL rdval, Bit#(5) fflags, WordXL mstatus);
+function Trace_Data mkTrace_F_GRD (WordXL pc, ISize isize, Bit #(32) instr, RegIdx rd, WordXL rdval, Bit#(5) fflags, WordXL mstatus);
    Trace_Data td = ?;
    td.op       = TRACE_F_GRD;
    td.pc       = pc;
@@ -181,7 +181,7 @@ endfunction
 // I_LOAD
 // op    pc    instr_sz    instr    rd    word1    word2    word3    word4
 // x     x     x           x        x     rdval             eaddr
-function Trace_Data mkTrace_I_LOAD (WordXL pc, ISize isize, Bit #(32) instr, RegName rd, WordXL rdval, WordXL eaddr);
+function Trace_Data mkTrace_I_LOAD (WordXL pc, ISize isize, Bit #(32) instr, RegIdx rd, WordXL rdval, WordXL eaddr);
    Trace_Data td = ?;
    td.op       = TRACE_I_LOAD;
    td.pc       = pc;
@@ -212,7 +212,7 @@ endfunction
 // F_LOAD
 // op    pc    instr_sz    instr    rd    word1    word2    word3    word4    word5
 // x     x     x           x        x                       eaddr    mstatus  rdval
-function Trace_Data mkTrace_F_LOAD (WordXL pc, ISize isize, Bit #(32) instr, RegName rd, WordFL rdval, WordXL eaddr, WordXL mstatus);
+function Trace_Data mkTrace_F_LOAD (WordXL pc, ISize isize, Bit #(32) instr, RegIdx rd, WordFL rdval, WordXL eaddr, WordXL mstatus);
    Trace_Data td = ?;
    td.op       = TRACE_F_LOAD;
    td.pc       = pc;
@@ -264,7 +264,7 @@ endfunction
 // op    pc    instr_sz    instr    rd    word1    word2    word3    word4
 // x     x     x           x        x     rdval    stval    eaddr    funct3
 function Trace_Data mkTrace_AMO (WordXL pc, Bit #(3) funct3, ISize isize, Bit #(32) instr,
-				 RegName rd, WordXL rdval, WordXL stval, WordXL eaddr);
+				 RegIdx rd, WordXL rdval, WordXL stval, WordXL eaddr);
    Trace_Data td = ?;
    td.op       = TRACE_AMO;
    td.pc       = pc;
@@ -315,8 +315,8 @@ endfunction
 // x     x     x           x        x     rdval    [1] mstatus_valid  csraddr  csrval  mstatus
 //                                                 [0] csrvalid
 function Trace_Data mkTrace_CSRRX (WordXL pc, ISize isize, Bit #(32) instr,
-				   RegName rd, WordXL rdval,
-				   Bool csrvalid, CSR_Addr csraddr, WordXL csrval,
+				   RegIdx rd, WordXL rdval,
+				   Bool csrvalid, CSRAddr csraddr, WordXL csrval,
 				   Bool   mstatus_valid,
 				   WordXL mstatus);
    Trace_Data td = ?;

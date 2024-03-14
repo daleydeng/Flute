@@ -42,7 +42,7 @@ interface FBox_Top_IFC;
         Opcode                      opcode
       , Bit #(7)                    f7
       , Bit #(3)                    rm
-      , RegName                     rs2
+      , RegIdx                     rs2
       , Bit #(64)                   v1
       , Bit #(64)                   v2
       , Bit #(64)                   v3

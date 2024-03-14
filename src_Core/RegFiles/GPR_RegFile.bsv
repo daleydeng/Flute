@@ -36,15 +36,15 @@ interface GPR_RegFile_IFC;
 
    // GPR read
    (* always_ready *)
-   method WordXL read_rs1 (RegName rs1);
+   method WordXL read_rs1 (RegIdx rs1);
    (* always_ready *)
-   method WordXL read_rs1_port2 (RegName rs1);    // For debugger access only
+   method WordXL read_rs1_port2 (RegIdx rs1);    // For debugger access only
    (* always_ready *)
-   method WordXL read_rs2 (RegName rs2);
+   method WordXL read_rs2 (RegIdx rs2);
 
    // GPR write
    (* always_ready *)
-   method Action write_rd (RegName rd, WordXL rd_val);
+   method Action write_rd (RegIdx rd, WordXL rd_val);
 
 endinterface
 
@@ -66,7 +66,7 @@ module mkGPR_RegFile (GPR_RegFile_IFC);
 
    // General Purpose Registers
    // TODO: can we use Reg [0] for some other purpose?
-   RegFile #(RegName, WordXL) regfile <- mkRegFileFull;
+   RegFile #(RegIdx, WordXL) regfile <- mkRegFileFull;
 
    // ----------------------------------------------------------------
    // Reset.
@@ -75,7 +75,7 @@ module mkGPR_RegFile (GPR_RegFile_IFC);
    // and tandem verification
 
 `ifdef INCLUDE_TANDEM_VERIF
-   Reg #(RegName) rg_j <- mkRegU;    // reset loop index
+   Reg #(RegIdx) rg_j <- mkRegU;    // reset loop index
 `endif
 
    rule rl_reset_start (rg_state == RF_RESET_START);
@@ -119,21 +119,21 @@ module mkGPR_RegFile (GPR_RegFile_IFC);
    endinterface
 
    // GPR read
-   method WordXL read_rs1 (RegName rs1);
+   method WordXL read_rs1 (RegIdx rs1);
       return ((rs1 == 0) ? 0 : regfile.sub (rs1));
    endmethod
 
    // GPR read
-   method WordXL read_rs1_port2 (RegName rs1);        // For debugger access only
+   method WordXL read_rs1_port2 (RegIdx rs1);        // For debugger access only
       return ((rs1 == 0) ? 0 : regfile.sub (rs1));
    endmethod
 
-   method WordXL read_rs2 (RegName rs2);
+   method WordXL read_rs2 (RegIdx rs2);
       return ((rs2 == 0) ? 0 : regfile.sub (rs2));
    endmethod
 
    // GPR write
-   method Action write_rd (RegName rd, WordXL rd_val);
+   method Action write_rd (RegIdx rd, WordXL rd_val);
       if (rd != 0) regfile.upd (rd, rd_val);
    endmethod
 

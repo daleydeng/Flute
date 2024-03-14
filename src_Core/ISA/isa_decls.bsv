@@ -27,18 +27,8 @@ typedef  TLog#(BytesPerWordXL)              Bits_per_Byte_in_WordXL;
 typedef  Bit#(Bits_per_Byte_in_WordXL)        Byte_in_WordXL;
 Integer  bits_per_byte_in_wordxl = valueOf (Bits_per_Byte_in_WordXL);
 
-typedef  XLEN                                  Bits_per_Addr;
-typedef  TDiv #(Bits_per_Addr, BitsPerByte)  Bytes_per_Addr;
-
 typedef  Int#(XLEN)  IntXL;     // Signed register data
 typedef  WordXL       Addr;
-
-Integer  addr_lo_byte_in_wordxl = 0;
-Integer  addr_hi_byte_in_wordxl = addr_lo_byte_in_wordxl + bits_per_byte_in_wordxl - 1;
-
-function  Byte_in_WordXL  fn_addr_to_byte_in_wordxl (Addr a);
-   return a [addr_hi_byte_in_wordxl : addr_lo_byte_in_wordxl ];
-endfunction
 
 // ================================================================
 // FLEN and related constants, for floating point data
@@ -54,75 +44,60 @@ endfunction
 
 `ifdef ISA_D
 typedef 64 FLEN;
-Bool hasFpu32 = False;
-Bool hasFpu64 = True;
+Bool has_fpu_32 = False;
+Bool has_fpu_64 = True;
 `else
 typedef 32 FLEN;
-Bool hasFpu32 = True;
-Bool hasFpu64 = False;
+Bool has_fpu_32 = True;
+Bool has_fpu_64 = False;
 `endif
 
-typedef  Bit #(FLEN) FP_Value;
 typedef  Bit #(FLEN)  WordFL;    // Floating point data
-
-typedef  TDiv #(FLEN, BitsPerByte)           Bytes_per_WordFL;
-typedef  TLog #(Bytes_per_WordFL)              Bits_per_Byte_in_WordFL;
-typedef  Bit #(Bits_per_Byte_in_WordFL)        Byte_in_WordFL;
+typedef  TDiv#(FLEN, BitsPerByte) BytesPerWordFL;
 
 `endif
 
 // ================================================================
 // Tokens are used for signalling/synchronization, and have no payload
-
-typedef Bit #(0) Token;
+typedef Bit#(0) Token;
 
 // ================================================================
 // Instruction fields
-
 // This is used for encoding Tandem Verifier traces
-typedef enum { ISIZE16BIT, ISIZE32BIT
-   } ISize deriving (Bits, Eq, FShow);
+typedef enum {ISIZE16BIT, ISIZE32BIT} ISize deriving (Bits, Eq, FShow);
 
-typedef  Bit #(32)  Instr;
-typedef  Bit #(7)   Opcode;
-typedef  Bit #(5)   RegName;       // 32 registers, 0..31
+typedef  Bit#(32)  Instr;
+typedef  Bit#(7)   Opcode;
+typedef  Bit#(5)   RegIdx;       // 32 registers, 0..31
+typedef  Bit#(12)  CSRAddr;
+
 typedef  32         NumRegs;
-Integer  numRegs = valueOf (NumRegs);
+Integer  num_regs = valueOf(NumRegs);
 
-Instr  illegal_instr = 32'h0000_0000;
+Instr illegal_instr = 32'h0000_0000;
 
-function  Opcode     instr_opcode   (Instr x); return x [6:0]; endfunction
+function  Opcode    instr_opcode   (Instr x); return x [6:0]; endfunction
+function  Bit#(2)   instr_funct2   (Instr x); return x [26:25]; endfunction
+function  Bit#(3)   instr_funct3   (Instr x); return x [14:12]; endfunction
+function  Bit#(5)   instr_funct5   (Instr x); return x [31:27]; endfunction
+function  Bit#(7)   instr_funct7   (Instr x); return x [31:25]; endfunction
+function  Bit#(10)  instr_funct10  (Instr x); return { x [31:25], x [14:12] }; endfunction
+function  Bit#(2)   instr_fmt      (Instr x); return x [26:25]; endfunction
 
-function  Bit #(2)   instr_funct2   (Instr x); return x [26:25]; endfunction
-function  Bit #(3)   instr_funct3   (Instr x); return x [14:12]; endfunction
-function  Bit #(5)   instr_funct5   (Instr x); return x [31:27]; endfunction
-function  Bit #(7)   instr_funct7   (Instr x); return x [31:25]; endfunction
-function  Bit #(10)  instr_funct10  (Instr x); return { x [31:25], x [14:12] }; endfunction
-function  Bit #(2)   instr_fmt      (Instr x); return x [26:25]; endfunction
+function  RegIdx    instr_rd       (Instr x); return x [11:7]; endfunction
+function  RegIdx    instr_rs1      (Instr x); return x [19:15]; endfunction
+function  RegIdx    instr_rs2      (Instr x); return x [24:20]; endfunction
+function  RegIdx    instr_rs3      (Instr x); return x [31:27]; endfunction
+function  CSRAddr    instr_csr      (Instr x); return x [31:20]; endfunction
+function  Bit #(12)  instr_I_imm12  (Instr x); return x [31:20]; endfunction
+function  Bit #(12)  instr_S_imm12  (Instr x); return { x [31:25], x [11:7] }; endfunction
+function  Bit #(20)  instr_U_imm20  (Instr x); return x [31:12]; endfunction
 
-function  RegName    instr_rd       (Instr x); return x [11:7]; endfunction
-function  RegName    instr_rs1      (Instr x); return x [19:15]; endfunction
-function  RegName    instr_rs2      (Instr x); return x [24:20]; endfunction
-function  RegName    instr_rs3      (Instr x); return x [31:27]; endfunction
-function  CSR_Addr   instr_csr      (Instr x); return unpack(x [31:20]); endfunction
-
-function  Bit #(12)  instr_I_imm12  (Instr x);
-   return x [31:20];
-endfunction
-
-function  Bit #(12)  instr_S_imm12  (Instr x);
-   return { x [31:25], x [11:7] };
-endfunction
-
-function  Bit #(13)  instr_SB_imm13 (Instr x);
+function  Bit #(13)  instr_B_imm13 (Instr x); 
    return { x [31], x [7], x [30:25], x [11:8], 1'b0 };
 endfunction
 
-function  Bit #(20)  instr_U_imm20  (Instr x);
-   return x [31:12];
-endfunction
-
-function  Bit #(21)  instr_UJ_imm21 (Instr x);
+function  Bit #(21)  instr_J_imm21 (Instr x);
    return { x [31], x [19:12], x [20], x [30:21], 1'b0 };
 endfunction
 
@@ -139,11 +114,11 @@ function  Bit #(2)   instr_aqrl (Instr x); return x [26:25]; endfunction
 typedef struct {
    Opcode    opcode;
 
-   RegName   rd;
-   RegName   rs1;
-   RegName   rs2;
-   RegName   rs3;
-   CSR_Addr  csr;
+   RegIdx   rd;
+   RegIdx   rs1;
+   RegIdx   rs2;
+   RegIdx   rs3;
+   CSRAddr   csr;
 
    Bit #(3)  funct3;
    Bit #(5)  funct5;
@@ -152,49 +127,49 @@ typedef struct {
 
    Bit #(12) imm12_I;
    Bit #(12) imm12_S;
-   Bit #(13) imm13_SB;
+   Bit #(13) imm13_B;
    Bit #(20) imm20_U;
-   Bit #(21) imm21_UJ;
+   Bit #(21) imm13_J;
 
    Bit #(4)  pred;
    Bit #(4)  succ;
 
    Bit #(2)  aqrl;
-   } Decoded_Instr
+   } DecodedInstr
 deriving (FShow, Bits);
 
-function Decoded_Instr fv_decode (Instr instr);
-   return Decoded_Instr {opcode:    instr_opcode (instr),
+function DecodedInstr decode_instr (Instr instr);
+   return DecodedInstr {
+      opcode:    instr_opcode   (instr),
+      rd:        instr_rd       (instr),
+      rs1:       instr_rs1      (instr),
+      rs2:       instr_rs2      (instr),
+      rs3:       instr_rs3      (instr),
+      csr:       instr_csr      (instr),
 
-			 rd:        instr_rd       (instr),
-			 rs1:       instr_rs1      (instr),
-			 rs2:       instr_rs2      (instr),
-			 rs3:       instr_rs3      (instr),
-			 csr:       instr_csr      (instr),
+      funct3:    instr_funct3   (instr),
+      funct5:    instr_funct5   (instr),
+      funct7:    instr_funct7   (instr),
+      funct10:   instr_funct10  (instr),
 
-			 funct3:    instr_funct3   (instr),
-			 funct5:    instr_funct5   (instr),
-			 funct7:    instr_funct7   (instr),
-			 funct10:   instr_funct10  (instr),
+      imm12_I:   instr_I_imm12  (instr),
+      imm12_S:   instr_S_imm12  (instr),
+      imm13_B:  instr_B_imm13 (instr),
+      imm20_U:   instr_U_imm20  (instr),
+      imm13_J:  instr_J_imm21 (instr),
 
-			 imm12_I:   instr_I_imm12  (instr),
-			 imm12_S:   instr_S_imm12  (instr),
-			 imm13_SB:  instr_SB_imm13 (instr),
-			 imm20_U:   instr_U_imm20  (instr),
-			 imm21_UJ:  instr_UJ_imm21 (instr),
+      pred:      instr_pred     (instr),
+      succ:      instr_succ     (instr),
 
-			 pred:      instr_pred     (instr),
-			 succ:      instr_succ     (instr),
-
-			 aqrl:      instr_aqrl     (instr)
-			 };
+      aqrl:      instr_aqrl     (instr)
+      };
 endfunction
 
 // Decodes if we need to read the GPR register file. This step becomes necessary
 // on integrating the FPU as certain instruction now do not require the GPR
 // anymore
 //                IsFP, GPRRd
-// function Tuple2# (Bool, Bool) fv_decode_gpr_read (Decoded_Instr di);
+// function Tuple2# (Bool, Bool) fv_decode_gpr_read (DecodedInstr di);
 // `ifdef ISA_F
 //    // FP_LD and FP_ST are treated as non-FP operation as far as GPR reads
 //    // are concerned
@@ -221,84 +196,80 @@ endfunction
 // Used in 'C' decode to construct equivalent 32-bit instructions
 
 // R-type
-function Instr  mkInstr_R_type (Bit #(7) funct7, RegName rs2, RegName rs1, Bit #(3) funct3, RegName rd, Bit #(7) opcode);
+function Instr  mkInstr_R_type (Bit #(7) funct7, RegIdx rs2, RegIdx rs1, Bit #(3) funct3, RegIdx rd, Bit #(7) opcode);
    let instr = { funct7, rs2, rs1, funct3, rd, opcode };
    return instr;
 endfunction
 
 // I-type
-function Instr  mkInstr_I_type (Bit #(12) imm12, RegName rs1, Bit #(3) funct3, RegName rd, Bit #(7) opcode);
+function Instr  mkInstr_I_type (Bit #(12) imm12, RegIdx rs1, Bit #(3) funct3, RegIdx rd, Bit #(7) opcode);
    let instr = { imm12, rs1, funct3, rd, opcode };
    return instr;
 endfunction
 
 // S-type
 
-function Instr  mkInstr_S_type (Bit #(12) imm12, RegName rs2, RegName rs1, Bit #(3) funct3, Bit #(7) opcode);
+function Instr  mkInstr_S_type (Bit #(12) imm12, RegIdx rs2, RegIdx rs1, Bit #(3) funct3, Bit #(7) opcode);
    let instr = { imm12 [11:5], rs2, rs1, funct3, imm12 [4:0], opcode };
    return instr;
 endfunction
 
 // B-type
-function Instr  mkInstr_B_type (Bit #(13) imm13, RegName rs2, RegName rs1, Bit #(3) funct3, Bit #(7) opcode);
+function Instr  mkInstr_B_type (Bit #(13) imm13, RegIdx rs2, RegIdx rs1, Bit #(3) funct3, Bit #(7) opcode);
    let instr = { imm13 [12], imm13 [10:5], rs2, rs1, funct3, imm13 [4:1], imm13 [11], opcode };
    return instr;
 endfunction
 
 // U-type
-function Instr  mkInstr_U_type (Bit #(20) imm20, RegName rd, Bit #(7) opcode);
+function Instr  mkInstr_U_type (Bit #(20) imm20, RegIdx rd, Bit #(7) opcode);
    let instr = { imm20, rd, opcode };
    return instr;
 endfunction
 
 // J-type
-function Instr  mkInstr_J_type (Bit #(21) imm21, RegName rd, Bit #(7) opcode);
+function Instr  mkInstr_J_type (Bit #(21) imm21, RegIdx rd, Bit #(7) opcode);
    let instr = { imm21 [20], imm21 [10:1], imm21 [11], imm21 [19:12], rd, opcode };
    return instr;
 endfunction
 
-// ================================================================
-// Symbolic register names
-
-RegName x0  =  0;    RegName x1  =  1;    RegName x2  =  2;    RegName x3  =  3;
-RegName x4  =  4;    RegName x5  =  5;    RegName x6  =  6;    RegName x7  =  7;
-RegName x8  =  8;    RegName x9  =  9;    RegName x10 = 10;    RegName x11 = 11;
-RegName x12 = 12;    RegName x13 = 13;    RegName x14 = 14;    RegName x15 = 15;
-RegName x16 = 16;    RegName x17 = 17;    RegName x18 = 18;    RegName x19 = 19;
-RegName x20 = 20;    RegName x21 = 21;    RegName x22 = 22;    RegName x23 = 23;
-RegName x24 = 24;    RegName x25 = 25;    RegName x26 = 26;    RegName x27 = 27;
-RegName x28 = 28;    RegName x29 = 29;    RegName x30 = 30;    RegName x31 = 31;
+RegIdx x0  =  0;    RegIdx x1  =  1;    RegIdx x2  =  2;    RegIdx x3  =  3;
+RegIdx x4  =  4;    RegIdx x5  =  5;    RegIdx x6  =  6;    RegIdx x7  =  7;
+RegIdx x8  =  8;    RegIdx x9  =  9;    RegIdx x10 = 10;    RegIdx x11 = 11;
+RegIdx x12 = 12;    RegIdx x13 = 13;    RegIdx x14 = 14;    RegIdx x15 = 15;
+RegIdx x16 = 16;    RegIdx x17 = 17;    RegIdx x18 = 18;    RegIdx x19 = 19;
+RegIdx x20 = 20;    RegIdx x21 = 21;    RegIdx x22 = 22;    RegIdx x23 = 23;
+RegIdx x24 = 24;    RegIdx x25 = 25;    RegIdx x26 = 26;    RegIdx x27 = 27;
+RegIdx x28 = 28;    RegIdx x29 = 29;    RegIdx x30 = 30;    RegIdx x31 = 31;
 
 // Register names used in calling convention
+RegIdx reg_zero =  0;
+RegIdx reg_ra   =  1;
+RegIdx reg_sp   =  2;
+RegIdx reg_gp   =  3;
+RegIdx reg_tp   =  4;
 
-RegName reg_zero =  0;
-RegName reg_ra   =  1;
-RegName reg_sp   =  2;
-RegName reg_gp   =  3;
-RegName reg_tp   =  4;
+RegIdx reg_t0   =  5; RegIdx reg_t1  =  6; RegIdx reg_t2 =  7;
+RegIdx reg_fp   =  8;
+RegIdx reg_s0   =  8; RegIdx reg_s1  =  9;
 
-RegName reg_t0   =  5; RegName reg_t1  =  6; RegName reg_t2 =  7;
-RegName reg_fp   =  8;
-RegName reg_s0   =  8; RegName reg_s1  =  9;
+RegIdx reg_a0   = 10; RegIdx reg_a1  = 11;
+RegIdx reg_v0   = 10; RegIdx reg_v1  = 11;
 
-RegName reg_a0   = 10; RegName reg_a1  = 11;
-RegName reg_v0   = 10; RegName reg_v1  = 11;
+RegIdx reg_a2   = 12; RegIdx reg_a3  = 13; RegIdx reg_a4 = 14; RegIdx reg_a5 = 15;
+RegIdx reg_a6   = 16; RegIdx reg_a7  = 17;
 
-RegName reg_a2   = 12; RegName reg_a3  = 13; RegName reg_a4 = 14; RegName reg_a5 = 15;
-RegName reg_a6   = 16; RegName reg_a7  = 17;
+RegIdx reg_s2   = 18; RegIdx reg_s3  = 19; RegIdx reg_s4 = 20; RegIdx reg_s5 = 21;
+RegIdx reg_s6   = 22; RegIdx reg_s7  = 23; RegIdx reg_s8 = 24; RegIdx reg_s9 = 25;
+RegIdx reg_s10  = 26; RegIdx reg_s11 = 27;
 
-RegName reg_s2   = 18; RegName reg_s3  = 19; RegName reg_s4 = 20; RegName reg_s5 = 21;
-RegName reg_s6   = 22; RegName reg_s7  = 23; RegName reg_s8 = 24; RegName reg_s9 = 25;
-RegName reg_s10  = 26; RegName reg_s11 = 27;
-
-RegName reg_t3   = 28; RegName reg_t4  = 29; RegName reg_t5 = 30; RegName reg_t6 = 31;
+RegIdx reg_t3   = 28; RegIdx reg_t4  = 29; RegIdx reg_t5 = 30; RegIdx reg_t6 = 31;
 
 // ----------------
 // Is 'r' a standard register for PC save/restore on call/return?
 // This function is used in branch-predictors for managing the return-address stack.
 
-function Bool fn_reg_is_link (RegName  r);
-   return ((r == x1) || (r == x5));
+function Bool fn_reg_is_link (RegIdx  r);
+   return (r == reg_ra) || (r == reg_t0);
 endfunction
 
 // ================================================================
@@ -725,7 +696,7 @@ Bit #(7) f7_FMV_D_X     = 7'h79; Bit #(5) rs2_FMV_D_X   = 5'b00000; Bit #(3) fun
 // ----------------------------------------------------------------
 // fv_is_rd_in_GPR: Checks if the request generates a result which
 // should be written into the GPR
-function Bool fv_is_rd_in_GPR (Bit #(7) funct7, RegName rs2);
+function Bool fv_is_rd_in_GPR (Bit #(7) funct7, RegIdx rs2);
 
 `ifdef ISA_D
     let is_FCVT_W_D  =    (funct7 == f7_FCVT_W_D)
@@ -814,7 +785,7 @@ endfunction
 // TODO: Check misa.f and misa.d
 function Bool fv_is_fp_instr_legal (Bit #(7) funct7,
 				    Bit #(3) rm,
-				    RegName  rs2,
+				    RegIdx  rs2,
 				    Opcode   opcode);
    // These compile-time constants (which will be optimized out) avoid ugly ifdefs later
    Bool rv64 = False;
@@ -937,7 +908,7 @@ endfunction
 
 // Returns True if the first operand (val1) should be taken from the GPR
 // instead of the FPR for a FP opcode
-function Bool fv_fp_val1_from_gpr (Opcode opcode, Bit#(7) f7, RegName rs2);
+function Bool fv_fp_val1_from_gpr (Opcode opcode, Bit#(7) f7, RegIdx rs2);
    return (
          (opcode == op_FP)
       && (   False
@@ -993,7 +964,7 @@ Bit #(7)  f7_SFENCE_VMA = 7'b_0001_001;
 Instr break_instr = { f12_EBREAK, 5'b00000, 3'b000, 5'b00000, op_SYSTEM };
 
 function Bool fn_instr_is_csrrx (Instr  instr);
-   let decoded_instr = fv_decode (instr);
+   let decoded_instr = decode_instr (instr);
    let opcode        = decoded_instr.opcode;
    let funct3        = decoded_instr.funct3;
    let csr           = decoded_instr.csr;
@@ -1037,100 +1008,98 @@ endfunction
 // ================================================================
 // Control/Status registers
 
-typedef Bit #(12) CSR_Addr;
-
-function Bool fn_csr_addr_can_write (CSR_Addr csr_addr);
+function Bool fn_csr_addr_can_write (CSRAddr csr_addr);
    return (csr_addr [11:10] != 2'b11);
 endfunction
 
-function Bool fn_csr_addr_priv_ok (CSR_Addr csr_addr, Priv_Mode priv_mode);
+function Bool fn_csr_addr_priv_ok (CSRAddr csr_addr, Priv_Mode priv_mode);
    return (priv_mode >= csr_addr [9:8]);
 endfunction
 
 // ----------------
 // User-level CSR addresses
 
-CSR_Addr   csr_addr_ustatus        = 12'h000;    // User status
-CSR_Addr   csr_addr_uie            = 12'h004;    // User interrupt-enable
-CSR_Addr   csr_addr_utvec          = 12'h005;    // User trap handler base address
+CSRAddr   csr_addr_ustatus        = 12'h000;    // User status
+CSRAddr   csr_addr_uie            = 12'h004;    // User interrupt-enable
+CSRAddr   csr_addr_utvec          = 12'h005;    // User trap handler base address
 
-CSR_Addr   csr_addr_uscratch       = 12'h040;    // Scratch register for trap handlers
-CSR_Addr   csr_addr_uepc           = 12'h041;    // User exception program counter
-CSR_Addr   csr_addr_ucause         = 12'h042;    // User trap cause
-CSR_Addr   csr_addr_utval          = 12'h043;    // User bad address or instruction
-CSR_Addr   csr_addr_uip            = 12'h044;    // User interrupt pending
+CSRAddr   csr_addr_uscratch       = 12'h040;    // Scratch register for trap handlers
+CSRAddr   csr_addr_uepc           = 12'h041;    // User exception program counter
+CSRAddr   csr_addr_ucause         = 12'h042;    // User trap cause
+CSRAddr   csr_addr_utval          = 12'h043;    // User bad address or instruction
+CSRAddr   csr_addr_uip            = 12'h044;    // User interrupt pending
 
-CSR_Addr   csr_addr_fflags         = 12'h001;    // Floating-point accrued exceptions
-CSR_Addr   csr_addr_frm            = 12'h002;    // Floating-point Dynamic Rounding Mode
-CSR_Addr   csr_addr_fcsr           = 12'h003;    // Floating-point Control and Status Register (frm + fflags)
+CSRAddr   csr_addr_fflags         = 12'h001;    // Floating-point accrued exceptions
+CSRAddr   csr_addr_frm            = 12'h002;    // Floating-point Dynamic Rounding Mode
+CSRAddr   csr_addr_fcsr           = 12'h003;    // Floating-point Control and Status Register (frm + fflags)
 
-CSR_Addr   csr_addr_cycle          = 12'hC00;    // Cycle counter for RDCYCLE
-CSR_Addr   csr_addr_time           = 12'hC01;    // Timer for RDTIME
-CSR_Addr   csr_addr_instret        = 12'hC02;    // Instructions retired counter for RDINSTRET
+CSRAddr   csr_addr_cycle          = 12'hC00;    // Cycle counter for RDCYCLE
+CSRAddr   csr_addr_time           = 12'hC01;    // Timer for RDTIME
+CSRAddr   csr_addr_instret        = 12'hC02;    // Instructions retired counter for RDINSTRET
 
-CSR_Addr   csr_addr_hpmcounter3    = 12'hC03;    // Performance-monitoring counter
-CSR_Addr   csr_addr_hpmcounter4    = 12'hC04;    // Performance-monitoring counter
-CSR_Addr   csr_addr_hpmcounter5    = 12'hC05;    // Performance-monitoring counter
-CSR_Addr   csr_addr_hpmcounter6    = 12'hC06;    // Performance-monitoring counter
-CSR_Addr   csr_addr_hpmcounter7    = 12'hC07;    // Performance-monitoring counter
-CSR_Addr   csr_addr_hpmcounter8    = 12'hC08;    // Performance-monitoring counter
-CSR_Addr   csr_addr_hpmcounter9    = 12'hC09;    // Performance-monitoring counter
-CSR_Addr   csr_addr_hpmcounter10   = 12'hC0A;    // Performance-monitoring counter
-CSR_Addr   csr_addr_hpmcounter11   = 12'hC0B;    // Performance-monitoring counter
-CSR_Addr   csr_addr_hpmcounter12   = 12'hC0C;    // Performance-monitoring counter
-CSR_Addr   csr_addr_hpmcounter13   = 12'hC0D;    // Performance-monitoring counter
-CSR_Addr   csr_addr_hpmcounter14   = 12'hC0E;    // Performance-monitoring counter
-CSR_Addr   csr_addr_hpmcounter15   = 12'hC0F;    // Performance-monitoring counter
-CSR_Addr   csr_addr_hpmcounter16   = 12'hC10;    // Performance-monitoring counter
-CSR_Addr   csr_addr_hpmcounter17   = 12'hC11;    // Performance-monitoring counter
-CSR_Addr   csr_addr_hpmcounter18   = 12'hC12;    // Performance-monitoring counter
-CSR_Addr   csr_addr_hpmcounter19   = 12'hC13;    // Performance-monitoring counter
-CSR_Addr   csr_addr_hpmcounter20   = 12'hC14;    // Performance-monitoring counter
-CSR_Addr   csr_addr_hpmcounter21   = 12'hC15;    // Performance-monitoring counter
-CSR_Addr   csr_addr_hpmcounter22   = 12'hC16;    // Performance-monitoring counter
-CSR_Addr   csr_addr_hpmcounter23   = 12'hC17;    // Performance-monitoring counter
-CSR_Addr   csr_addr_hpmcounter24   = 12'hC18;    // Performance-monitoring counter
-CSR_Addr   csr_addr_hpmcounter25   = 12'hC19;    // Performance-monitoring counter
-CSR_Addr   csr_addr_hpmcounter26   = 12'hC1A;    // Performance-monitoring counter
-CSR_Addr   csr_addr_hpmcounter27   = 12'hC1B;    // Performance-monitoring counter
-CSR_Addr   csr_addr_hpmcounter28   = 12'hC1C;    // Performance-monitoring counter
-CSR_Addr   csr_addr_hpmcounter29   = 12'hC1D;    // Performance-monitoring counter
-CSR_Addr   csr_addr_hpmcounter30   = 12'hC1E;    // Performance-monitoring counter
-CSR_Addr   csr_addr_hpmcounter31   = 12'hC1F;    // Performance-monitoring counter
+CSRAddr   csr_addr_hpmcounter3    = 12'hC03;    // Performance-monitoring counter
+CSRAddr   csr_addr_hpmcounter4    = 12'hC04;    // Performance-monitoring counter
+CSRAddr   csr_addr_hpmcounter5    = 12'hC05;    // Performance-monitoring counter
+CSRAddr   csr_addr_hpmcounter6    = 12'hC06;    // Performance-monitoring counter
+CSRAddr   csr_addr_hpmcounter7    = 12'hC07;    // Performance-monitoring counter
+CSRAddr   csr_addr_hpmcounter8    = 12'hC08;    // Performance-monitoring counter
+CSRAddr   csr_addr_hpmcounter9    = 12'hC09;    // Performance-monitoring counter
+CSRAddr   csr_addr_hpmcounter10   = 12'hC0A;    // Performance-monitoring counter
+CSRAddr   csr_addr_hpmcounter11   = 12'hC0B;    // Performance-monitoring counter
+CSRAddr   csr_addr_hpmcounter12   = 12'hC0C;    // Performance-monitoring counter
+CSRAddr   csr_addr_hpmcounter13   = 12'hC0D;    // Performance-monitoring counter
+CSRAddr   csr_addr_hpmcounter14   = 12'hC0E;    // Performance-monitoring counter
+CSRAddr   csr_addr_hpmcounter15   = 12'hC0F;    // Performance-monitoring counter
+CSRAddr   csr_addr_hpmcounter16   = 12'hC10;    // Performance-monitoring counter
+CSRAddr   csr_addr_hpmcounter17   = 12'hC11;    // Performance-monitoring counter
+CSRAddr   csr_addr_hpmcounter18   = 12'hC12;    // Performance-monitoring counter
+CSRAddr   csr_addr_hpmcounter19   = 12'hC13;    // Performance-monitoring counter
+CSRAddr   csr_addr_hpmcounter20   = 12'hC14;    // Performance-monitoring counter
+CSRAddr   csr_addr_hpmcounter21   = 12'hC15;    // Performance-monitoring counter
+CSRAddr   csr_addr_hpmcounter22   = 12'hC16;    // Performance-monitoring counter
+CSRAddr   csr_addr_hpmcounter23   = 12'hC17;    // Performance-monitoring counter
+CSRAddr   csr_addr_hpmcounter24   = 12'hC18;    // Performance-monitoring counter
+CSRAddr   csr_addr_hpmcounter25   = 12'hC19;    // Performance-monitoring counter
+CSRAddr   csr_addr_hpmcounter26   = 12'hC1A;    // Performance-monitoring counter
+CSRAddr   csr_addr_hpmcounter27   = 12'hC1B;    // Performance-monitoring counter
+CSRAddr   csr_addr_hpmcounter28   = 12'hC1C;    // Performance-monitoring counter
+CSRAddr   csr_addr_hpmcounter29   = 12'hC1D;    // Performance-monitoring counter
+CSRAddr   csr_addr_hpmcounter30   = 12'hC1E;    // Performance-monitoring counter
+CSRAddr   csr_addr_hpmcounter31   = 12'hC1F;    // Performance-monitoring counter
 
-CSR_Addr   csr_addr_cycleh         = 12'hC80;    // Upper 32 bits of csr_cycle (RV32I only)
-CSR_Addr   csr_addr_timeh          = 12'hC81;    // Upper 32 bits of csr_time (RV32I only)
-CSR_Addr   csr_addr_instreth       = 12'hC82;    // Upper 32 bits of csr_instret (RV32I only)
+CSRAddr   csr_addr_cycleh         = 12'hC80;    // Upper 32 bits of csr_cycle (RV32I only)
+CSRAddr   csr_addr_timeh          = 12'hC81;    // Upper 32 bits of csr_time (RV32I only)
+CSRAddr   csr_addr_instreth       = 12'hC82;    // Upper 32 bits of csr_instret (RV32I only)
 
-CSR_Addr   csr_addr_hpmcounter3h   = 12'hC83;    // Upper 32 bits of performance-monitoring counter
-CSR_Addr   csr_addr_hpmcounter4h   = 12'hC84;    // Upper 32 bits of performance-monitoring counter
-CSR_Addr   csr_addr_hpmcounter5h   = 12'hC85;    // Upper 32 bits of performance-monitoring counter
-CSR_Addr   csr_addr_hpmcounter6h   = 12'hC86;    // Upper 32 bits of performance-monitoring counter
-CSR_Addr   csr_addr_hpmcounter7h   = 12'hC87;    // Upper 32 bits of performance-monitoring counter
-CSR_Addr   csr_addr_hpmcounter8h   = 12'hC88;    // Upper 32 bits of performance-monitoring counter
-CSR_Addr   csr_addr_hpmcounter9h   = 12'hC89;    // Upper 32 bits of performance-monitoring counter
-CSR_Addr   csr_addr_hpmcounter10h  = 12'hC8A;    // Upper 32 bits of performance-monitoring counter
-CSR_Addr   csr_addr_hpmcounter11h  = 12'hC8B;    // Upper 32 bits of performance-monitoring counter
-CSR_Addr   csr_addr_hpmcounter12h  = 12'hC8C;    // Upper 32 bits of performance-monitoring counter
-CSR_Addr   csr_addr_hpmcounter13h  = 12'hC8D;    // Upper 32 bits of performance-monitoring counter
-CSR_Addr   csr_addr_hpmcounter14h  = 12'hC8E;    // Upper 32 bits of performance-monitoring counter
-CSR_Addr   csr_addr_hpmcounter15h  = 12'hC8F;    // Upper 32 bits of performance-monitoring counter
-CSR_Addr   csr_addr_hpmcounter16h  = 12'hC90;    // Upper 32 bits of performance-monitoring counter
-CSR_Addr   csr_addr_hpmcounter17h  = 12'hC91;    // Upper 32 bits of performance-monitoring counter
-CSR_Addr   csr_addr_hpmcounter18h  = 12'hC92;    // Upper 32 bits of performance-monitoring counter
-CSR_Addr   csr_addr_hpmcounter19h  = 12'hC93;    // Upper 32 bits of performance-monitoring counter
-CSR_Addr   csr_addr_hpmcounter20h  = 12'hC94;    // Upper 32 bits of performance-monitoring counter
-CSR_Addr   csr_addr_hpmcounter21h  = 12'hC95;    // Upper 32 bits of performance-monitoring counter
-CSR_Addr   csr_addr_hpmcounter22h  = 12'hC96;    // Upper 32 bits of performance-monitoring counter
-CSR_Addr   csr_addr_hpmcounter23h  = 12'hC97;    // Upper 32 bits of performance-monitoring counter
-CSR_Addr   csr_addr_hpmcounter24h  = 12'hC98;    // Upper 32 bits of performance-monitoring counter
-CSR_Addr   csr_addr_hpmcounter25h  = 12'hC99;    // Upper 32 bits of performance-monitoring counter
-CSR_Addr   csr_addr_hpmcounter26h  = 12'hC9A;    // Upper 32 bits of performance-monitoring counter
-CSR_Addr   csr_addr_hpmcounter27h  = 12'hC9B;    // Upper 32 bits of performance-monitoring counter
-CSR_Addr   csr_addr_hpmcounter28h  = 12'hC9C;    // Upper 32 bits of performance-monitoring counter
-CSR_Addr   csr_addr_hpmcounter29h  = 12'hC9D;    // Upper 32 bits of performance-monitoring counter
-CSR_Addr   csr_addr_hpmcounter30h  = 12'hC9E;    // Upper 32 bits of performance-monitoring counter
-CSR_Addr   csr_addr_hpmcounter31h  = 12'hC9F;    // Upper 32 bits of performance-monitoring counter
+CSRAddr   csr_addr_hpmcounter3h   = 12'hC83;    // Upper 32 bits of performance-monitoring counter
+CSRAddr   csr_addr_hpmcounter4h   = 12'hC84;    // Upper 32 bits of performance-monitoring counter
+CSRAddr   csr_addr_hpmcounter5h   = 12'hC85;    // Upper 32 bits of performance-monitoring counter
+CSRAddr   csr_addr_hpmcounter6h   = 12'hC86;    // Upper 32 bits of performance-monitoring counter
+CSRAddr   csr_addr_hpmcounter7h   = 12'hC87;    // Upper 32 bits of performance-monitoring counter
+CSRAddr   csr_addr_hpmcounter8h   = 12'hC88;    // Upper 32 bits of performance-monitoring counter
+CSRAddr   csr_addr_hpmcounter9h   = 12'hC89;    // Upper 32 bits of performance-monitoring counter
+CSRAddr   csr_addr_hpmcounter10h  = 12'hC8A;    // Upper 32 bits of performance-monitoring counter
+CSRAddr   csr_addr_hpmcounter11h  = 12'hC8B;    // Upper 32 bits of performance-monitoring counter
+CSRAddr   csr_addr_hpmcounter12h  = 12'hC8C;    // Upper 32 bits of performance-monitoring counter
+CSRAddr   csr_addr_hpmcounter13h  = 12'hC8D;    // Upper 32 bits of performance-monitoring counter
+CSRAddr   csr_addr_hpmcounter14h  = 12'hC8E;    // Upper 32 bits of performance-monitoring counter
+CSRAddr   csr_addr_hpmcounter15h  = 12'hC8F;    // Upper 32 bits of performance-monitoring counter
+CSRAddr   csr_addr_hpmcounter16h  = 12'hC90;    // Upper 32 bits of performance-monitoring counter
+CSRAddr   csr_addr_hpmcounter17h  = 12'hC91;    // Upper 32 bits of performance-monitoring counter
+CSRAddr   csr_addr_hpmcounter18h  = 12'hC92;    // Upper 32 bits of performance-monitoring counter
+CSRAddr   csr_addr_hpmcounter19h  = 12'hC93;    // Upper 32 bits of performance-monitoring counter
+CSRAddr   csr_addr_hpmcounter20h  = 12'hC94;    // Upper 32 bits of performance-monitoring counter
+CSRAddr   csr_addr_hpmcounter21h  = 12'hC95;    // Upper 32 bits of performance-monitoring counter
+CSRAddr   csr_addr_hpmcounter22h  = 12'hC96;    // Upper 32 bits of performance-monitoring counter
+CSRAddr   csr_addr_hpmcounter23h  = 12'hC97;    // Upper 32 bits of performance-monitoring counter
+CSRAddr   csr_addr_hpmcounter24h  = 12'hC98;    // Upper 32 bits of performance-monitoring counter
+CSRAddr   csr_addr_hpmcounter25h  = 12'hC99;    // Upper 32 bits of performance-monitoring counter
+CSRAddr   csr_addr_hpmcounter26h  = 12'hC9A;    // Upper 32 bits of performance-monitoring counter
+CSRAddr   csr_addr_hpmcounter27h  = 12'hC9B;    // Upper 32 bits of performance-monitoring counter
+CSRAddr   csr_addr_hpmcounter28h  = 12'hC9C;    // Upper 32 bits of performance-monitoring counter
+CSRAddr   csr_addr_hpmcounter29h  = 12'hC9D;    // Upper 32 bits of performance-monitoring counter
+CSRAddr   csr_addr_hpmcounter30h  = 12'hC9E;    // Upper 32 bits of performance-monitoring counter
+CSRAddr   csr_addr_hpmcounter31h  = 12'hC9F;    // Upper 32 bits of performance-monitoring counter
 
 // Information from the CSR on a new trap. 
 typedef struct {

@@ -178,7 +178,7 @@ function Tuple2 #(Bool, Instr) fv_decode_C_LWSP (MISA  misa, Bit #(2)  xl, Instr
 		       && (rd != 0)
 		       && (funct3 == funct3_C_LWSP));
 
-      RegName rs1   = reg_sp;
+      RegIdx rs1   = reg_sp;
       let     instr = mkInstr_I_type (zeroExtend (offset),  rs1,  f3_LW,  rd,  op_LOAD);
 
       return tuple2 (is_legal, instr);
@@ -200,7 +200,7 @@ function Tuple2 #(Bool, Instr) fv_decode_C_LDSP (MISA  misa, Bit #(2)  xl, Instr
 		       && (   (xl == misa_mxl_64)
 			   || (xl == misa_mxl_128)));
 
-      RegName rs1   = reg_sp;
+      RegIdx rs1   = reg_sp;
       let     instr = mkInstr_I_type (zeroExtend (offset),  rs1,  f3_LD,  rd,  op_LOAD);
 
       return tuple2 (is_legal, instr);
@@ -222,7 +222,7 @@ function Tuple2 #(Bool, Instr) fv_decode_C_LQSP (MISA  misa, Bit #(2)  xl, Instr
 		       && (funct3 == funct3_C_LQSP)
 		       && (xl == misa_mxl_128));
 
-      RegName rs1   = reg_sp;
+      RegIdx rs1   = reg_sp;
       let     instr = mkInstr_I_type (zeroExtend (offset),  rs1,  f3_LQ,  rd,  op_LOAD);
 
       return tuple2 (is_legal, instr);
@@ -243,7 +243,7 @@ function Tuple2 #(Bool, Instr) fv_decode_C_FLWSP (MISA  misa, Bit #(2)  xl, Inst
 		       && (funct3 == funct3_C_FLWSP)
 		       && (misa.f == 1'b1));
 
-      RegName rs1   = reg_sp;
+      RegIdx rs1   = reg_sp;
       let     instr = mkInstr_I_type (zeroExtend (offset),  rs1,  f3_FLW,  rd,  op_LOAD_FP);
 
       return tuple2 (is_legal, instr);
@@ -264,7 +264,7 @@ function Tuple2 #(Bool, Instr) fv_decode_C_FLDSP (MISA  misa,  Bit #(2) xl, Inst
 		       && (funct3 == funct3_C_FLDSP)
 		       && (misa.d == 1'b1));
 
-      RegName rs1   = reg_sp;
+      RegIdx rs1   = reg_sp;
       let     instr = mkInstr_I_type (zeroExtend (offset),  rs1,  f3_FLD,  rd,  op_LOAD_FP);
 
       return tuple2 (is_legal, instr);
@@ -286,7 +286,7 @@ function Tuple2 #(Bool, Instr) fv_decode_C_SWSP (MISA  misa,  Bit #(2)  xl, Inst
 		       && (op == opcode_C2)
 		       && (funct3 == funct3_C_SWSP));
 
-      RegName   rs1   = reg_sp;
+      RegIdx   rs1   = reg_sp;
       let       instr = mkInstr_S_type (zeroExtend (offset), rs2, rs1, f3_SW, op_STORE);
 
       return tuple2 (is_legal, instr);
@@ -307,7 +307,7 @@ function Tuple2 #(Bool, Instr) fv_decode_C_SDSP (MISA  misa,  Bit #(2)  xl, Inst
 		       && (   (xl == misa_mxl_64)
 			   || (xl == misa_mxl_128)));
 
-      RegName   rs1   = reg_sp;
+      RegIdx   rs1   = reg_sp;
       let       instr = mkInstr_S_type (zeroExtend (offset), rs2, rs1, f3_SD, op_STORE);
 
       return tuple2 (is_legal, instr);
@@ -328,7 +328,7 @@ function Tuple2 #(Bool, Instr) fv_decode_C_SQSP (MISA  misa,  Bit #(2)  xl, Inst
 		       && (funct3 == funct3_C_SQSP)
 		       && (xl == misa_mxl_128));
 
-      RegName   rs1   = reg_sp;
+      RegIdx   rs1   = reg_sp;
       let       instr = mkInstr_S_type (zeroExtend (offset), rs2, rs1, f3_SQ, op_STORE);
 
       return tuple2 (is_legal, instr);
@@ -348,7 +348,7 @@ function Tuple2 #(Bool, Instr) fv_decode_C_FSWSP (MISA  misa,  Bit #(2)  xl, Ins
 		       && (op == opcode_C2)
 		       && (funct3 == funct3_C_FSWSP));
 
-      RegName   rs1   = reg_sp;
+      RegIdx   rs1   = reg_sp;
       let       instr = mkInstr_S_type (zeroExtend (offset), rs2, rs1, f3_FSW, op_STORE_FP);
 
       return tuple2 (is_legal, instr);
@@ -368,7 +368,7 @@ function Tuple2 #(Bool, Instr) fv_decode_C_FSDSP (MISA  misa,  Bit #(2)  xl, Ins
 		       && (op == opcode_C2)
 		       && (funct3 == funct3_C_FSDSP));
 
-      RegName   rs1   = reg_sp;
+      RegIdx   rs1   = reg_sp;
       let       instr = mkInstr_S_type (zeroExtend (offset), rs2, rs1, f3_FSD, op_STORE_FP);
 
       return tuple2 (is_legal, instr);
@@ -596,7 +596,7 @@ function Tuple2 #(Bool, Instr) fv_decode_C_J (MISA  misa,  Bit #(2)  xl,  Instr_
 		       && (op == opcode_C1)
 		       && (funct3 == funct3_C_J));
 
-      RegName   rd    = reg_zero;
+      RegIdx   rd    = reg_zero;
       Bit #(21) imm21 = signExtend (offset);
       let       instr = mkInstr_J_type (imm21, rd, op_JAL);
       
@@ -624,7 +624,7 @@ function Tuple2 #(Bool, Instr) fv_decode_C_JAL (MISA  misa,  Bit #(2)  xl,  Inst
 		       && (funct3 == funct3_C_JAL)
 		       && (xl == misa_mxl_32));
 
-      RegName   rd    = reg_ra;
+      RegIdx   rd    = reg_ra;
       Bit #(21) imm21 = signExtend (offset);
       let       instr = mkInstr_J_type  (imm21,  rd,  op_JAL);
       
@@ -644,7 +644,7 @@ function Tuple2 #(Bool, Instr) fv_decode_C_JR (MISA  misa,  Bit #(2)  xl,  Instr
 		       && (rs1 != 0)
 		       && (rs2 == 0));
 
-      RegName   rd    = reg_zero;
+      RegIdx   rd    = reg_zero;
       Bit #(12) imm12 = 0;
       let       instr = mkInstr_I_type (imm12, rs1, funct3_JALR, rd, op_JALR);
       return tuple2 (is_legal, instr);
@@ -663,7 +663,7 @@ function Tuple2 #(Bool, Instr) fv_decode_C_JALR (MISA  misa,  Bit #(2)  xl,  Ins
 		       && (rs1 != 0)
 		       && (rs2 == 0));
 
-      RegName   rd    = reg_ra;
+      RegIdx   rd    = reg_ra;
       Bit #(12) imm12 = 0;
       let       instr = mkInstr_I_type (imm12, rs1, funct3_JALR, rd, op_JALR);
 
@@ -682,7 +682,7 @@ function Tuple2 #(Bool, Instr) fv_decode_C_BEQZ (MISA  misa,  Bit #(2)  xl,  Ins
 		       && (op == opcode_C1)
 		       && (funct3 == funct3_C_BEQZ));
 
-      RegName   rs2   = reg_zero;
+      RegIdx   rs2   = reg_zero;
       Bit #(13) imm13 = signExtend (offset);
       let       instr = mkInstr_B_type (imm13, rs2, rs1, f3_BEQ, op_BRANCH);
 
@@ -701,7 +701,7 @@ function Tuple2 #(Bool, Instr) fv_decode_C_BNEZ (MISA  misa,  Bit #(2)  xl,  Ins
 		       && (op == opcode_C1)
 		       && (funct3 == funct3_C_BNEZ));
 
-      RegName   rs2   = reg_zero;
+      RegIdx   rs2   = reg_zero;
       Bit #(13) imm13 = signExtend (offset);
       let       instr = mkInstr_B_type (imm13, rs2, rs1, f3_BNE, op_BRANCH);
 
@@ -724,7 +724,7 @@ function Tuple2 #(Bool, Instr) fv_decode_C_LI (MISA  misa,  Bit #(2)  xl,  Instr
 		       && (funct3 == funct3_C_LI)
 		       && (rd != 0));
 
-      RegName   rs1   = reg_zero;
+      RegIdx   rs1   = reg_zero;
       Bit #(12) imm12 = signExtend (imm6);
       let       instr = mkInstr_I_type (imm12, rs1, f3_ADDI, rd, op_OP_IMM);
 
@@ -849,7 +849,7 @@ function Tuple2 #(Bool, Instr) fv_decode_C_ADDI4SPN (MISA  misa,  Bit #(2)  xl, 
 		       && (funct3 == funct3_C_ADDI4SPN)
 		       && (nzimm10 != 0));
 
-      RegName   rs1   = reg_sp;
+      RegIdx   rs1   = reg_sp;
       Bit #(12) imm12 = zeroExtend (nzimm10);
       let       instr = mkInstr_I_type (imm12, rs1, f3_ADDI, rd, op_OP_IMM);
 
@@ -967,7 +967,7 @@ function Tuple2 #(Bool, Instr) fv_decode_C_MV (MISA  misa,  Bit #(2)  xl,  Instr
 		       && (rd_rs1 != 0)
 		       && (rs2 != 0));
 
-      RegName rs1   = reg_zero;
+      RegIdx rs1   = reg_zero;
       let     instr = mkInstr_R_type (funct7_ADD, rs2, rs1, funct3_ADD, rd_rs1, op_OP);
 
       return tuple2 (is_legal, instr);

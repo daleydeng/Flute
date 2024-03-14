@@ -42,7 +42,7 @@ typedef struct {
 `ifdef ISA_C
    Instr_C        instr_C;
 `endif
-   Decoded_Instr  decoded_instr;
+   DecodedInstr  decoded_instr;
    WordXL         rs1_val;
    WordXL         rs2_val;
    WordXL         mstatus;
@@ -84,7 +84,7 @@ typedef struct {
    Exc_Code   exc_code;        // Relevant if control == CONTROL_TRAP
 
    Op_Stage2  op_stage2;
-   RegName    rd;
+   RegIdx    rd;
    Addr       addr;           // Branch, jump: newPC
 		              // Mem ops and AMOs: mem addr
    WordXL     val1;           // OP_Stage2_ALU: result for Rd (ALU ops: result, JAL/JALR: return PC)
@@ -231,7 +231,7 @@ function ALU_Outputs fv_BRANCH (ALU_Inputs inputs);
    IntXL s_rs1_val = unpack (inputs.rs1_val);
    IntXL s_rs2_val = unpack (inputs.rs2_val);
 
-   IntXL offset        = extend (unpack (inputs.decoded_instr.imm13_SB));
+   IntXL offset        = extend (unpack (inputs.decoded_instr.imm13_B));
    Addr  branch_target = pack (unpack (inputs.pc) + offset);
    Bool  branch_taken  = False;
    Bool  trap          = False;
@@ -285,7 +285,7 @@ endfunction
 // JAL
 
 function ALU_Outputs fv_JAL (ALU_Inputs inputs);
-   IntXL offset  = extend (unpack (inputs.decoded_instr.imm21_UJ));
+   IntXL offset  = extend (unpack (inputs.decoded_instr.imm13_J));
    Addr  next_pc = pack (unpack (inputs.pc) + offset);
    Addr  ret_pc  = fall_through_pc (inputs);
 

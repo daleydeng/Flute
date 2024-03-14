@@ -62,17 +62,17 @@ interface CSR_RegFile_IFC;
 
    // CSR read (w.o. side effect)
    (* always_ready *)
-   method Maybe #(WordXL) read_csr (CSR_Addr csr_addr);
+   method Maybe #(WordXL) read_csr (CSRAddr csr_addr);
    (* always_ready *)
-   method Maybe #(WordXL) read_csr_port2 (CSR_Addr csr_addr);
+   method Maybe #(WordXL) read_csr_port2 (CSRAddr csr_addr);
 
    // CSR read (w. side effect)
    (* always_ready *)
-   method ActionValue #(Maybe #(WordXL)) mav_read_csr (CSR_Addr csr_addr);
+   method ActionValue #(Maybe #(WordXL)) mav_read_csr (CSRAddr csr_addr);
 
    // CSR write (returning new value)
    (* always_ready *)
-   method ActionValue #(CSR_Write_Result) mav_csr_write (CSR_Addr csr_addr, WordXL word);
+   method ActionValue #(CSR_Write_Result) mav_csr_write (CSRAddr csr_addr, WordXL word);
 
 `ifdef ISA_F
    // Read FRM
@@ -146,13 +146,13 @@ interface CSR_RegFile_IFC;
 
    // Access permission
    (* always_ready *)
-   method Bool access_permitted_1 (Priv_Mode  priv, CSR_Addr  csr_addr, Bool  read_not_write);
+   method Bool access_permitted_1 (Priv_Mode  priv, CSRAddr  csr_addr, Bool  read_not_write);
    (* always_ready *)
-   method Bool access_permitted_2 (Priv_Mode  priv, CSR_Addr  csr_addr, Bool  read_not_write);
+   method Bool access_permitted_2 (Priv_Mode  priv, CSRAddr  csr_addr, Bool  read_not_write);
 
    // Fault on reading counters?
    (* always_ready *)
-   method Bool csr_counter_read_fault (Priv_Mode  priv, CSR_Addr  csr_addr);
+   method Bool csr_counter_read_fault (Priv_Mode  priv, CSRAddr  csr_addr);
 
    // Read MIP
    (* always_ready *)
@@ -488,7 +488,7 @@ module mkCSR_RegFile (CSR_RegFile_IFC);
    // ----------------
    // Test if CSR is supported
 
-   function Bool fv_csr_exists (CSR_Addr csr_addr);
+   function Bool fv_csr_exists (CSRAddr csr_addr);
       Bool result = (   ((csr_addr_hpmcounter3 <= csr_addr) && (csr_addr <= csr_addr_hpmcounter31))
 		     || ((csr_addr_mhpmcounter3 <= csr_addr) && (csr_addr <= csr_addr_mhpmcounter31))
 `ifdef RV32
@@ -600,7 +600,7 @@ module mkCSR_RegFile (CSR_RegFile_IFC);
    // CSR reads (no side effect)
    // Returns Invalid for invalid CSR addresses or access-mode violations
 
-   function Maybe #(WordXL) fv_csr_read (CSR_Addr csr_addr);
+   function Maybe #(WordXL) fv_csr_read (CSRAddr csr_addr);
       Maybe #(WordXL)  m_csr_value = tagged Invalid;
 
       if ((csr_addr_hpmcounter3 <= csr_addr) && (csr_addr <= csr_addr_hpmcounter31))
@@ -739,7 +739,7 @@ module mkCSR_RegFile (CSR_RegFile_IFC);
    // transformation is to ignore the attempted write-value and return the hardwired value.
    // The value returned is conceptually the value you'd read if you did a subsequent CSR read.
 
-   function ActionValue #(CSR_Write_Result) fav_csr_write (CSR_Addr csr_addr, WordXL wordxl);
+   function ActionValue #(CSR_Write_Result) fav_csr_write (CSRAddr csr_addr, WordXL wordxl);
       actionvalue
 	 Bool            success = True;
 	 WordXL          new_csr_value  = ?;
@@ -1024,7 +1024,7 @@ module mkCSR_RegFile (CSR_RegFile_IFC);
    endfunction: fav_csr_write
 
    // Access permission
-   function Bool fv_access_permitted (Priv_Mode  priv, CSR_Addr  csr_addr,  Bool read_not_write);
+   function Bool fv_access_permitted (Priv_Mode  priv, CSRAddr  csr_addr,  Bool read_not_write);
       Bool exists  = fv_csr_exists (csr_addr);    // Is this CSR implemented?
 
       Bool priv_ok = priv >= csr_addr [9:8];      // Accessible at current privilege?
@@ -1105,22 +1105,22 @@ module mkCSR_RegFile (CSR_RegFile_IFC);
    endinterface
 
    // CSR read (w.o. side effect)
-   method Maybe #(WordXL) read_csr (CSR_Addr csr_addr);
+   method Maybe #(WordXL) read_csr (CSRAddr csr_addr);
       return fv_csr_read (csr_addr);
    endmethod
 
    // CSR read (w.o. side effect)
-   method Maybe #(WordXL) read_csr_port2 (CSR_Addr csr_addr);
+   method Maybe #(WordXL) read_csr_port2 (CSRAddr csr_addr);
       return fv_csr_read (csr_addr);
    endmethod
 
    // CSR read (w. side effect)
-   method ActionValue #(Maybe #(WordXL)) mav_read_csr (CSR_Addr csr_addr);
+   method ActionValue #(Maybe #(WordXL)) mav_read_csr (CSRAddr csr_addr);
       return fv_csr_read (csr_addr);
    endmethod
 
    // CSR write
-   method ActionValue #(CSR_Write_Result) mav_csr_write (CSR_Addr csr_addr, WordXL word);
+   method ActionValue #(CSR_Write_Result) mav_csr_write (CSRAddr csr_addr, WordXL word);
       let result <- fav_csr_write (csr_addr, word);
       return result;
    endmethod
@@ -1304,16 +1304,16 @@ module mkCSR_RegFile (CSR_RegFile_IFC);
    endmethod
 
    // Access permission
-   method Bool access_permitted_1 (Priv_Mode  priv, CSR_Addr  csr_addr,  Bool read_not_write);
+   method Bool access_permitted_1 (Priv_Mode  priv, CSRAddr  csr_addr,  Bool read_not_write);
       return fv_access_permitted (priv, csr_addr, read_not_write);
    endmethod
 
-   method Bool access_permitted_2 (Priv_Mode  priv, CSR_Addr  csr_addr,  Bool read_not_write);
+   method Bool access_permitted_2 (Priv_Mode  priv, CSRAddr  csr_addr,  Bool read_not_write);
       return fv_access_permitted (priv, csr_addr, read_not_write);
    endmethod
 
    // Fault on reading counters?
-   method Bool csr_counter_read_fault (Priv_Mode  priv, CSR_Addr  csr_addr);
+   method Bool csr_counter_read_fault (Priv_Mode  priv, CSRAddr  csr_addr);
       return (   ((priv == s_Priv_Mode) || (priv == u_Priv_Mode))
 	      && (   ((csr_addr == csr_addr_cycle)   && (rg_mcounteren.cy == 0))
 		  || ((csr_addr == csr_addr_time)    && (rg_mcounteren.tm == 0))

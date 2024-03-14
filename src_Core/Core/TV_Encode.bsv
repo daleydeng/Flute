@@ -434,10 +434,10 @@ module mkTV_Encode (TV_Encode_IFC);
 
       // Use new priv mode to decide which trap regs are updated (M, S or U priv)
       Priv_Mode priv            = truncate (td.rd);
-      CSR_Addr  csr_addr_status = csr_addr_mstatus;
-      CSR_Addr  csr_addr_cause  = csr_addr_mcause;
-      CSR_Addr  csr_addr_epc    = csr_addr_mepc;
-      CSR_Addr  csr_addr_tval   = csr_addr_mtval;
+      CSRAddr  csr_addr_status = csr_addr_mstatus;
+      CSRAddr  csr_addr_cause  = csr_addr_mcause;
+      CSRAddr  csr_addr_epc    = csr_addr_mepc;
+      CSRAddr  csr_addr_tval   = csr_addr_mtval;
       if (priv == s_Priv_Mode) begin
 	 csr_addr_status = csr_addr_sstatus;
 	 csr_addr_cause  = csr_addr_scause;
@@ -487,10 +487,10 @@ module mkTV_Encode (TV_Encode_IFC);
 
       // Use new priv mode to decide which trap regs are updated (M, S or U priv)
       Priv_Mode priv            = truncate (td.rd);
-      CSR_Addr  csr_addr_status = csr_addr_mstatus;
-      CSR_Addr  csr_addr_cause  = csr_addr_mcause;
-      CSR_Addr  csr_addr_epc    = csr_addr_mepc;
-      CSR_Addr  csr_addr_tval   = csr_addr_mtval;
+      CSRAddr  csr_addr_status = csr_addr_mstatus;
+      CSRAddr  csr_addr_cause  = csr_addr_mcause;
+      CSRAddr  csr_addr_epc    = csr_addr_mepc;
+      CSRAddr  csr_addr_tval   = csr_addr_mtval;
       if (priv == s_Priv_Mode) begin
 	 csr_addr_status = csr_addr_sstatus;
 	 csr_addr_cause  = csr_addr_scause;
@@ -622,15 +622,15 @@ Bit #(8) te_op_addl_state_pc       = 10;
 //      2018-10-02_riscv_debug_spec_v0.13_DRAFT_f2873e71
 //     "Table 3.3 Abstract Register Numbers"
 
-function Bit #(16) fv_csr_regnum (CSR_Addr  csr_addr);
+function Bit #(16) fv_csr_regnum (CSRAddr  csr_addr);
    return zeroExtend (csr_addr);
 endfunction
 
-function Bit #(16) fv_gpr_regnum (RegName  gpr_addr);
+function Bit #(16) fv_gpr_regnum (RegIdx  gpr_addr);
    return 'h1000 + zeroExtend (gpr_addr);
 endfunction
 
-function Bit #(16) fv_fpr_regnum (RegName  fpr_addr);
+function Bit #(16) fv_fpr_regnum (RegIdx  fpr_addr);
    return 'h1020 + zeroExtend (fpr_addr);
 endfunction
 

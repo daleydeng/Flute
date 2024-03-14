@@ -44,17 +44,17 @@ interface CSR_RegFile_IFC;
 
    // CSR read (w.o. side effect)
    (* always_ready *)
-   method Maybe #(Word) read_csr (CSR_Addr csr_addr);
+   method Maybe #(Word) read_csr (CSRAddr csr_addr);
    (* always_ready *)
-   method Maybe #(Word) read_csr_port2 (CSR_Addr csr_addr);
+   method Maybe #(Word) read_csr_port2 (CSRAddr csr_addr);
 
    // CSR read (w. side effect)
    (* always_ready *)
-   method ActionValue #(Maybe #(Word)) mav_read_csr (CSR_Addr csr_addr);
+   method ActionValue #(Maybe #(Word)) mav_read_csr (CSRAddr csr_addr);
 
    // CSR write
    (* always_ready *)
-   method Action write_csr (CSR_Addr csr_addr, Word word);
+   method Action write_csr (CSRAddr csr_addr, Word word);
 
 `ifdef ISA_F
    // Read FCSR.FRM
@@ -111,7 +111,7 @@ interface CSR_RegFile_IFC;
 
    // Fault on reading counters?
    (* always_ready *)
-   method Bool csr_counter_read_fault (Priv_Mode  priv, CSR_Addr  csr_addr);
+   method Bool csr_counter_read_fault (Priv_Mode  priv, CSRAddr  csr_addr);
 
    // Read MIP
    (* always_ready *)
@@ -412,7 +412,7 @@ module mkCSR_RegFile (CSR_RegFile_IFC);
    // CSR reads (no side effect)
    // Returns Invalid for invalid CSR addresses or access-mode violations
 
-   function Maybe #(Word) fv_csr_read (CSR_Addr csr_addr);
+   function Maybe #(Word) fv_csr_read (CSRAddr csr_addr);
       Maybe #(Word)  m_csr_value = tagged Invalid;
 
       if ((csr_hpmcounter3 <= csr_addr) && (csr_addr <= csr_hpmcounter31))
@@ -548,7 +548,7 @@ module mkCSR_RegFile (CSR_RegFile_IFC);
    // Returns True if successful
    // If unsuccessful, should trap (illegal CSR).
 
-   function Action fav_write_csr (CSR_Addr csr_addr, Word word);
+   function Action fav_write_csr (CSRAddr csr_addr, Word word);
       action
 	 Bool success = True;
 	 if ((csr_mhpmcounter3 <= csr_addr) && (csr_addr <= csr_mhpmcounter31))
@@ -792,22 +792,22 @@ module mkCSR_RegFile (CSR_RegFile_IFC);
    endinterface
 
    // CSR read (w.o. side effect)
-   method Maybe #(Word) read_csr (CSR_Addr csr_addr);
+   method Maybe #(Word) read_csr (CSRAddr csr_addr);
       return fv_csr_read (csr_addr);
    endmethod
 
    // CSR read (w.o. side effect)
-   method Maybe #(Word) read_csr_port2 (CSR_Addr csr_addr);
+   method Maybe #(Word) read_csr_port2 (CSRAddr csr_addr);
       return fv_csr_read (csr_addr);
    endmethod
 
    // CSR read (w. side effect)
-   method ActionValue #(Maybe #(Word)) mav_read_csr (CSR_Addr csr_addr);
+   method ActionValue #(Maybe #(Word)) mav_read_csr (CSRAddr csr_addr);
       return fv_csr_read (csr_addr);
    endmethod
 
    // CSR write
-   method Action write_csr (CSR_Addr csr_addr, Word word);
+   method Action write_csr (CSRAddr csr_addr, Word word);
       fav_write_csr (csr_addr, word);
    endmethod
 
@@ -951,7 +951,7 @@ module mkCSR_RegFile (CSR_RegFile_IFC);
    endmethod
 
    // Fault on reading counters?
-   method Bool csr_counter_read_fault (Priv_Mode  priv, CSR_Addr  csr_addr);
+   method Bool csr_counter_read_fault (Priv_Mode  priv, CSRAddr  csr_addr);
       return (   ((priv == s_Priv_Mode) || (priv == u_Priv_Mode))
 	      && (   ((csr_addr == csr_cycle)   && (rg_mcounteren.cy == 0))
 		  || ((csr_addr == csr_time)    && (rg_mcounteren.tm == 0))

@@ -36,17 +36,17 @@ interface FPR_RegFile_IFC;
 
    // FPR read
    (* always_ready *)
-   method WordFL read_rs1 (RegName rs1);
+   method WordFL read_rs1 (RegIdx rs1);
    (* always_ready *)
-   method WordFL read_rs1_port2 (RegName rs1);    // For debugger access only
+   method WordFL read_rs1_port2 (RegIdx rs1);    // For debugger access only
    (* always_ready *)
-   method WordFL read_rs2 (RegName rs2);
+   method WordFL read_rs2 (RegIdx rs2);
    (* always_ready *)
-   method WordFL read_rs3 (RegName rs3);
+   method WordFL read_rs3 (RegIdx rs3);
 
    // FPR write
    (* always_ready *)
-   method Action write_rd (RegName rd, WordFL rd_val);
+   method Action write_rd (RegIdx rd, WordFL rd_val);
 
 endinterface
 
@@ -68,7 +68,7 @@ module mkFPR_RegFile (FPR_RegFile_IFC);
 
    // Floating Point Registers
    // Unlike GPRs, all registers in the FPR are regular registers (no r0)
-   RegFile #(RegName, WordFL) regfile <- mkRegFileFull;
+   RegFile #(RegIdx, WordFL) regfile <- mkRegFileFull;
 
    // ----------------------------------------------------------------
    // Reset.
@@ -77,7 +77,7 @@ module mkFPR_RegFile (FPR_RegFile_IFC);
    // and tandem verification
 
 `ifdef INCLUDE_TANDEM_VERIF
-   Reg #(RegName) rg_j <- mkRegU;    // reset loop index
+   Reg #(RegIdx) rg_j <- mkRegU;    // reset loop index
 `endif
 
    rule rl_reset_start (rg_state == RF_RESET_START);
@@ -121,25 +121,25 @@ module mkFPR_RegFile (FPR_RegFile_IFC);
    endinterface
 
    // FPR read
-   method WordFL read_rs1 (RegName rs1);
+   method WordFL read_rs1 (RegIdx rs1);
       return (regfile.sub (rs1));
    endmethod
 
    // FPR read
-   method WordFL read_rs1_port2 (RegName rs1);        // For debugger access only
+   method WordFL read_rs1_port2 (RegIdx rs1);        // For debugger access only
       return (regfile.sub (rs1));
    endmethod
 
-   method WordFL read_rs2 (RegName rs2);
+   method WordFL read_rs2 (RegIdx rs2);
       return (regfile.sub (rs2));
    endmethod
 
-   method WordFL read_rs3 (RegName rs3);
+   method WordFL read_rs3 (RegIdx rs3);
       return (regfile.sub (rs3));
    endmethod
 
    // FPR write
-   method Action write_rd (RegName rd, WordFL rd_val);
+   method Action write_rd (RegIdx rd, WordFL rd_val);
       regfile.upd (rd, rd_val);
    endmethod
 

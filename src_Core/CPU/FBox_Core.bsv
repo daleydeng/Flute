@@ -55,7 +55,7 @@ interface FBox_Core_IFC;
         Opcode                      opcode
       , Bit #(7)                    f7
       , Bit #(3)                    rm
-      , RegName                     rs2
+      , RegIdx                     rs2
       , Bit #(64)                   v1
       , Bit #(64)                   v2
       , Bit #(64)                   v3
@@ -143,7 +143,7 @@ module mkFBox_Core #(Bit #(4) verbosity) (FBox_Core_IFC);
    Reg   #(Maybe #(Tuple7 #(
         Opcode
       , Bit #(7)
-      , RegName 
+      , RegIdx 
       , Bit #(3)
       , Bit #(64)
       , Bit #(64)

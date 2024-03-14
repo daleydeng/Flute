@@ -117,7 +117,7 @@ deriving (Eq, Bits, FShow);
 
 typedef struct {
    Bypass_State  bypass_state;
-   RegName       rd;
+   RegIdx       rd;
    WordXL          rd_val;
    } Bypass
 deriving (Bits);
@@ -138,7 +138,7 @@ endinstance
 `ifdef ISA_F
 typedef struct {
    Bypass_State  bypass_state;
-   RegName       rd;
+   RegIdx       rd;
    WordFL        rd_val;
    } FBypass
 deriving (Bits);
@@ -173,9 +173,9 @@ FBypass no_fbypass = FBypass {bypass_state: BYPASS_RD_NONE,
 // ----------------
 // Bypass functions for GPRs
 // Returns '(busy, val)'
-// 'busy' means that the RegName is valid and matches, but the value is not available yet
+// 'busy' means that the RegIdx is valid and matches, but the value is not available yet
 
-function Tuple2 #(Bool, WordXL) fn_gpr_bypass (Bypass bypass, RegName rd, WordXL rd_val);
+function Tuple2 #(Bool, WordXL) fn_gpr_bypass (Bypass bypass, RegIdx rd, WordXL rd_val);
    Bool   busy = ((bypass.bypass_state == BYPASS_RD) && (bypass.rd == rd));
    WordXL val  = (  ((bypass.bypass_state == BYPASS_RD_RDVAL) && (bypass.rd == rd))
 		  ? bypass.rd_val
@@ -186,9 +186,9 @@ endfunction
 `ifdef ISA_F
 // FBypass functions for FPRs
 // Returns '(busy, val)'
-// 'busy' means that the RegName is valid and matches, but the value is not available yet
+// 'busy' means that the RegIdx is valid and matches, but the value is not available yet
 
-function Tuple2 #(Bool, WordFL) fn_fpr_bypass (FBypass bypass, RegName rd, WordFL rd_val);
+function Tuple2 #(Bool, WordFL) fn_fpr_bypass (FBypass bypass, RegIdx rd, WordFL rd_val);
    Bool busy = ((bypass.bypass_state == BYPASS_RD) && (bypass.rd == rd));
    WordFL val= (  ((bypass.bypass_state == BYPASS_RD_RDVAL) && (bypass.rd == rd))
 		? bypass.rd_val
@@ -304,7 +304,7 @@ typedef struct {
    Instr          instr;              // Valid if no exception
    Instr_C        instr_C;            // Valid if no exception; original compressed instruction
    WordXL         pred_pc;            // Predicted next pc
-   Decoded_Instr  decoded_instr;
+   DecodedInstr  decoded_instr;
    } Data_StageD_to_Stage1
 deriving (Bits);
 
@@ -422,7 +422,7 @@ typedef struct {
    Instr      instr;             // For debugging. Just funct3, funct7 are
                                  // enough for functionality.
    Op_Stage2  op_stage2;
-   RegName    rd;
+   RegIdx    rd;
    Addr       addr;              // Branch, jump: newPC
                                  // Mem ops and AMOs: mem addr
    WordXL     val1;              // OP_Stage2_ALU: rd_val
@@ -507,7 +507,7 @@ typedef struct {
    Priv_Mode priv;
 
    Bool      rd_valid;
-   RegName   rd;
+   RegIdx   rd;
    WordXL    rd_val;
 
 `ifdef ISA_F
