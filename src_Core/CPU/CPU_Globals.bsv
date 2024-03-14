@@ -19,7 +19,7 @@ package CPU_Globals;
 // ================================================================
 // Project imports
 
-import ISA_Decls     :: *;
+import isa_decls     :: *;
 import TV_Trace_Data :: *;
 
 // ================================================================

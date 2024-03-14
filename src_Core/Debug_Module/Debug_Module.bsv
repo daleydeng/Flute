@@ -66,7 +66,7 @@ import Cur_Cycle  :: *;
 // ================================================================
 // Project imports
 
-import ISA_Decls    :: *;
+import isa_decls    :: *;
 import AXI4_Types   :: *;
 import Fabric_Defs  :: *;
 

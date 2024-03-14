@@ -26,7 +26,7 @@ import Semi_FIFOF :: *;
 // ================================================================
 // Project imports
 
-import ISA_Decls       :: *;
+import isa_decls       :: *;
 import Near_Mem_IFC    :: *;
 import MMU_Cache       :: *;
 import Fabric_Defs     :: *;

@@ -22,7 +22,7 @@ import GetPut_Aux :: *;
 // ================================================================
 // Project imports
 
-import ISA_Decls      :: *;
+import isa_decls      :: *;
 import TV_Info        :: *;
 import SoC_Top        :: *;
 import Mem_Controller :: *;

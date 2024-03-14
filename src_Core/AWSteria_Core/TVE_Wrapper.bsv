@@ -40,7 +40,7 @@ import Fabric_Defs :: *;    // for Wd_{Id,Addr,Data,User}
 import AXI_Widths  :: *;    // for Wd_{Id,Addr,Data,User}_Dma
 import SoC_Map     :: *;
 
-import ISA_Decls :: *;
+import isa_decls :: *;
 import CPU_IFC   :: *;
 
 import DM_Common      :: *;    // For Server_DMI

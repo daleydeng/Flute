@@ -51,7 +51,7 @@ import Cur_Cycle  :: *;
 // ================================================================
 // Project imports
 
-import ISA_Decls     :: *;
+import isa_decls     :: *;
 
 import TV_Trace_Data :: *;
 

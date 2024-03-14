@@ -31,7 +31,7 @@ import GetPut_Aux :: *;
 // ================================================================
 // Project imports
 
-import ISA_Decls :: *;
+import isa_decls :: *;
 import SoC_Map   :: *;
 
 `ifdef INCLUDE_GDB_CONTROL
@@ -322,10 +322,10 @@ module mkCSR_RegFile (CSR_RegFile_IFC);
    Reg #(MTVec)      rg_stvec     <- mkRegU;
    // scounteren hardwired to 0 for now
 
-   Reg #(Word)       rg_sscratch  <- mkRegU;
-   Reg #(Word)       rg_sepc      <- mkRegU;
+   Reg #(WordXL)       rg_sscratch  <- mkRegU;
+   Reg #(WordXL)       rg_sepc      <- mkRegU;
    Reg #(MCause)     rg_scause    <- mkRegU;
-   Reg #(Word)       rg_stval     <- mkRegU;
+   Reg #(WordXL)       rg_stval     <- mkRegU;
 
    Reg #(WordXL)     rg_satp      <- mkRegU;
 

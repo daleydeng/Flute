@@ -36,7 +36,7 @@ import AXI4_ClockCrossing :: *;
 import AWSteria_Core_IFC   :: *;
 import AWSteria_Core_Inner :: *;
 
-import ISA_Decls :: *;
+import isa_decls :: *;
 
 // Debug Module interface
 import DM_Common      :: *;

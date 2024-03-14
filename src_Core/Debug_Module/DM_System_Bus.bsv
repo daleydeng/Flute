@@ -20,7 +20,7 @@ import Semi_FIFOF :: *;
 // ================================================================
 // Project Imports
 
-import ISA_Decls :: *;
+import isa_decls :: *;
 import DM_Common :: *;
 
 import AXI4_Types  :: *;

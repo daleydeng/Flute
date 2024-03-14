@@ -27,7 +27,7 @@ import GetPut_Aux    :: *;
 // ================================================================
 // Project imports
 
-import ISA_Decls        :: *;
+import isa_decls        :: *;
 import MMU_Cache_Common :: *;
 
 // ================================================================

@@ -11,7 +11,7 @@ import ClientServer :: *;
 // ================================================================
 // Project imports
 
-import ISA_Decls :: *;
+import isa_decls :: *;
 
 import AXI4_Types   :: *;
 import AXI_Widths   :: *;    // For Wd_Id/Addr/Data/User_Dma

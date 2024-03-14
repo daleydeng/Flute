@@ -1,15 +1,3 @@
-// Copyright (c) 2013-2019 Bluespec, Inc. All Rights Reserved
-
-// ================================================================
-// This is an 'include' file, not a separate BSV package
-//
-// Contains RISC-V Machine-Level ISA defs
-//
-// ================================================================
-
-// ================================================================
-// Utility functions
-
 // In these functions, 'bitpos' is Bit #(6) which is enough to index
 // 64-bit words in RV64.
 

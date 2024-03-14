@@ -60,7 +60,7 @@ import SoC_Map     :: *;
 import AWSteria_Core_IFC :: *;    // For AXI4_Wd_{Id,Addr,Data_A,Data_B,_User}
                                   // and N_Core_External_Interrupt_Sources
 
-import ISA_Decls         :: *;
+import isa_decls         :: *;
 import Fabric_Defs       :: *;    // for Wd_{Id,Addr,Data,User}
 
 import DM_Common         :: *;    // Debug Module interface etc.

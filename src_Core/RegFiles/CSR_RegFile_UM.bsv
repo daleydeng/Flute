@@ -29,7 +29,7 @@ import GetPut_Aux :: *;
 // ================================================================
 // Project imports
 
-import ISA_Decls :: *;
+import isa_decls :: *;
 import SoC_Map   :: *;
 
 `ifdef INCLUDE_GDB_CONTROL

@@ -1,4 +1,4 @@
-// Copyright (c) 2013-2019 Bluespec, Inc. All Rights Reserved
+
 package FPU;
 
 import FIFOF :: *;
@@ -6,13 +6,12 @@ import RegFile :: *;
 import GetPut :: *;
 import ClientServer :: *;
 
-import FloatingPoint :: *;
+import FloatingPoint::*;
 import Divide :: *;
 import SquareRoot ::*;
-import ISA_Decls :: *;
 
-// ================================================================
-// Type definitions
+import isa_decls :: *;
+
 typedef FloatingPoint#(11,52) FDouble;
 typedef FloatingPoint#(8,23)  FSingle;
 
@@ -21,7 +20,7 @@ typedef union tagged {
    FSingle S;
    } FloatU deriving(Bits,Eq);
 
-typedef Tuple5#( FloatU,FloatU,FloatU,RoundMode,FpuOp) Fpu_Req;
+typedef Tuple5#( FloatU,FloatU,FloatU, RoundMode, FpuOp) Fpu_Req;
 typedef Tuple2#( FloatU, FloatingPoint::Exception )       Fpu_Rsp;
 
 `ifdef ISA_D
@@ -62,7 +61,7 @@ module mkFPU ( FPU_IFC );
 `else
    Server# (UInt# (60)
           , Tuple2# (UInt# (60), Bool)) _sqrt <- mkNonPipelinedSquareRooter(2);
-   Server# (Tuple2# (FSingle, RoundMode)
+   Server# (Tuple2# (FSingle, FRoundMode)
           , FpuR) fpu_sqr <- mkFloatingPointSquareRooter(_sqrt);
 `endif
 `endif

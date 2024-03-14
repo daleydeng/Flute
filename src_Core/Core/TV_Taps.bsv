@@ -29,7 +29,7 @@ import GetPut_Aux  :: *;
 // ================================================================
 // Project imports
 
-import ISA_Decls      :: *;
+import isa_decls      :: *;
 import DM_CPU_Req_Rsp :: *;
 import TV_Trace_Data  :: *;
 

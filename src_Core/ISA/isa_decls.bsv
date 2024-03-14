@@ -1,6 +1,4 @@
-package ISA_Decls;
-
-import Vector       :: *;
+package isa_decls;
 
 `ifdef RV32
 typedef 32 XLEN;
@@ -15,50 +13,30 @@ Integer xlen = valueOf (XLEN);
 typedef enum { RV32, RV64 } RVVersion deriving (Eq, Bits);
 RVVersion rv_version = xlen == 32 ? RV32 : RV64;
 
-// ----------------
-// We're evolving the code to use WordXL/IntXL instead of Word/Word_S
-// because of the widespread and inconsistent use of 'word' in the field.
-// All existing uses of 'Word/Word_S' should migrate towards WordXL/IntXL.
-// All new code should only use WordXL/IntXL
-// Eventually, we should remove Word and Word_S
+typedef  8 BitsPerByte;
+typedef  Bit#(BitsPerByte) Byte;
+Integer  bits_per_byte = valueOf(BitsPerByte);
 
-typedef  Bit #(XLEN)  WordXL;    // Raw (unsigned) register data
-typedef  Int #(XLEN)  IntXL;     // Signed register data
+typedef  XLEN BitsPerWordXL;
+typedef  Bit#(BitsPerWordXL)  WordXL;
 
-// typedef  Bit #(XLEN)  Word;      // Raw (unsigned) register data    // OLD: migrate to WordXL
-// typedef  Int #(XLEN)  Word_S;    // Signed register data            // OLD: migrate to IntXL
+typedef  TDiv#(BitsPerWordXL, BitsPerByte) BytesPerWordXL;
+Integer  bytes_per_wordxl = valueOf(BytesPerWordXL);
 
-typedef  WordXL       Addr;      // addresses/pointers
-
-// ----------------
-
-typedef  8                                     Bits_per_Byte;
-typedef  Bit #(Bits_per_Byte)                  Byte;
-
-typedef  XLEN                                  Bits_per_Word;            // REDUNDANT to XLEN
-
-typedef  TDiv #(Bits_per_Word, Bits_per_Byte)  Bytes_per_Word;           // OLD ('WordXL')
-typedef  TLog #(Bytes_per_Word)                Bits_per_Byte_in_Word;    // OLD ('WordXL')
-typedef  Bit #(Bits_per_Byte_in_Word)          Byte_in_Word;             // OLD ('WordXL')
-typedef  Vector #(Bytes_per_Word, Byte)        Word_B;                   // OLD ('WordXL')
-
-typedef  TDiv #(XLEN, Bits_per_Byte)           Bytes_per_WordXL;
-typedef  TLog #(Bytes_per_WordXL)              Bits_per_Byte_in_WordXL;
-typedef  Bit #(Bits_per_Byte_in_WordXL)        Byte_in_WordXL;
-typedef  Vector #(Bytes_per_WordXL, Byte)      WordXL_B;
+typedef  TLog#(BytesPerWordXL)              Bits_per_Byte_in_WordXL;
+typedef  Bit#(Bits_per_Byte_in_WordXL)        Byte_in_WordXL;
+Integer  bits_per_byte_in_wordxl = valueOf (Bits_per_Byte_in_WordXL);
 
 typedef  XLEN                                  Bits_per_Addr;
-typedef  TDiv #(Bits_per_Addr, Bits_per_Byte)  Bytes_per_Addr;
+typedef  TDiv #(Bits_per_Addr, BitsPerByte)  Bytes_per_Addr;
 
-Integer  bits_per_byte           = valueOf (Bits_per_Byte);
-
-Integer  bytes_per_wordxl        = valueOf (Bytes_per_WordXL);
-Integer  bits_per_byte_in_wordxl = valueOf (Bits_per_Byte_in_WordXL);
+typedef  Int#(XLEN)  IntXL;     // Signed register data
+typedef  WordXL       Addr;
 
 Integer  addr_lo_byte_in_wordxl = 0;
 Integer  addr_hi_byte_in_wordxl = addr_lo_byte_in_wordxl + bits_per_byte_in_wordxl - 1;
 
-function  Byte_in_Word  fn_addr_to_byte_in_wordxl (Addr a);
+function  Byte_in_WordXL  fn_addr_to_byte_in_wordxl (Addr a);
    return a [addr_hi_byte_in_wordxl : addr_lo_byte_in_wordxl ];
 endfunction
 
@@ -87,10 +65,9 @@ Bool hasFpu64 = False;
 typedef  Bit #(FLEN) FP_Value;
 typedef  Bit #(FLEN)  WordFL;    // Floating point data
 
-typedef  TDiv #(FLEN, Bits_per_Byte)           Bytes_per_WordFL;
+typedef  TDiv #(FLEN, BitsPerByte)           Bytes_per_WordFL;
 typedef  TLog #(Bytes_per_WordFL)              Bits_per_Byte_in_WordFL;
 typedef  Bit #(Bits_per_Byte_in_WordFL)        Byte_in_WordFL;
-typedef  Vector #(Bytes_per_WordFL, Byte)      WordFL_B;
 
 `endif
 
@@ -624,7 +601,7 @@ Bit #(3) funct3_JALR = 3'b000;
 // Floating Point Instructions
 
 // ----------------------------------------------------------------
-// TODO: the following are FPU implementation choices; shouldn't be in ISA_Decls
+// TODO: the following are FPU implementation choices; shouldn't be in isa_decls
 // Enumeration of floating point opcodes for decode within the FPU
 typedef enum {FPAdd,
 	      FPSub,
@@ -636,15 +613,6 @@ typedef enum {FPAdd,
 	      FPNMAdd,
 	      FPNMSub
    } FpuOp
-   deriving (Bits, Eq, FShow);
-
-// Enumeration of rounding modes
-typedef enum {Rnd_Nearest_Even,
-	      Rnd_Zero,
-	      Rnd_Minus_Inf,
-	      Rnd_Plus_Inf,
-	      Rnd_Nearest_Max_Mag
-   } RoundMode
    deriving (Bits, Eq, FShow);
 
 // ----------------------------------------------------------------
@@ -1172,26 +1140,8 @@ typedef struct {
    Priv_Mode   priv;
 } Trap_Info deriving (Bits, Eq, FShow);
 
-// ================================================================
-// 'C' Extension ("compressed" instructions)
-
-`include "ISA_Decls_C.bsv"
-
-// ================================================================
-// Supervisor-Level ISA defs
-
-`include "ISA_Decls_Priv_S.bsv"
-
-// ================================================================
-// Hypervisor-Level ISA defs
-
-// `include "ISA_Decls_Priv_H.bsv"
-
-// ================================================================
-// Machine-Level ISA defs
-
-`include "ISA_Decls_Priv_M.bsv"
-
-// ================================================================
+`include "isa_decls_cext.inc.bsv"
+`include "isa_decls_priv_supervisor.inc.bsv"
+`include "isa_decls_priv_machine.inc.bsv"
 
 endpackage

@@ -27,7 +27,7 @@ import Vector :: *;
 // ================================================================
 // Project imports
 
-import ISA_Decls     :: *;
+import isa_decls     :: *;
 import CPU_Globals   :: *;
 import TV_Trace_Data :: *;
 

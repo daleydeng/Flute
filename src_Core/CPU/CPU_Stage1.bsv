@@ -30,7 +30,7 @@ import Cur_Cycle :: *;
 // ================================================================
 // Project imports
 
-import ISA_Decls        :: *;
+import isa_decls        :: *;
 import CPU_Globals      :: *;
 import Near_Mem_IFC     :: *;
 import GPR_RegFile      :: *;

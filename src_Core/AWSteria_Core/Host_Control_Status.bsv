@@ -27,7 +27,7 @@ import Semi_FIFOF :: *;
 // ================================================================
 // Project imports
 
-import ISA_Decls      :: *;    // for XLEN
+import isa_decls      :: *;    // for XLEN
 import DM_CPU_Req_Rsp :: *;
 
 // ================================================================

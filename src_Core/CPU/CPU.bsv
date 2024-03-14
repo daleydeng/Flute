@@ -42,7 +42,7 @@ import AXI4_Types :: *;
 import AXI4_Lite_Types :: *;
 `endif
 
-import ISA_Decls :: *;
+import isa_decls :: *;
 
 import PC_Trace      :: *;
 import TV_Trace_Data :: *;

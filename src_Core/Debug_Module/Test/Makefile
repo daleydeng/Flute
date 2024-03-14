@@ -60,7 +60,7 @@ simulate:
 # FOR VERILOG
 
 BSCDIRS_V = -vdir verilog  -bdir build_v  -info-dir build_v
-BSCPATH_V = ..:$(ISA_DECLS_DIR):$(ADDL_LIBS_DIR):+
+BSCPATH_V = ..:$(isa_decls_DIR):$(ADDL_LIBS_DIR):+
 
 # Set VSIM to desired Verilog simulator
 # VSIM = modelsim
