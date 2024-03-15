@@ -115,10 +115,10 @@ isa_tests:
 
 .PHONY: clean
 clean:
-	rm -r -f  *~  Makefile_*  symbol_table.txt  build_dir  obj_dir  directc*
+	rm -r -f  *~  Makefile_*  symbol_table.txt  build_dir  obj_dir  directc* trace_out.dat *.hex
 
 .PHONY: full_clean
 full_clean: clean
-	rm -r -f  $(SIM_EXE_FILE)*  *.log  *.vcd  *.hex  Logs/  worker_* Verilog_RTL trace_out.dat
+	rm -r -f  $(SIM_EXE_FILE)*  *.log  *.vcd  Logs/  worker_* Verilog_RTL
 
 # ================================================================
