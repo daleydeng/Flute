@@ -1093,9 +1093,9 @@ typedef struct {
    PrivMode   priv;
 } Trap_Info deriving (Bits, Eq, FShow);
 
-`include "isa_decls_cext.inc.bsv"
-`include "isa_decls_priv_supervisor.inc.bsv"
-`include "isa_decls_priv_machine.inc.bsv"
+`include "isa_decls_cext.bsvi"
+`include "isa_decls_priv_supervisor.bsvi"
+`include "isa_decls_priv_machine.bsvi"
 
 `ifdef INCLUDE_PC_TRACE
 typedef struct {
