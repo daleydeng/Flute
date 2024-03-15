@@ -864,11 +864,12 @@ module mkCPU (CPU_IFC);
       // Trace data
       TraceData trace_data;
       if (is_interrupt)
-	 trace_data = mkTrace_INTR (next_pc, new_priv, new_mstatus, mcause, epc, 0);
+	 trace_data = mkTrace_INTR (epc, next_pc, new_priv, new_mstatus, mcause, epc, 0);
       else begin
 	 trace_data = rg_trap_trace_data;
 	 trace_data.op = TRACE_TRAP;
-	 trace_data.pc = next_pc;
+    trace_data.pc = epc;
+	 trace_data.next_pc = next_pc;
 	 // trace_data.instr_sz    should already be set
 	 // trace_data.instr       should already be set
 	 trace_data.rd    = zeroExtend (new_priv);
@@ -990,16 +991,18 @@ module mkCPU (CPU_IFC);
 
 `ifdef INCLUDE_TANDEM_VERIF
 	 // Trace data
-	 let trace_data = mkTrace_CSRRX (rg_trap_trace_data.pc,
-					 rg_trap_trace_data.instr_sz,
-					 rg_trap_trace_data.instr,
-					 rd,
-					 new_rd_val,
-					 True,    // updated-CSR info is valid
-					 csr_addr,
-					 new_csr_val,
-					 isValid (m_new_mstatus),
-					 fromMaybe (?, m_new_mstatus));
+	 let trace_data = mkTrace_CSRRX (
+      rg_csr_pc,
+      rg_trap_trace_data.pc,
+      rg_trap_trace_data.instr_sz,
+      rg_trap_trace_data.instr,
+      rd,
+      new_rd_val,
+      True,    // updated-CSR info is valid
+      csr_addr,
+      new_csr_val,
+      isValid (m_new_mstatus),
+      fromMaybe (?, m_new_mstatus));
 	 f_trace_data.enq (trace_data);
 `endif
 
@@ -1110,16 +1113,18 @@ module mkCPU (CPU_IFC);
 
 `ifdef INCLUDE_TANDEM_VERIF
 	 // Trace data
-	 let trace_data = mkTrace_CSRRX (rg_trap_trace_data.pc,
-					 rg_trap_trace_data.instr_sz,
-					 rg_trap_trace_data.instr,
-					 rd,
-					 new_rd_val,
-					 (rs1 != 0),    // whether we've written csr or not
-					 csr_addr,
-					 new_csr_val,
-					 isValid (m_new_mstatus),
-					 fromMaybe (?, m_new_mstatus));
+	 let trace_data = mkTrace_CSRRX (
+      rg_csr_pc,
+      rg_trap_trace_data.pc,
+      rg_trap_trace_data.instr_sz,
+      rg_trap_trace_data.instr,
+      rd,
+      new_rd_val,
+      (rs1 != 0),    // whether we've written csr or not
+      csr_addr,
+      new_csr_val,
+      isValid (m_new_mstatus),
+      fromMaybe (?, m_new_mstatus));
 	 f_trace_data.enq (trace_data);
 `endif
 
@@ -1184,7 +1189,7 @@ module mkCPU (CPU_IFC);
 `ifdef INCLUDE_TANDEM_VERIF
       // Trace data
       let td  = stage1.out.data_to_stage2.trace_data;
-      let td1 = mkTrace_RET (next_pc, td.instr_sz, td.instr, new_priv, new_mstatus);
+      let td1 = mkTrace_RET (stage1.out.data_to_stage2.pc, next_pc, td.instr_sz, td.instr, new_priv, new_mstatus);
       f_trace_data.enq (td1);
 `endif
 

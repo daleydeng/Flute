@@ -160,7 +160,7 @@ module mkTV_Encode (TV_Encode_IFC);
 
       // Encode components of td into byte vecs
       match { .n0, .vb0 } = encode_byte (te_op_begin_group);
-      match { .n1, .vb1 } = encode_pc (td.pc);
+      match { .n1, .vb1 } = encode_pc (td.pc, td.next_pc);
       match { .n2, .vb2 } = encode_instr (td.instr_sz, td.instr);
       match { .nN, .vbN } = encode_byte (te_op_end_group);
 
@@ -181,7 +181,7 @@ module mkTV_Encode (TV_Encode_IFC);
 
       // Encode components of td into byte vecs
       match { .n0, .vb0 } = encode_byte (te_op_begin_group);
-      match { .n1, .vb1 } = encode_pc (td.pc);
+      match { .n1, .vb1 } = encode_pc (td.pc, td.next_pc);
       match { .n2, .vb2 } = encode_instr (td.instr_sz, td.instr);
       match { .n3, .vb3 } = encode_reg (fv_gpr_regnum (td.rd), td.word1);
       match { .nN, .vbN } = encode_byte (te_op_end_group);
@@ -207,7 +207,7 @@ module mkTV_Encode (TV_Encode_IFC);
 
       // Encode components of td into byte vecs
       match { .n0, .vb0 } = encode_byte (te_op_begin_group);
-      match { .n1, .vb1 } = encode_pc (td.pc);
+      match { .n1, .vb1 } = encode_pc (td.pc, td.next_pc);
       match { .n2, .vb2 } = encode_instr (td.instr_sz, td.instr);
       match { .n3, .vb3 } = encode_reg (fv_gpr_regnum (td.rd), td.word1);
       match { .n4, .vb4 } = encode_reg (fv_csr_regnum (csr_addr_fflags), td.word2);
@@ -233,7 +233,7 @@ module mkTV_Encode (TV_Encode_IFC);
 
       // Encode components of td into byte vecs
       match { .n0, .vb0 } = encode_byte (te_op_begin_group);
-      match { .n1, .vb1 } = encode_pc (td.pc);
+      match { .n1, .vb1 } = encode_pc (td.pc, td.next_pc);
       match { .n2, .vb2 } = encode_instr (td.instr_sz, td.instr);
       match { .n3, .vb3 } = encode_fpr (fv_fpr_regnum (td.rd), td.word5);
       match { .n4, .vb4 } = encode_reg (fv_csr_regnum (csr_addr_fflags), td.word2);
@@ -258,7 +258,7 @@ module mkTV_Encode (TV_Encode_IFC);
 
       // Encode components of td into byte vecs
       match { .n0, .vb0 } = encode_byte (te_op_begin_group);
-      match { .n1, .vb1 } = encode_pc (td.pc);
+      match { .n1, .vb1 } = encode_pc (td.pc, td.next_pc);
       match { .n2, .vb2 } = encode_instr (td.instr_sz, td.instr);
       match { .n3, .vb3 } = encode_reg (fv_gpr_regnum (td.rd), td.word1);
       match { .n4, .vb4 } = encode_eaddr (truncate (td.word3));
@@ -281,7 +281,7 @@ module mkTV_Encode (TV_Encode_IFC);
 
       // Encode components of td into byte vecs
       match { .n0, .vb0 } = encode_byte (te_op_begin_group);
-      match { .n1, .vb1 } = encode_pc (td.pc);
+      match { .n1, .vb1 } = encode_pc (td.pc, td.next_pc);
       match { .n2, .vb2 } = encode_instr (td.instr_sz, td.instr);
       match { .n3, .vb3 } = encode_fpr (fv_fpr_regnum (td.rd), td.word5);
       match { .n4, .vb4 } = encode_eaddr (truncate (td.word3));
@@ -308,7 +308,7 @@ module mkTV_Encode (TV_Encode_IFC);
 
       // Encode components of td into byte vecs
       match { .n0, .vb0 } = encode_byte (te_op_begin_group);
-      match { .n1, .vb1 } = encode_pc (td.pc);
+      match { .n1, .vb1 } = encode_pc (td.pc, td.next_pc);
       match { .n2, .vb2 } = encode_instr (td.instr_sz, td.instr);
       match { .n3, .vb3 } = encode_stval (mem_req_size, td.word2);
       match { .n4, .vb4 } = encode_eaddr (truncate (td.word3));
@@ -333,7 +333,7 @@ module mkTV_Encode (TV_Encode_IFC);
 
       // Encode components of td into byte vecs
       match { .n0, .vb0 } = encode_byte (te_op_begin_group);
-      match { .n1, .vb1 } = encode_pc (td.pc);
+      match { .n1, .vb1 } = encode_pc (td.pc, td.next_pc);
       match { .n2, .vb2 } = encode_instr (td.instr_sz, td.instr);
       match { .n3, .vb3 } = encode_fstval (mem_req_size, td.word5);
       match { .n4, .vb4 } = encode_eaddr (truncate (td.word3));
@@ -358,7 +358,7 @@ module mkTV_Encode (TV_Encode_IFC);
 
       // Encode components of td into byte vecs
       match { .n0, .vb0 } = encode_byte (te_op_begin_group);
-      match { .n1, .vb1 } = encode_pc (td.pc);
+      match { .n1, .vb1 } = encode_pc (td.pc, td.next_pc);
       match { .n2, .vb2 } = encode_instr (td.instr_sz, td.instr);
       match { .n3, .vb3 } = encode_reg (fv_gpr_regnum (td.rd), td.word1);
       match { .n4, .vb4 } = encode_stval (mem_req_size, td.word2);
@@ -385,7 +385,7 @@ module mkTV_Encode (TV_Encode_IFC);
 
       // Encode components of td into byte vecs
       match { .n0, .vb0 } = encode_byte (te_op_begin_group);
-      match { .n1, .vb1 } = encode_pc (td.pc);
+      match { .n1, .vb1 } = encode_pc (td.pc, td.next_pc);
       match { .n2, .vb2 } = encode_instr (td.instr_sz, td.instr);
       match { .n3, .vb3 } = encode_reg (fv_gpr_regnum (td.rd), td.word1);
       Bool csr_written = (td.word2 [0] == 1'b1);
@@ -446,7 +446,7 @@ module mkTV_Encode (TV_Encode_IFC);
 
       // Encode components of td into byte vecs
       match { .n0, .vb0 } = encode_byte (te_op_begin_group);
-      match { .n1, .vb1 } = encode_pc (td.pc);
+      match { .n1, .vb1 } = encode_pc (td.pc, td.next_pc);
       match { .n2, .vb2 } = (is_instr_fault
 			     ? tuple2 (0, ?)
 			     : encode_instr (td.instr_sz, td.instr));
@@ -495,7 +495,7 @@ module mkTV_Encode (TV_Encode_IFC);
 
       // Encode components of td into byte vecs
       match { .n0, .vb0 } = encode_byte (te_op_begin_group);
-      match { .n1, .vb1 } = encode_pc (td.pc);
+      match { .n1, .vb1 } = encode_pc (td.pc, td.next_pc);
       match { .n2, .vb2 } = encode_priv (td.rd);
       match { .n3, .vb3 } = encode_reg (fv_csr_regnum (csr_addr_status), td.word1);
       match { .n4, .vb4 } = encode_reg (fv_csr_regnum (csr_addr_cause),  td.word2);
@@ -521,7 +521,7 @@ module mkTV_Encode (TV_Encode_IFC);
 
       // Encode components of td into byte vecs
       match { .n0, .vb0 } = encode_byte (te_op_begin_group);
-      match { .n1, .vb1 } = encode_pc (td.pc);
+      match { .n1, .vb1 } = encode_pc (td.pc, td.next_pc);
       match { .n2, .vb2 } = encode_instr (td.instr_sz, td.instr);
       match { .n3, .vb3 } = encode_priv (td.rd);
       match { .n4, .vb4 } = encode_reg (fv_csr_regnum (csr_addr_mstatus), td.word1);
@@ -760,22 +760,41 @@ function Tuple2 #(Bit#(32), TV_Vec_Bytes) encode_priv (Bit#(5) priv);
    return tuple2 (3, vb);
 endfunction
 
-function Tuple2 #(Bit#(32), TV_Vec_Bytes) encode_pc (WordXL word);
+function Tuple2 #(Bit#(32), TV_Vec_Bytes) encode_pc (WordXL pc, WordXL next_pc);
    TV_Vec_Bytes vb = newVector;
    Bit#(32) n;
    vb [0] = te_op_addl_state;
    vb [1] = te_op_addl_state_pc;
-   vb [2] = word [7:0];
-   vb [3] = word [15:8];
-   vb [4] = word [23:16];
-   vb [5] = word [31:24];
-   n = 6;
 `ifdef RV64
-   vb [6] = word [39:32];
-   vb [7] = word [47:40];
-   vb [8] = word [55:48];
-   vb [9] = word [63:56];
-   n = 10;
+   vb [2] = pc [7:0];
+   vb [3] = pc [15:8];
+   vb [4] = pc [23:16];
+   vb [5] = pc [31:24];
+   vb [6] = pc [39:32];
+   vb [7] = pc [47:40];
+   vb [8] = pc [55:48];
+   vb [9] = pc [63:56];
+
+   vb [10] = next_pc [7:0];
+   vb [11] = next_pc [15:8];
+   vb [12] = next_pc [23:16];
+   vb [13] = next_pc [31:24];
+   vb [14] = next_pc [39:32];
+   vb [15] = next_pc [47:40];
+   vb [16] = next_pc [55:48];
+   vb [17] = next_pc [63:56];
+   n = 2 + 8 + 8;
+`else
+   vb [2] = pc [7:0];
+   vb [3] = pc [15:8];
+   vb [4] = pc [23:16];
+   vb [5] = pc [31:24];
+
+   vb [6] = next_pc [7:0];
+   vb [7] = next_pc [15:8];
+   vb [8] = next_pc [23:16];
+   vb [9] = next_pc [31:24];
+   n = 2 + 4 + 4;
 `endif
    return tuple2 (n, vb);
 endfunction

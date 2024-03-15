@@ -40,6 +40,8 @@ typedef enum {// These are not from instruction flow and do not have a PC or ins
 typedef struct {
    TraceOp    op;
    WordXL     pc;
+   WordXL     next_pc;
+
    ISize      instr_sz;
    Bit#(32)   instr;
    RegIdx     rd;
@@ -114,10 +116,11 @@ endfunction
 // OTHER
 // op    pc    instr_sz    instr    rd    word1    word2    word3    word4
 // x     x     x           x
-function TraceData mkTrace_OTHER (WordXL pc, ISize isize, Bit#(32) instr);
+function TraceData mkTrace_OTHER (WordXL pc, WordXL next_pc, ISize isize, Bit#(32) instr);
    TraceData td = ?;
    td.op       = TRACE_OTHER;
    td.pc       = pc;
+   td.next_pc  = next_pc;
    td.instr_sz = isize;
    td.instr    = instr;
    return td;
@@ -126,10 +129,11 @@ endfunction
 // I_RD
 // op    pc    instr_sz    instr    rd    word1    word2    word3    word4
 // x     x     x           x        x     rdval
-function TraceData mkTrace_I_RD (WordXL pc, ISize isize, Bit#(32) instr, RegIdx rd, WordXL rdval);
+function TraceData mkTrace_I_RD (WordXL pc, WordXL next_pc, ISize isize, Bit#(32) instr, RegIdx rd, WordXL rdval);
    TraceData td = ?;
    td.op       = TRACE_I_RD;
    td.pc       = pc;
+   td.next_pc  = next_pc;
    td.instr_sz = isize;
    td.instr    = instr;
    td.rd       = rd;
@@ -141,10 +145,11 @@ endfunction
 // F_FRD
 // op    pc    instr_sz    instr    rd    word1    word2    word3    word4    word5
 // x     x     x           x        x              fflags            mstatus  rdval
-function TraceData mkTrace_F_FRD (WordXL pc, ISize isize, Bit#(32) instr, RegIdx rd, WordFL rdval, Bit#(5) fflags, WordXL mstatus);
+function TraceData mkTrace_F_FRD (WordXL pc, WordXL next_pc, ISize isize, Bit#(32) instr, RegIdx rd, WordFL rdval, Bit#(5) fflags, WordXL mstatus);
    TraceData td = ?;
    td.op       = TRACE_F_FRD;
    td.pc       = pc;
+   td.next_pc  = next_pc;
    td.instr_sz = isize;
    td.instr    = instr;
    td.rd       = rd;
@@ -161,10 +166,11 @@ endfunction
 // F_GRD
 // op    pc    instr_sz    instr    rd    word1    word2    word3    word4    word5
 // x     x     x           x        x     rdval    fflags            mstatus
-function TraceData mkTrace_F_GRD (WordXL pc, ISize isize, Bit#(32) instr, RegIdx rd, WordXL rdval, Bit#(5) fflags, WordXL mstatus);
+function TraceData mkTrace_F_GRD (WordXL pc, WordXL next_pc, ISize isize, Bit#(32) instr, RegIdx rd, WordXL rdval, Bit#(5) fflags, WordXL mstatus);
    TraceData td = ?;
    td.op       = TRACE_F_GRD;
    td.pc       = pc;
+   td.next_pc  = next_pc;
    td.instr_sz = isize;
    td.instr    = instr;
    td.rd       = rd;
@@ -178,10 +184,11 @@ endfunction
 // I_LOAD
 // op    pc    instr_sz    instr    rd    word1    word2    word3    word4
 // x     x     x           x        x     rdval             eaddr
-function TraceData mkTrace_I_LOAD (WordXL pc, ISize isize, Bit#(32) instr, RegIdx rd, WordXL rdval, WordXL eaddr);
+function TraceData mkTrace_I_LOAD (WordXL pc, WordXL next_pc, ISize isize, Bit#(32) instr, RegIdx rd, WordXL rdval, WordXL eaddr);
    TraceData td = ?;
    td.op       = TRACE_I_LOAD;
    td.pc       = pc;
+   td.next_pc  = next_pc;
    td.instr_sz = isize;
    td.instr    = instr;
    td.rd       = rd;
@@ -193,10 +200,11 @@ endfunction
 // I_STORE
 // op    pc    instr_sz    instr    rd    word1    word2    word3    word4
 // x     x     x           x              funct3   stval    eaddr
-function TraceData mkTrace_I_STORE (WordXL pc, Bit#(3) funct3, ISize isize, Bit#(32) instr, WordXL stval, WordXL eaddr);
+function TraceData mkTrace_I_STORE (WordXL pc, WordXL next_pc, Bit#(3) funct3, ISize isize, Bit#(32) instr, WordXL stval, WordXL eaddr);
    TraceData td = ?;
    td.op       = TRACE_I_STORE;
    td.pc       = pc;
+   td.next_pc  = next_pc;
    td.instr_sz = isize;
    td.instr    = instr;
    td.word1    = zeroExtend (funct3);
@@ -209,10 +217,11 @@ endfunction
 // F_LOAD
 // op    pc    instr_sz    instr    rd    word1    word2    word3    word4    word5
 // x     x     x           x        x                       eaddr    mstatus  rdval
-function TraceData mkTrace_F_LOAD (WordXL pc, ISize isize, Bit#(32) instr, RegIdx rd, WordFL rdval, WordXL eaddr, WordXL mstatus);
+function TraceData mkTrace_F_LOAD (WordXL pc, WordXL next_pc, ISize isize, Bit#(32) instr, RegIdx rd, WordFL rdval, WordXL eaddr, WordXL mstatus);
    TraceData td = ?;
    td.op       = TRACE_F_LOAD;
    td.pc       = pc;
+   td.next_pc  = next_pc;
    td.instr_sz = isize;
    td.instr    = instr;
    td.rd       = rd;
@@ -229,10 +238,11 @@ endfunction
 // F_STORE
 // op    pc    instr_sz    instr    rd    word1    word2    word3    word4    word5
 // x     x     x           x              funct3            eaddr             stval
-function TraceData mkTrace_F_STORE (WordXL pc, Bit#(3) funct3, ISize isize, Bit#(32) instr, WordFL stval, WordXL eaddr);
+function TraceData mkTrace_F_STORE (WordXL pc, WordXL next_pc, Bit#(3) funct3, ISize isize, Bit#(32) instr, WordFL stval, WordXL eaddr);
    TraceData td = ?;
    td.op       = TRACE_F_STORE;
    td.pc       = pc;
+   td.next_pc  = next_pc;
    td.instr_sz = isize;
    td.instr    = instr;
    td.word3    = zeroExtend (eaddr);
@@ -260,11 +270,12 @@ endfunction
 // AMO
 // op    pc    instr_sz    instr    rd    word1    word2    word3    word4
 // x     x     x           x        x     rdval    stval    eaddr    funct3
-function TraceData mkTrace_AMO (WordXL pc, Bit#(3) funct3, ISize isize, Bit#(32) instr,
+function TraceData mkTrace_AMO (WordXL pc, WordXL next_pc, Bit#(3) funct3, ISize isize, Bit#(32) instr,
 				 RegIdx rd, WordXL rdval, WordXL stval, WordXL eaddr);
    TraceData td = ?;
    td.op       = TRACE_AMO;
    td.pc       = pc;
+   td.next_pc  = next_pc;
    td.instr_sz = isize;
    td.instr    = instr;
    td.rd       = rd;
@@ -278,11 +289,12 @@ endfunction
 // TRAP
 // op    pc    instr_sz    instr    rd    word1    word2    word3    word4
 // x     x     x           x        priv  mstatus  mcause   mepc     mtval
-function TraceData mkTrace_TRAP (WordXL pc, ISize isize, Bit#(32) instr,
+function TraceData mkTrace_TRAP (WordXL pc, WordXL next_pc, ISize isize, Bit#(32) instr,
 				  PrivMode  priv, WordXL mstatus, WordXL mcause, WordXL mepc, WordXL mtval);
    TraceData td = ?;
    td.op       = TRACE_TRAP;
    td.pc       = pc;
+   td.next_pc  = next_pc;
    td.instr_sz = isize;
    td.instr    = instr;
    td.rd       = zeroExtend (priv);
@@ -296,10 +308,11 @@ endfunction
 // RET
 // op    pc    instr_sz    instr    rd    word1    word2    word3    word4
 // x     x     x           x        priv  mstatus
-function TraceData mkTrace_RET (WordXL pc, ISize isize, Bit#(32) instr, PrivMode  priv, WordXL mstatus);
+function TraceData mkTrace_RET (WordXL pc, WordXL next_pc, ISize isize, Bit#(32) instr, PrivMode  priv, WordXL mstatus);
    TraceData td = ?;
    td.op       = TRACE_RET;
    td.pc       = pc;
+   td.next_pc  = next_pc;
    td.instr_sz = isize;
    td.instr    = instr;
    td.rd       = zeroExtend (priv);
@@ -311,7 +324,7 @@ endfunction
 // op    pc    instr_sz    instr    rd    word1    word2              word3    word4   word5
 // x     x     x           x        x     rdval    [1] mstatus_valid  csraddr  csrval  mstatus
 //                                                 [0] csrvalid
-function TraceData mkTrace_CSRRX (WordXL pc, ISize isize, Bit#(32) instr,
+function TraceData mkTrace_CSRRX (WordXL pc, WordXL next_pc, ISize isize, Bit#(32) instr,
 				   RegIdx rd, WordXL rdval,
 				   Bool csrvalid, CSRAddr csraddr, WordXL csrval,
 				   Bool   mstatus_valid,
@@ -319,6 +332,7 @@ function TraceData mkTrace_CSRRX (WordXL pc, ISize isize, Bit#(32) instr,
    TraceData td = ?;
    td.op       = TRACE_CSRRX;
    td.pc       = pc;
+   td.next_pc  = next_pc;
    td.instr_sz = isize;
    td.instr    = instr;
    td.rd       = rd;
@@ -339,11 +353,12 @@ endfunction
 // INTR
 // op    pc    instr_sz    instr    rd    word1    word2    word3    word4
 // x     x                          priv  mstatus  mcause   mepc     mtval
-function TraceData mkTrace_INTR (WordXL pc,
+function TraceData mkTrace_INTR (WordXL pc, WordXL next_pc,
 				  PrivMode  priv, WordXL mstatus, WordXL mcause, WordXL mepc, WordXL mtval);
    TraceData td = ?;
    td.op       = TRACE_INTR;
    td.pc       = pc;
+   td.next_pc  = next_pc;
    td.rd       = zeroExtend (priv);
    td.word1    = mstatus;
    td.word2    = mcause;

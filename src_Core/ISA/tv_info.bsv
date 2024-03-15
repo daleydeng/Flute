@@ -3,7 +3,7 @@ package tv_info;
 
 import Vector :: *;
 
-typedef 72   TV_VB_SIZE;    // max bytes needed for each transaction
+typedef 80   TV_VB_SIZE;    // max bytes needed for each transaction
 typedef  Vector #(TV_VB_SIZE, Bit#(8))  TV_Vec_Bytes;
 
 typedef struct {
