@@ -1,6 +1,6 @@
 // Copyright (c) 2018-2022 Bluespec, Inc. All Rights Reserved.
 
-package TV_Taps;
+package tv_taps;
 
 // ================================================================
 // This package defines 'taps' on connections between

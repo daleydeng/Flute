@@ -1,6 +1,6 @@
 // Copyright (c) 2013-2022 Bluespec, Inc. All Rights Reserved.
 
-package TV_Encode;
+package tv_encode;
 
 // ================================================================
 // module mkTV_Encode is a transforming FIFO

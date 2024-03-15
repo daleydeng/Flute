@@ -62,13 +62,13 @@ import Dma_Server_Mux :: *;
 `ifdef INCLUDE_TANDEM_VERIF
 import tv_trace_data :: *;
 import tv_info   :: *;
-import TV_Encode :: *;
+import tv_encode :: *;
 `endif
 
 `ifdef INCLUDE_GDB_CONTROL
 `ifdef INCLUDE_TANDEM_VERIF
-// TV_Taps needed when both GDB_CONTROL and TANDEM_VERIF are present
-import TV_Taps :: *;
+// tv_taps needed when both GDB_CONTROL and TANDEM_VERIF are present
+import tv_taps :: *;
 `endif
 `endif
 

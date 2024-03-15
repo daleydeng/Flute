@@ -1,32 +1,21 @@
 // Copyright (c) 2013-2022 Bluespec, Inc. All Rights Reserved.
 
-package TV_Encode;
+package tv_encode;
 
 // ================================================================
 // module mkTV_Encode is a transforming FIFO
 // converting TraceData into encoded byte vectors
 
-// ================================================================
-// BSV lib imports
-
 import Vector       :: *;
 import FIFOF        :: *;
 import GetPut       :: *;
-import ClientServer :: *;
-import Connectable  :: *;
-
-// ----------------
-// BSV additional libs
-
-import Cur_Cycle  :: *;
 import GetPut_Aux :: *;
 
-// ================================================================
-// Project imports
+import Cur_Cycle  :: *;
 
 import isa_decls     :: *;
-import tv_trace_data :: *;
 import tv_info       :: *;
+import tv_trace_data :: *;
 
 // ================================================================
 

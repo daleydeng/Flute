@@ -51,10 +51,10 @@ import Dma_Server_Mux :: *;
 
 import tv_trace_data :: *;
 import tv_info       :: *;
-import TV_Encode     :: *;
+import tv_encode     :: *;
 
-// TV_Taps needed when both GDB_CONTROL and TANDEM_VERIF are present
-import TV_Taps :: *;
+// tv_taps needed when both GDB_CONTROL and TANDEM_VERIF are present
+import tv_taps :: *;
 
 // ================================================================
 // Common parameter struct for all module variants

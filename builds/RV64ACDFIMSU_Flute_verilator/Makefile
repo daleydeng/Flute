@@ -22,7 +22,8 @@ BSC_COMPILATION_FLAGS += \
 	-D Near_Mem_Caches    \
 	-D FABRIC64    \
 	-D WATCH_TOHOST    \
-        -D INCLUDE_TANDEM_VERIF \
+	-D INCLUDE_TANDEM_VERIF \
+#	-D INCLUDE_GDB_CONTROL \
 
 # Default ISA test
 

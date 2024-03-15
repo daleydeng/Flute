@@ -60,14 +60,15 @@ import PLIC              :: *;
 import PLIC_16_2_7       :: *;
 
 `ifdef INCLUDE_TANDEM_VERIF
-import tv_info   :: *;
-import TV_Encode :: *;
+import tv_trace_data::*;
+import tv_info::*;
+import tv_encode::*;
 `endif
 
-// TV_Taps needed when both GDB_CONTROL and TANDEM_VERIF are present
+// tv_taps needed when both GDB_CONTROL and TANDEM_VERIF are present
 `ifdef INCLUDE_GDB_CONTROL
 `ifdef INCLUDE_TANDEM_VERIF
-import TV_Taps :: *;
+import tv_taps :: *;
 `endif
 `endif
 

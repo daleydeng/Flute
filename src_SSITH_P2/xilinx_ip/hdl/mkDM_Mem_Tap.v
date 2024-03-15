@@ -1094,7 +1094,7 @@ module mkDM_Mem_Tap(CLK,
 	  slave_xactor_f_wr_data$D_OUT[8:1] != 8'h04 &&
 	  slave_xactor_f_wr_data$D_OUT[8:1] != 8'h02 &&
 	  slave_xactor_f_wr_data$D_OUT[8:1] != 8'h01)
-	$display("Dynamic assertion failed: \"../src_Core/Core_v2/TV_Taps.bsv\", line 100, column 40\nmkDM_Mem_Tap: unsupported byte enables");
+	$display("Dynamic assertion failed: \"../src_Core/Core_v2/tv_taps.bsv\", line 100, column 40\nmkDM_Mem_Tap: unsupported byte enables");
     if (RST_N != `BSV_RESET_VALUE)
       if (WILL_FIRE_RL_write_reqs &&
 	  slave_xactor_f_wr_data$D_OUT[8:1] != 8'hFF &&

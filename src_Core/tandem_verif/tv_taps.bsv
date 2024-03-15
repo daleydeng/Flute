@@ -1,6 +1,6 @@
 // Copyright (c) 2018-2022 Bluespec, Inc. All Rights Reserved.
 
-package TV_Taps;
+package tv_taps;
 
 // ================================================================
 // This package defines 'taps' on connections between
@@ -10,29 +10,19 @@ package TV_Taps;
 // write-memory command for the Tandem Verifier, so that it keeps its
 // GPRs, FPRs, CSRs and memories in sync.
 
-// ================================================================
-// BSV library imports
-
 import Assert        :: *;
 import BUtils        :: *;
 import FIFOF         :: *;
+import Semi_FIFOF  :: *;
+
 import GetPut        :: *;
+import GetPut_Aux  :: *;
 import ClientServer  :: *;
 import Connectable   :: *;
 
-// ----------------
-// BSV additional libs
-
-import Semi_FIFOF  :: *;
-import GetPut_Aux  :: *;
-
-// ================================================================
-// Project imports
-
 import isa_decls      :: *;
-import DM_CPU_Req_Rsp :: *;
 import tv_trace_data  :: *;
-
+import DM_CPU_Req_Rsp :: *;
 import AXI4_Types   :: *;
 import Fabric_Defs  :: *;
 
