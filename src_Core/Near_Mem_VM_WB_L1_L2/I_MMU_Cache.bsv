@@ -87,20 +87,20 @@ interface I_MMU_Cache_IFC;
    (* always_ready *)
    method Action  ma_req (WordXL     va,
 			  // The following args for VM
-			  Priv_Mode  priv,
-			  Bit #(1)   sstatus_SUM,
-			  Bit #(1)   mstatus_MXR,
+			  PrivMode  priv,
+			  Bit#(1)   sstatus_SUM,
+			  Bit#(1)   mstatus_MXR,
 			  WordXL     satp);    // { VM_Mode, ASID, PPN_for_page_table }
 
    // CPU interface: response
    (* always_ready *)  method Bool       valid;
    (* always_ready *)  method WordXL     addr;        // req addr for which this is a response
-   (* always_ready *)  method Bit #(64)  word64;      // rd_val (instruction)
+   (* always_ready *)  method Bit#(64)  word64;      // rd_val (instruction)
    (* always_ready *)  method Bool       exc;
    (* always_ready *)  method Exc_Code   exc_code;
 
    // Cache flush request/response
-   interface Server #(Bit #(1), Token) flush_server;
+   interface Server #(Bit#(1), Token) flush_server;
 
 `ifdef ISA_PRIV_S
    // TLB flush
@@ -234,7 +234,7 @@ module mkI_MMU_Cache (I_MMU_Cache_IFC);
    Reg #(Bool)      crg_valid [2]        <- mkCReg (2, False);
    Reg #(Bool)      crg_exc [2]          <- mkCRegU (2);
    Reg #(Exc_Code)  crg_exc_code [2]     <- mkCRegU (2);
-   Reg #(Bit #(64)) crg_ld_val [2]       <- mkCRegU (2);  // Load-val (instruction)
+   Reg #(Bit#(64)) crg_ld_val [2]       <- mkCRegU (2);  // Load-val (instruction)
 
    // ****************************************************************
    // ****************************************************************
@@ -546,8 +546,8 @@ module mkI_MMU_Cache (I_MMU_Cache_IFC);
    // ****************************************************************
    // CACHE FLUSH
 
-   FIFOF #(Bit #(1))  f_cache_flush_reqs <- mkFIFOF;
-   FIFOF #(Bit #(0))  f_cache_flush_rsps <- mkFIFOF;
+   FIFOF #(Bit#(1))  f_cache_flush_reqs <- mkFIFOF;
+   FIFOF #(Bit#(0))  f_cache_flush_rsps <- mkFIFOF;
 
    rule rl_cache_flush_start ((crg_state [0] == STATE_MAIN)
 			      && (crg_mmu_cache_req_state [0] == REQ_STATE_EMPTY));
@@ -580,9 +580,9 @@ module mkI_MMU_Cache (I_MMU_Cache_IFC);
    // As soon as this method is called, the module starts working on this new request.
    method Action ma_req (WordXL     va,
 			 // The following  args for VM
-			 Priv_Mode  priv,
-			 Bit #(1)   sstatus_SUM,
-			 Bit #(1)   mstatus_MXR,
+			 PrivMode  priv,
+			 Bit#(1)   sstatus_SUM,
+			 Bit#(1)   mstatus_MXR,
 			 WordXL     satp);         // = { VM_Mode, ASID, PPN_for_page_table }
 
       let mmu_cache_req = MMU_Cache_Req {op:          CACHE_LD,
@@ -610,7 +610,7 @@ module mkI_MMU_Cache (I_MMU_Cache_IFC);
       return crg_mmu_cache_req [0].va;
    endmethod
 
-   method Bit #(64)  word64;
+   method Bit#(64)  word64;
       return crg_ld_val [0];
    endmethod
 

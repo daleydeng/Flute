@@ -6,7 +6,7 @@ package TV_Taps;
 // This package defines 'taps' on connections between
 // - DM and CPU, on which DM accesses CPU GPRs, FPRs and CSRs
 // - DM and memory bus, on which DM accesses memory
-// Each tap snoops 'writes', and produces a corresponsing Trace_Data
+// Each tap snoops 'writes', and produces a corresponsing TraceData
 // write-memory command for the Tandem Verifier, so that it keeps its
 // GPRs, FPRs, CSRs and memories in sync.
 
@@ -31,7 +31,7 @@ import GetPut_Aux  :: *;
 
 import isa_decls      :: *;
 import DM_CPU_Req_Rsp :: *;
-import TV_Trace_Data  :: *;
+import tv_trace_data  :: *;
 
 import AXI4_Types   :: *;
 import Fabric_Defs  :: *;
@@ -42,7 +42,7 @@ import Fabric_Defs  :: *;
 interface DM_Mem_Tap_IFC;
    interface AXI4_Slave_IFC  #(Wd_Id, Wd_Addr, Wd_Data, Wd_User)  slave;
    interface AXI4_Master_IFC #(Wd_Id, Wd_Addr, Wd_Data, Wd_User)  master;
-   interface Get #(Trace_Data)                                    trace_data_out;
+   interface Get #(TraceData)                                    trace_data_out;
 endinterface
 
 (* synthesize *)
@@ -55,7 +55,7 @@ module mkDM_Mem_Tap (DM_Mem_Tap_IFC);
    AXI4_Master_Xactor_IFC #(Wd_Id, Wd_Addr, Wd_Data, Wd_User) master_xactor <- mkAXI4_Master_Xactor;
 
    // Tap output
-   FIFOF #(Trace_Data)  f_trace_data <- mkFIFOF;
+   FIFOF #(TraceData)  f_trace_data <- mkFIFOF;
 
    // ----------------
    // AXI requests
@@ -73,8 +73,8 @@ module mkDM_Mem_Tap (DM_Mem_Tap_IFC);
       master_xactor.i_wr_data.enq (wr_data);
 
       // Tap
-      Bit #(64)    paddr = ?;
-      Bit #(64)    stval = ?;
+      Bit#(64)    paddr = ?;
+      Bit#(64)    stval = ?;
       Integer      sh    = 0;
       Fabric_Data  mask  = 0;
       MemReqSize   sz    = ?;
@@ -101,7 +101,7 @@ module mkDM_Mem_Tap (DM_Mem_Tap_IFC);
       endcase
       paddr = zeroExtend (wr_addr.awaddr);
       stval = ((zeroExtend (wr_data.wdata) >> sh) & mask);
-      Trace_Data td = mkTrace_MEM_WRITE (sz, truncate (stval), paddr);
+      TraceData td = mkTrace_MEM_WRITE (sz, truncate (stval), paddr);
       f_trace_data.enq (td);
    endrule
 
@@ -128,7 +128,7 @@ endmodule: mkDM_Mem_Tap
 interface DM_GPR_Tap_IFC;
    interface Client #(DM_CPU_Req #(5,  XLEN), DM_CPU_Rsp #(XLEN))  client;
    interface Server #(DM_CPU_Req #(5,  XLEN), DM_CPU_Rsp #(XLEN))  server;
-   interface Get #(Trace_Data)        trace_data_out;
+   interface Get #(TraceData)        trace_data_out;
 endinterface
 
 (* synthesize *)
@@ -140,7 +140,7 @@ module mkDM_GPR_Tap (DM_GPR_Tap_IFC);
    // resp CPU->DM
    FIFOF #(DM_CPU_Rsp #(XLEN))     f_rsp        <- mkFIFOF;
    // Tap to TV
-   FIFOF #(Trace_Data)             f_trace_data <- mkFIFOF;
+   FIFOF #(TraceData)             f_trace_data <- mkFIFOF;
 
    rule request;
       let req <- pop (f_req_in);
@@ -150,7 +150,7 @@ module mkDM_GPR_Tap (DM_GPR_Tap_IFC);
 
       // Snoop writes and send trace data to TV
       if (req.write) begin
-	 Trace_Data td;
+	 TraceData td;
 	 td = mkTrace_GPR_WRITE (req.address, req.data);
 	 f_trace_data.enq (td);
       end
@@ -170,7 +170,7 @@ endmodule: mkDM_GPR_Tap
 interface DM_FPR_Tap_IFC;
    interface Client #(DM_CPU_Req #(5,  FLEN), DM_CPU_Rsp #(FLEN)) client;
    interface Server #(DM_CPU_Req #(5,  FLEN), DM_CPU_Rsp #(FLEN)) server;
-   interface Get #(Trace_Data) trace_data_out;
+   interface Get #(TraceData) trace_data_out;
 endinterface
 
 (* synthesize *)
@@ -182,7 +182,7 @@ module mkDM_FPR_Tap (DM_FPR_Tap_IFC);
    // resp CPU->DM
    FIFOF #(DM_CPU_Rsp #(FLEN))     f_rsp        <- mkFIFOF;
    // Tap to TV
-   FIFOF #(Trace_Data)             f_trace_data <- mkFIFOF;
+   FIFOF #(TraceData)             f_trace_data <- mkFIFOF;
 
    rule request;
       let req <- pop (f_req_in);
@@ -192,7 +192,7 @@ module mkDM_FPR_Tap (DM_FPR_Tap_IFC);
 
       // Snoop writes and send trace data to TV
       if (req.write) begin
-	 Trace_Data td;
+	 TraceData td;
 	 td = mkTrace_FPR_WRITE (req.address, req.data);
 	 f_trace_data.enq (td);
       end
@@ -212,7 +212,7 @@ endmodule: mkDM_FPR_Tap
 interface DM_CSR_Tap_IFC;
    interface Client #(DM_CPU_Req #(12,  XLEN), DM_CPU_Rsp #(XLEN)) client;
    interface Server #(DM_CPU_Req #(12,  XLEN), DM_CPU_Rsp #(XLEN)) server;
-   interface Get #(Trace_Data)  trace_data_out;
+   interface Get #(TraceData)  trace_data_out;
 endinterface
 
 (* synthesize *)
@@ -224,7 +224,7 @@ module mkDM_CSR_Tap (DM_CSR_Tap_IFC);
    // resp CPU->DM
    FIFOF #(DM_CPU_Rsp #(XLEN))      f_rsp        <- mkFIFOF;
    // Tap to TV
-   FIFOF #(Trace_Data)              f_trace_data <- mkFIFOF;
+   FIFOF #(TraceData)              f_trace_data <- mkFIFOF;
 
    rule request;
       let req <- pop (f_req_in);
@@ -234,7 +234,7 @@ module mkDM_CSR_Tap (DM_CSR_Tap_IFC);
 
       // Snoop writes and send trace data to TV
       if (req.write) begin
-	 Trace_Data td = mkTrace_CSR_WRITE (req.address, req.data);
+	 TraceData td = mkTrace_CSR_WRITE (req.address, req.data);
 	 f_trace_data.enq (td);
       end
    endrule

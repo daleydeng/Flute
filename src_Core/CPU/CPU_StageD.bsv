@@ -62,7 +62,7 @@ endinterface
 // ================================================================
 // Implementation module
 
-module mkCPU_StageD #(Bit #(4)  verbosity, MISA misa)
+module mkCPU_StageD #(Bit#(4)  verbosity, MISA misa)
                     (CPU_StageD_IFC);
 
    FIFOF #(Token)  f_reset_reqs <- mkFIFOF;
@@ -71,9 +71,9 @@ module mkCPU_StageD #(Bit #(4)  verbosity, MISA misa)
    Reg #(Bool)                   rg_full <- mkReg (False);
    Reg #(Data_StageF_to_StageD)  rg_data <- mkRegU;
 
-   Bit #(2) xl = ((xlen == 32) ? misa_mxl_32 : misa_mxl_64);
+   Bit#(2) xl = ((xlen == 32) ? misa_mxl_32 : misa_mxl_64);
 
-   Instr instr = rg_data.instr;
+   InstrBits instr = rg_data.instr;
 `ifdef ISA_C
    Instr_C instr_C = instr [15:0];
    if (! rg_data.is_i32_not_i16)
@@ -94,6 +94,7 @@ module mkCPU_StageD #(Bit #(4)  verbosity, MISA misa)
 
    function Output_StageD fv_out;
       let decoded_instr = decode_instr (instr);
+      let instruction = decode_instruction(instr);
 
       Output_StageD  output_stageD = ?;
 
@@ -115,7 +116,8 @@ module mkCPU_StageD #(Bit #(4)  verbosity, MISA misa)
 							       instr_C:        instr_C,
 `endif
 							       pred_pc:        rg_data.pred_pc,
-							       decoded_instr:  decoded_instr};
+							       decoded_instr:  decoded_instr,
+                            instruction: instruction};
       end
 
       return output_stageD;

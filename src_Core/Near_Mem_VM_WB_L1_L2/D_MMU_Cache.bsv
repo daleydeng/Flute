@@ -99,28 +99,28 @@ interface D_MMU_Cache_IFC;
    // CPU interface: request
    (* always_ready *)
    method Action  ma_req (CacheOp    op,
-			  Bit #(3)   f3,
+			  Bit#(3)   f3,
 `ifdef ISA_A
-			  Bit #(7)   amo_funct7,
+			  Bit#(7)   amo_funct7,
 `endif
 			  WordXL     va,
-			  Bit #(64)  st_value,
+			  Bit#(64)  st_value,
 			  // The following args for VM
-			  Priv_Mode  priv,
-			  Bit #(1)   sstatus_SUM,
-			  Bit #(1)   mstatus_MXR,
+			  PrivMode  priv,
+			  Bit#(1)   sstatus_SUM,
+			  Bit#(1)   mstatus_MXR,
 			  WordXL     satp);    // { VM_Mode, ASID, PPN_for_page_table }
 
    // CPU interface: response
    (* always_ready *)  method Bool       valid;
    (* always_ready *)  method WordXL     addr;        // req addr for which this is a response
-   (* always_ready *)  method Bit #(64)  word64;      // rd_val (data for LD, LR, AMO, SC success/fail result)
-   (* always_ready *)  method Bit #(64)  st_amo_val;  // Final stored value for ST, SC, AMO
+   (* always_ready *)  method Bit#(64)  word64;      // rd_val (data for LD, LR, AMO, SC success/fail result)
+   (* always_ready *)  method Bit#(64)  st_amo_val;  // Final stored value for ST, SC, AMO
    (* always_ready *)  method Bool       exc;
    (* always_ready *)  method Exc_Code   exc_code;
 
    // Cache flush request/response
-   interface Server #(Bit #(1), Token) flush_server;
+   interface Server #(Bit#(1), Token) flush_server;
 
 `ifdef ISA_PRIV_S
    // TLB flush
@@ -147,8 +147,8 @@ interface D_MMU_Cache_IFC;
    // ----------------------------------------------------------------
    // For ISA tests: watch memory writes to <tohost> addr (see NOTE: "tohost" above)
 
-   method Action set_watch_tohost (Bool watch_tohost, Bit #(64) tohost_addr);
-   method Bit #(64) mv_tohost_value;
+   method Action set_watch_tohost (Bool watch_tohost, Bit#(64) tohost_addr);
+   method Bit#(64) mv_tohost_value;
 `endif
 
 endinterface
@@ -279,17 +279,17 @@ module mkD_MMU_Cache (D_MMU_Cache_IFC);
    Reg #(Bool)      crg_valid [2]        <- mkCReg (2, False);
    Reg #(Bool)      crg_exc [2]          <- mkCRegU (2);
    Reg #(Exc_Code)  crg_exc_code [2]     <- mkCRegU (2);
-   Reg #(Bit #(64)) crg_ld_val [2]       <- mkCRegU (2);  // Load-val for LOAD/LR/AMO, success/fail for SC
-   Reg #(Bit #(64)) crg_final_st_val [2] <- mkCRegU (2);
+   Reg #(Bit#(64)) crg_ld_val [2]       <- mkCRegU (2);  // Load-val for LOAD/LR/AMO, success/fail for SC
+   Reg #(Bit#(64)) crg_final_st_val [2] <- mkCRegU (2);
 
 `ifdef WATCH_TOHOST
    // See NOTE: "tohost" above.
    // "tohost" addr on which to monitor writes, for standard ISA tests.
    // These are set by the 'set_watch_tohost' method but are otherwise read-only.
    Reg #(Bool)      rg_watch_tohost <- mkReg (True);
-   // Reg #(Bit #(64)) rg_tohost_addr  <- mkReg ('h_8000_1000);    // Default for ISA tests
-   Reg #(Bit #(64)) rg_tohost_addr  <- mkReg ('h_6FFF_0010);    // Default for ISA tests
-   Reg #(Bit #(64)) rg_tohost_value <- mkReg (0);
+   // Reg #(Bit#(64)) rg_tohost_addr  <- mkReg ('h_8000_1000);    // Default for ISA tests
+   Reg #(Bit#(64)) rg_tohost_addr  <- mkReg ('h_6FFF_0010);    // Default for ISA tests
+   Reg #(Bit#(64)) rg_tohost_value <- mkReg (0);
 `endif
 
    // ****************************************************************
@@ -304,7 +304,7 @@ module mkD_MMU_Cache (D_MMU_Cache_IFC);
    // Interface plumbing makes it available to surrounding hardware so
    // it can also be used on FPGA.
 
-   function Action fa_watch_tohost (Bit #(64) addr, Bit #(64) final_st_val);
+   function Action fa_watch_tohost (Bit#(64) addr, Bit#(64) final_st_val);
       action
 `ifdef WATCH_TOHOST
 	 if (rg_watch_tohost && (addr == rg_tohost_addr)) begin
@@ -636,8 +636,8 @@ module mkD_MMU_Cache (D_MMU_Cache_IFC);
    // ****************************************************************
    // CACHE FLUSH
 
-   FIFOF #(Bit #(1))  f_cache_flush_reqs <- mkFIFOF;
-   FIFOF #(Bit #(0))  f_cache_flush_rsps <- mkFIFOF;
+   FIFOF #(Bit#(1))  f_cache_flush_reqs <- mkFIFOF;
+   FIFOF #(Bit#(0))  f_cache_flush_rsps <- mkFIFOF;
 
    rule rl_cache_flush_start ((crg_state [0] == STATE_MAIN)
 			      && (crg_mmu_cache_req_state [0] == REQ_STATE_EMPTY));
@@ -844,16 +844,16 @@ module mkD_MMU_Cache (D_MMU_Cache_IFC);
    // NOTE: this has no flow control: CPU should only invoke it when consuming prev output.
    // As soon as this method is called, the module starts working on this new request.
    method Action ma_req (CacheOp    op,
-			 Bit #(3)   f3,
+			 Bit#(3)   f3,
 `ifdef ISA_A
-			 Bit #(7)   amo_funct7,
+			 Bit#(7)   amo_funct7,
 `endif
 			 WordXL     va,
-			 Bit #(64)  st_value,
+			 Bit#(64)  st_value,
 			 // The following  args for VM
-			 Priv_Mode  priv,
-			 Bit #(1)   sstatus_SUM,
-			 Bit #(1)   mstatus_MXR,
+			 PrivMode  priv,
+			 Bit#(1)   sstatus_SUM,
+			 Bit#(1)   mstatus_MXR,
 			 WordXL     satp);         // = { VM_Mode, ASID, PPN_for_page_table }
 
       let mmu_cache_req = MMU_Cache_Req {op:          op,
@@ -881,11 +881,11 @@ module mkD_MMU_Cache (D_MMU_Cache_IFC);
       return crg_mmu_cache_req [0].va;
    endmethod
 
-   method Bit #(64)  word64;
+   method Bit#(64)  word64;
       return crg_ld_val [0];
    endmethod
 
-   method Bit #(64)  st_amo_val;
+   method Bit#(64)  st_amo_val;
       return crg_final_st_val [0];
    endmethod
 
@@ -927,7 +927,7 @@ module mkD_MMU_Cache (D_MMU_Cache_IFC);
    // For ISA tests: watch memory writes to <tohost> addr (see NOTE: "tohost" above)
 
 `ifdef WATCH_TOHOST
-   method Action set_watch_tohost (Bool watch_tohost, Bit #(64) tohost_addr);
+   method Action set_watch_tohost (Bool watch_tohost, Bit#(64) tohost_addr);
       rg_watch_tohost <= watch_tohost;
       rg_tohost_addr  <= tohost_addr;
       rg_tohost_value <= 0;
@@ -935,7 +935,7 @@ module mkD_MMU_Cache (D_MMU_Cache_IFC);
 		cur_cycle, watch_tohost, tohost_addr);
    endmethod
 
-   method Bit #(64) mv_tohost_value;
+   method Bit#(64) mv_tohost_value;
       return rg_tohost_value;
    endmethod
 `endif

@@ -41,7 +41,7 @@ import PC_Trace  :: *;
 `endif
 
 `ifdef INCLUDE_TANDEM_VERIF
-import TV_Info  :: *;
+import tv_info  :: *;
 `endif
 
 `ifdef INCLUDE_GDB_CONTROL
@@ -130,14 +130,14 @@ interface Core_IFC #(numeric type t_n_interrupt_sources);
    // ----------------
    // Debugging: set core's verbosity
 
-   method Action  set_verbosity (Bit #(4)  verbosity, Bit #(64)  logdelay);
+   method Action  set_verbosity (Bit#(4)  verbosity, Bit#(64)  logdelay);
 
    // ----------------
    // For ISA tests: watch memory writes to <tohost> addr
 
 `ifdef WATCH_TOHOST
-   method Action set_watch_tohost (Bool watch_tohost, Bit #(64) tohost_addr);
-   method Bit #(64) mv_tohost_value;
+   method Action set_watch_tohost (Bool watch_tohost, Bit#(64) tohost_addr);
+   method Bit#(64) mv_tohost_value;
 `endif
 
    // Inform core that DDR4 has been initialized and is ready to accept requests
@@ -145,7 +145,7 @@ interface Core_IFC #(numeric type t_n_interrupt_sources);
 
    // Misc. status; 0 = running, no error
    (* always_ready *)
-   method Bit #(8) mv_status;
+   method Bit#(8) mv_status;
 
 endinterface
 

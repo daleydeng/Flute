@@ -91,21 +91,21 @@ interface I_MMU_Cache_IFC;
    (* always_ready *)
    method Action  req (WordXL     va,
 		       // The following  args for VM
-		       Priv_Mode  priv,
-		       Bit #(1)   sstatus_SUM,
-		       Bit #(1)   mstatus_MXR,
+		       PrivMode  priv,
+		       Bit#(1)   sstatus_SUM,
+		       Bit#(1)   mstatus_MXR,
 		       WordXL     satp);    // { VM_Mode, ASID, PPN_for_page_table }
 
 
    // CPU interface: response
    (* always_ready *)  method Bool       valid;
    (* always_ready *)  method WordXL     addr;        // req addr for which this is a response
-   (* always_ready *)  method Bit #(64)  word64;      // rd_val data for LD, LR, AMO, SC success/fail result)
+   (* always_ready *)  method Bit#(64)  word64;      // rd_val data for LD, LR, AMO, SC success/fail result)
    (* always_ready *)  method Bool       exc;
    (* always_ready *)  method Exc_Code   exc_code;
 
    // Cache flush request/response
-   interface Server #(Bit #(1), Token) flush_server;
+   interface Server #(Bit#(1), Token) flush_server;
 
 `ifdef ISA_PRIV_S
    // TLB flush
@@ -182,7 +182,7 @@ module mkI_MMU_Cache (I_MMU_Cache_IFC);
    //            1: Requests and responses
    //            2: rule firings
    //            3: + detail
-   Reg #(Bit #(3)) verbosity <- mkReg (0);
+   Reg #(Bit#(3)) verbosity <- mkReg (0);
    Integer verbosity_cache        = 0;
    Integer verbosity_axi4_adapter = 0;
 
@@ -238,12 +238,12 @@ module mkI_MMU_Cache (I_MMU_Cache_IFC);
    Reg #(Bool)      rg_valid        <- mkReg (False);
    Reg #(Bool)      rg_exc          <- mkRegU;
    Reg #(Exc_Code)  rg_exc_code     <- mkRegU;
-   Reg #(Bit #(64)) rg_ld_val       <- mkRegU;         // Load-value for LOAD/LR/AMO, success/fail for SC
+   Reg #(Bit#(64)) rg_ld_val       <- mkRegU;         // Load-value for LOAD/LR/AMO, success/fail for SC
 
    Reg #(Bool)      dw_valid        <- mkDWire (False);
    Reg #(Bool)      dw_exc          <- mkDWire (False);
    Reg #(Exc_Code)  dw_exc_code     <- mkDWire (?);
-   Reg #(Bit #(64)) dw_ld_val       <- mkDWire (?);
+   Reg #(Bit#(64)) dw_ld_val       <- mkDWire (?);
 
    // ****************************************************************
    // ****************************************************************
@@ -255,7 +255,7 @@ module mkI_MMU_Cache (I_MMU_Cache_IFC);
    // This Action function drives responses to CPU.
 
    function Action fa_cpu_response (Bool valid, Bool exc, Exc_Code exc_code,
-				    Bit #(64) ld_val);
+				    Bit#(64) ld_val);
       action
 	 dw_valid        <= valid;
 	 dw_exc          <= exc;
@@ -513,8 +513,8 @@ module mkI_MMU_Cache (I_MMU_Cache_IFC);
    // ****************************************************************
    // CACHE FLUSH
 
-   FIFOF #(Bit #(1))  f_cache_flush_reqs <- mkFIFOF;
-   FIFOF #(Bit #(0))  f_cache_flush_rsps <- mkFIFOF;
+   FIFOF #(Bit#(1))  f_cache_flush_reqs <- mkFIFOF;
+   FIFOF #(Bit#(0))  f_cache_flush_rsps <- mkFIFOF;
 
    rule rl_cache_flush_start (rg_fsm_flush_state == FSM_FLUSH_IDLE);
       if (verbosity >= 2)
@@ -553,9 +553,9 @@ module mkI_MMU_Cache (I_MMU_Cache_IFC);
    // As soon as this method is called, the module starts working on this new request.
    method Action  req (WordXL     va,
 		       // The following  args for VM
-		       Priv_Mode  priv,
-		       Bit #(1)   sstatus_SUM,
-		       Bit #(1)   mstatus_MXR,
+		       PrivMode  priv,
+		       Bit#(1)   sstatus_SUM,
+		       Bit#(1)   mstatus_MXR,
 		       WordXL     satp);         // = { VM_Mode, ASID, PPN_for_page_table }
 
       let cache_req = MMU_Cache_Req {op:          CACHE_LD,
@@ -583,7 +583,7 @@ module mkI_MMU_Cache (I_MMU_Cache_IFC);
       return rg_req.va;
    endmethod
 
-   method Bit #(64)  word64;
+   method Bit#(64)  word64;
       return dw_ld_val;
    endmethod
 

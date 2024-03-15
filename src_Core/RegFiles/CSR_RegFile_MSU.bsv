@@ -77,23 +77,23 @@ interface CSR_RegFile_IFC;
 `ifdef ISA_F
    // Read FRM
    (* always_ready *)
-   method Bit #(3) read_frm;
+   method Bit#(3) read_frm;
 
    // Read FRM
    (* always_ready *)
-   method Bit #(5) read_fflags;
+   method Bit#(5) read_fflags;
 
    // Update FCSR.FFLAGS
    (* always_ready *)
-   method Bit #(5) mv_update_fcsr_fflags (Bit #(5) flags);
+   method Bit#(5) mv_update_fcsr_fflags (Bit#(5) flags);
    (* always_ready *)
-   method Action ma_update_fcsr_fflags (Bit #(5) flags);
+   method Action ma_update_fcsr_fflags (Bit#(5) flags);
 
    // Update MSTATUS.FS
    (* always_ready *)
-   method WordXL mv_update_mstatus_fs (Bit #(2) fs);
+   method WordXL mv_update_mstatus_fs (Bit#(2) fs);
    (* always_ready *)
-   method Action ma_update_mstatus_fs (Bit #(2) fs);
+   method Action ma_update_mstatus_fs (Bit#(2) fs);
 `endif
 
    // Read MISA
@@ -122,7 +122,7 @@ interface CSR_RegFile_IFC;
 
    // CSR trap actions
    method ActionValue #(Trap_Info)
-          csr_trap_actions (Priv_Mode  from_priv,
+          csr_trap_actions (PrivMode  from_priv,
 			    WordXL       pc,
 			    Bool       nmi,          // non-maskable interrupt
 			    Bool       interrupt,    // other interrupt
@@ -130,11 +130,11 @@ interface CSR_RegFile_IFC;
 			    WordXL       xtval);
 
    // CSR RET actions (return from exception)
-   method ActionValue #(Tuple3 #(Addr, Priv_Mode, WordXL)) csr_ret_actions (Priv_Mode from_priv);
+   method ActionValue #(Tuple3 #(Addr, PrivMode, WordXL)) csr_ret_actions (PrivMode from_priv);
 
    // Read MINSTRET
    (* always_ready *)
-   method Bit #(64) read_csr_minstret;
+   method Bit#(64) read_csr_minstret;
 
    // Increment MINSTRET
    (* always_ready *)
@@ -142,17 +142,17 @@ interface CSR_RegFile_IFC;
 
    // Read MCYCLE
    (* always_ready *)
-   method Bit #(64) read_csr_mcycle;
+   method Bit#(64) read_csr_mcycle;
 
    // Access permission
    (* always_ready *)
-   method Bool access_permitted_1 (Priv_Mode  priv, CSRAddr  csr_addr, Bool  read_not_write);
+   method Bool access_permitted_1 (PrivMode  priv, CSRAddr  csr_addr, Bool  read_not_write);
    (* always_ready *)
-   method Bool access_permitted_2 (Priv_Mode  priv, CSRAddr  csr_addr, Bool  read_not_write);
+   method Bool access_permitted_2 (PrivMode  priv, CSRAddr  csr_addr, Bool  read_not_write);
 
    // Fault on reading counters?
    (* always_ready *)
-   method Bool csr_counter_read_fault (Priv_Mode  priv, CSRAddr  csr_addr);
+   method Bool csr_counter_read_fault (PrivMode  priv, CSRAddr  csr_addr);
 
    // Read MIP
    (* always_ready *)
@@ -162,7 +162,7 @@ interface CSR_RegFile_IFC;
    // Set CSR TIME (shadow-copy of MTIME)
 
    (* always_ready, always_enabled *)
-   method Action ma_set_csr_time (Bit #(64) t);
+   method Action ma_set_csr_time (Bit#(64) t);
 
    // ----------------
    // Interrupts
@@ -180,7 +180,7 @@ interface CSR_RegFile_IFC;
    method Action software_interrupt_req (Bool set_not_clear);
 
    (* always_ready *)
-   method Maybe #(Exc_Code) interrupt_pending (Priv_Mode cur_priv);
+   method Maybe #(Exc_Code) interrupt_pending (PrivMode cur_priv);
 
    // WFI ignores mstatus ies and ideleg regs
    (* always_ready *)
@@ -206,14 +206,14 @@ interface CSR_RegFile_IFC;
    method Action write_dpc (Addr pc);
 
    // Break should enter Debug Mode
-   method Bool dcsr_break_enters_debug (Priv_Mode cur_priv);
+   method Bool dcsr_break_enters_debug (PrivMode cur_priv);
 
    // Read dcsr.step
    method Bool read_dcsr_step ();
 
    // Update 'cause' and 'priv' in DCSR
    (* always_ready *)
-   method Action write_dcsr_cause_priv (DCSR_Cause  cause, Priv_Mode  priv);
+   method Action write_dcsr_cause_priv (DCSR_Cause  cause, PrivMode  priv);
 
 `endif
 
@@ -294,7 +294,7 @@ deriving (Eq, Bits, FShow);
 (* synthesize *)
 module mkCSR_RegFile (CSR_RegFile_IFC);
 
-   Reg #(Bit #(4)) cfg_verbosity <- mkConfigReg (0);
+   Reg #(Bit#(4)) cfg_verbosity <- mkConfigReg (0);
    Reg #(RF_State) rg_state      <- mkReg (RF_RESET_START);
 
    SoC_Map_IFC soc_map <- mkSoC_Map;
@@ -305,15 +305,15 @@ module mkCSR_RegFile (CSR_RegFile_IFC);
    // CSRs
    // User-mode CSRs
 `ifdef ISA_F
-   Reg #(Bit #(5)) rg_fflags <- mkRegU;    // floating point flags
-   Reg #(Bit #(3)) rg_frm    <- mkRegU;    // floating point rounding mode
+   Reg #(Bit#(5)) rg_fflags <- mkRegU;    // floating point flags
+   Reg #(Bit#(3)) rg_frm    <- mkRegU;    // floating point rounding mode
 `endif
 
-   Reg #(Bit #(64)) rg_time <- mkReg (0);    // Read-only shadow of MTIME
+   Reg #(Bit#(64)) rg_time <- mkReg (0);    // Read-only shadow of MTIME
 
    // Supervisor-mode CSRs
-   Bit #(16)  sedeleg = 0;    // hardwired to 0
-   Bit #(12)  sideleg = 0;    // hardwired to 0
+   Bit#(16)  sedeleg = 0;    // hardwired to 0
+   Bit#(12)  sideleg = 0;    // hardwired to 0
 
 `ifdef ISA_PRIV_S
    // sie     is a restricted view of mie
@@ -329,11 +329,11 @@ module mkCSR_RegFile (CSR_RegFile_IFC);
 
    Reg #(WordXL)     rg_satp      <- mkRegU;
 
-   Reg #(Bit #(16))  rg_medeleg   <- mkRegU;    // TODO: also in M-U systems with user-level traps
-   Reg #(Bit #(12))  rg_mideleg   <- mkRegU;    // TODO: also in M-U systems with user-level traps
+   Reg #(Bit#(16))  rg_medeleg   <- mkRegU;    // TODO: also in M-U systems with user-level traps
+   Reg #(Bit#(12))  rg_mideleg   <- mkRegU;    // TODO: also in M-U systems with user-level traps
 `else
-   Bit #(16)         rg_medeleg   = 0;
-   Bit #(12)         rg_mideleg   = 0;
+   Bit#(16)         rg_medeleg   = 0;
+   Bit#(12)         rg_mideleg   = 0;
 `endif
 
    // Machine-mode CSRs
@@ -356,18 +356,18 @@ module mkCSR_RegFile (CSR_RegFile_IFC);
    Reg #(MCause)     rg_mcause   <- mkRegU;
    Reg #(WordXL)       rg_mtval    <- mkRegU;
 
-   // RegFile #(Bit #(2), WordXL)  rf_pmpcfg   <- mkRegFileFull;
+   // RegFile #(Bit#(2), WordXL)  rf_pmpcfg   <- mkRegFileFull;
    // Vector #(16, Reg #(WordXL))  vrg_pmpaddr <- replicateM (mkRegU);
 
    // mcycle is needed even for user-mode RDCYCLE instruction
    // It can be updated by a CSR instruction (in Priv_M), and by the clock
-   Reg #(Bit #(64))   rg_mcycle <- mkReg (0);
-   RWire #(Bit #(64)) rw_mcycle <- mkRWire;    // Driven on CSRRx write to mcycle
+   Reg #(Bit#(64))   rg_mcycle <- mkReg (0);
+   RWire #(Bit#(64)) rw_mcycle <- mkRWire;    // Driven on CSRRx write to mcycle
 
    // minstret is needed even for user-mode RDINSTRET instructions
    // It can be updated by a CSR instruction (in Priv_M), and by retirement of any other instruction
-   Reg #(Bit #(64))   rg_minstret      <- mkReg (0);    // Needed even for user-mode instrs
-   RWire #(Bit #(64)) rw_minstret      <- mkRWire;      // Driven on CSRRx write to minstret
+   Reg #(Bit#(64))   rg_minstret      <- mkReg (0);    // Needed even for user-mode instrs
+   RWire #(Bit#(64)) rw_minstret      <- mkRWire;      // Driven on CSRRx write to minstret
    PulseWire          pw_minstret_incr <- mkPulseWire;
 
    // Debug/Trace
@@ -377,7 +377,7 @@ module mkCSR_RegFile (CSR_RegFile_IFC);
    Reg #(WordXL)    rg_tdata3  <- mkRegU;
 
    // Debug
-   Reg #(Bit #(32)) rg_dcsr      <- mkRegU;    // Is 32b even in RV64
+   Reg #(Bit#(32)) rg_dcsr      <- mkRegU;    // Is 32b even in RV64
    Reg #(WordXL)    rg_dpc       <- mkRegU;
    Reg #(WordXL)    rg_dscratch0 <- mkRegU;
    Reg #(WordXL)    rg_dscratch1 <- mkRegU;
@@ -713,8 +713,8 @@ module mkCSR_RegFile (CSR_RegFile_IFC);
 
 `ifdef INCLUDE_GDB_CONTROL
 	    csr_addr_dcsr:       begin
-				    Bit #(32) dcsr_nmip_mask = 'b_1000;
-				    Bit #(32) dcsr = (rg_nmi
+				    Bit#(32) dcsr_nmip_mask = 'b_1000;
+				    Bit#(32) dcsr = (rg_nmi
 						      ? (rg_dcsr | dcsr_nmip_mask)
 						      : (rg_dcsr & (~ dcsr_nmip_mask)));
 				    m_csr_value = tagged Valid zeroExtend (dcsr);
@@ -983,7 +983,7 @@ module mkCSR_RegFile (CSR_RegFile_IFC);
 
 `ifdef INCLUDE_GDB_CONTROL
 	       csr_addr_dcsr:       begin
-				       Bit #(32) new_dcsr
+				       Bit#(32) new_dcsr
 				       = {rg_dcsr [31:28],   // xdebugver: read-only
 					  rg_dcsr [27:16],   // reserved
 					  wordxl  [15:12],   // ebreakm/s/u,
@@ -1024,7 +1024,7 @@ module mkCSR_RegFile (CSR_RegFile_IFC);
    endfunction: fav_csr_write
 
    // Access permission
-   function Bool fv_access_permitted (Priv_Mode  priv, CSRAddr  csr_addr,  Bool read_not_write);
+   function Bool fv_access_permitted (PrivMode  priv, CSRAddr  csr_addr,  Bool read_not_write);
       Bool exists  = fv_csr_exists (csr_addr);    // Is this CSR implemented?
 
       Bool priv_ok = priv >= csr_addr [9:8];      // Accessible at current privilege?
@@ -1044,9 +1044,9 @@ module mkCSR_RegFile (CSR_RegFile_IFC);
    // ================================================================
    // For debugging
 
-   function Action fa_show_trap_csrs (Priv_Mode priv,
+   function Action fa_show_trap_csrs (PrivMode priv,
 				      WordXL ip, WordXL ie,
-				      Bit #(16) edeleg, Bit #(12) ideleg,
+				      Bit#(16) edeleg, Bit#(12) ideleg,
 				      MCause cause, WordXL status, MTVec tvec,
 				      WordXL epc, WordXL tval);
       action
@@ -1073,12 +1073,12 @@ module mkCSR_RegFile (CSR_RegFile_IFC);
    // ----------------------------------------------------------------
    // Help functions for interface methods
 `ifdef ISA_F
-   function Bit #(5) fv_update_fcsr_fflags (Bit #(5) flags);
+   function Bit#(5) fv_update_fcsr_fflags (Bit#(5) flags);
       return (rg_fflags | flags);
    endfunction
 `endif
 
-   function WordXL fv_update_mstatus_fs (Bit #(2) fs);
+   function WordXL fv_update_mstatus_fs (Bit#(2) fs);
       let old_mstatus = csr_mstatus.mv_read;
       let new_mstatus = fv_assign_bits (old_mstatus, fromInteger (mstatus_fs_bitpos), fs);
       return csr_mstatus.mv_write (misa, new_mstatus);
@@ -1141,7 +1141,7 @@ module mkCSR_RegFile (CSR_RegFile_IFC);
    endmethod
 
    // Update FCSR.FFLAGS
-   method Bit #(5) mv_update_fcsr_fflags (Bit #(5) flags);
+   method Bit#(5) mv_update_fcsr_fflags (Bit#(5) flags);
       return fv_update_fcsr_fflags (flags);
    endmethod
    method Action ma_update_fcsr_fflags (Bit#(5) flags);
@@ -1149,11 +1149,11 @@ module mkCSR_RegFile (CSR_RegFile_IFC);
    endmethod
 
    // Update MSTATUS.FS
-   method WordXL mv_update_mstatus_fs (Bit #(2) fs);
+   method WordXL mv_update_mstatus_fs (Bit#(2) fs);
       return fv_update_mstatus_fs (fs);
    endmethod
 
-   method Action ma_update_mstatus_fs (Bit #(2) fs);
+   method Action ma_update_mstatus_fs (Bit#(2) fs);
       let old_mstatus = csr_mstatus.mv_read;
       let new_mstatus = fv_assign_bits (old_mstatus, fromInteger (mstatus_fs_bitpos), fs);
       csr_mstatus.ma_write (misa, new_mstatus);
@@ -1190,7 +1190,7 @@ module mkCSR_RegFile (CSR_RegFile_IFC);
 
    // CSR Trap actions
    method ActionValue #(Trap_Info)
-          csr_trap_actions (Priv_Mode  from_priv,
+          csr_trap_actions (PrivMode  from_priv,
 			    WordXL     pc,
 			    Bool       nmi,          // non-maskable interrupt
 			    Bool       interrupt,    // other interrupt
@@ -1275,7 +1275,7 @@ module mkCSR_RegFile (CSR_RegFile_IFC);
    endmethod: csr_trap_actions
 
    // CSR RET actions (return from exception)
-   method ActionValue #(Tuple3 #(Addr, Priv_Mode, WordXL)) csr_ret_actions (Priv_Mode from_priv);
+   method ActionValue #(Tuple3 #(Addr, PrivMode, WordXL)) csr_ret_actions (PrivMode from_priv);
       match { .new_mstatus, .to_priv } = fv_new_mstatus_on_ret (misa, csr_mstatus.mv_read, from_priv);
       csr_mstatus.ma_write (misa, new_mstatus);
       WordXL next_pc = rg_mepc;
@@ -1289,7 +1289,7 @@ module mkCSR_RegFile (CSR_RegFile_IFC);
    endmethod
 
    // Read MINSTRET
-   method Bit #(64) read_csr_minstret;
+   method Bit#(64) read_csr_minstret;
       return rg_minstret;
    endmethod
 
@@ -1299,21 +1299,21 @@ module mkCSR_RegFile (CSR_RegFile_IFC);
    endmethod
 
    // Read MCYCLE
-   method Bit #(64) read_csr_mcycle;
+   method Bit#(64) read_csr_mcycle;
       return rg_mcycle;
    endmethod
 
    // Access permission
-   method Bool access_permitted_1 (Priv_Mode  priv, CSRAddr  csr_addr,  Bool read_not_write);
+   method Bool access_permitted_1 (PrivMode  priv, CSRAddr  csr_addr,  Bool read_not_write);
       return fv_access_permitted (priv, csr_addr, read_not_write);
    endmethod
 
-   method Bool access_permitted_2 (Priv_Mode  priv, CSRAddr  csr_addr,  Bool read_not_write);
+   method Bool access_permitted_2 (PrivMode  priv, CSRAddr  csr_addr,  Bool read_not_write);
       return fv_access_permitted (priv, csr_addr, read_not_write);
    endmethod
 
    // Fault on reading counters?
-   method Bool csr_counter_read_fault (Priv_Mode  priv, CSRAddr  csr_addr);
+   method Bool csr_counter_read_fault (PrivMode  priv, CSRAddr  csr_addr);
       return (   ((priv == s_Priv_Mode) || (priv == u_Priv_Mode))
 	      && (   ((csr_addr == csr_addr_cycle)   && (rg_mcounteren.cy == 0))
 		  || ((csr_addr == csr_addr_time)    && (rg_mcounteren.tm == 0))
@@ -1333,7 +1333,7 @@ module mkCSR_RegFile (CSR_RegFile_IFC);
    // ----------------
    // Set CSR TIME (shadow-copy of MTIME)
 
-   method Action ma_set_csr_time (Bit #(64) t);
+   method Action ma_set_csr_time (Bit#(64) t);
       rg_time <= t;
    endmethod
 
@@ -1363,7 +1363,7 @@ module mkCSR_RegFile (CSR_RegFile_IFC);
 	 $display ("%0d: CSR_RegFile: software_interrupt_req: %x", rg_mcycle, set_not_clear);
    endmethod
 
-   method Maybe #(Exc_Code) interrupt_pending (Priv_Mode cur_priv);
+   method Maybe #(Exc_Code) interrupt_pending (PrivMode cur_priv);
       return fv_interrupt_pending (misa,
 				   csr_mstatus.mv_read,
 				   csr_mip.mv_read,
@@ -1406,7 +1406,7 @@ module mkCSR_RegFile (CSR_RegFile_IFC);
    endmethod
 
    // Break should enter Debug Mode
-   method Bool dcsr_break_enters_debug (Priv_Mode cur_priv);
+   method Bool dcsr_break_enters_debug (PrivMode cur_priv);
       return case (cur_priv)
 		m_Priv_Mode: (rg_dcsr [15] == 1'b1);
 		s_Priv_Mode: (rg_dcsr [13] == 1'b1);
@@ -1420,8 +1420,8 @@ module mkCSR_RegFile (CSR_RegFile_IFC);
    endmethod
 
    // Update 'cause' and 'priv' in DCSR
-   method Action write_dcsr_cause_priv (DCSR_Cause  cause, Priv_Mode  priv);
-      Bit #(3) b3 = pack (cause);
+   method Action write_dcsr_cause_priv (DCSR_Cause  cause, PrivMode  priv);
+      Bit#(3) b3 = pack (cause);
       rg_dcsr <= { rg_dcsr [31:9], b3, rg_dcsr [5:2], priv };
    endmethod
 

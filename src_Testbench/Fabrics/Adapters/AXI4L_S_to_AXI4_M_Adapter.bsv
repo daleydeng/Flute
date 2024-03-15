@@ -68,8 +68,8 @@ module mkAXI4L_S_to_AXI4_M_Adapter (AXI4L_S_to_AXI4_M_Adapter_IFC #(wd_addr_AXI4
 	     Div #(wd_data_AXI4L_S,           8, wd_bytes_AXI4L_S),
 	     Div #(wd_data_AXI4_M,            8, wd_bytes_AXI4_M),
 
-	     Bits #(Vector #(expansion_t, Bit #(wd_data_AXI4L_S)),  wd_data_AXI4_M),
-	     Bits #(Vector #(expansion_t, Bit #(wd_bytes_AXI4L_S)), wd_bytes_AXI4_M),
+	     Bits #(Vector #(expansion_t, Bit#(wd_data_AXI4L_S)),  wd_data_AXI4_M),
+	     Bits #(Vector #(expansion_t, Bit#(wd_bytes_AXI4L_S)), wd_bytes_AXI4_M),
 
 	     NumAlias #(TLog #(wd_bytes_AXI4L_S), addr_index_S_t),
 	     NumAlias #(TLog #(wd_bytes_AXI4_M),  addr_index_M_t),
@@ -100,9 +100,9 @@ module mkAXI4L_S_to_AXI4_M_Adapter (AXI4L_S_to_AXI4_M_Adapter_IFC #(wd_addr_AXI4
       let awaddr_AXI4L <- pop_o (xactor_AXI4L_S.o_wr_addr);
       let wdata_AXI4L  <- pop_o (xactor_AXI4L_S.o_wr_data);
 
-      Bit #(wd_id_AXI4_M)   id_AXI4   = 1;
-      Bit #(wd_addr_AXI4_M) addr_AXI4 = zeroExtend (awaddr_AXI4L.awaddr);
-      Bit #(wd_user_AXI4_M) user_AXI4 = zeroExtend (awaddr_AXI4L.awuser);
+      Bit#(wd_id_AXI4_M)   id_AXI4   = 1;
+      Bit#(wd_addr_AXI4_M) addr_AXI4 = zeroExtend (awaddr_AXI4L.awaddr);
+      Bit#(wd_user_AXI4_M) user_AXI4 = zeroExtend (awaddr_AXI4L.awuser);
 
       AXI4_Wr_Addr #(wd_id_AXI4_M, wd_addr_AXI4_M, wd_user_AXI4_M)
           awaddr_AXI4 = AXI4_Wr_Addr {awid:     id_AXI4,
@@ -119,12 +119,12 @@ module mkAXI4L_S_to_AXI4_M_Adapter (AXI4L_S_to_AXI4_M_Adapter_IFC #(wd_addr_AXI4
 
       // Lane-align wdata for the wider AXI4
 
-      Vector #(expansion_t, Bit #(wd_data_AXI4L_S))  v_data = unpack (0);
-      Vector #(expansion_t, Bit #(wd_bytes_AXI4L_S)) v_strb = unpack (0);
+      Vector #(expansion_t, Bit#(wd_data_AXI4L_S))  v_data = unpack (0);
+      Vector #(expansion_t, Bit#(wd_bytes_AXI4L_S)) v_strb = unpack (0);
 
       Integer hi = valueOf (addr_index_M_t) - 1;
       Integer lo = valueOf (addr_index_S_t);
-      Bit #(index_width_t) index = awaddr_AXI4L.awaddr [hi:lo];
+      Bit#(index_width_t) index = awaddr_AXI4L.awaddr [hi:lo];
       v_data [index] = wdata_AXI4L.wdata;
       v_strb [index] = wdata_AXI4L.wstrb;
 
@@ -153,7 +153,7 @@ module mkAXI4L_S_to_AXI4_M_Adapter (AXI4L_S_to_AXI4_M_Adapter_IFC #(wd_addr_AXI4
    rule rl_wr_resp;
       let wr_resp_AXI4 <- pop_o (xactor_AXI4_M.o_wr_resp);
 
-      Bit #(wd_user_AXI4L_S) user = truncate (wr_resp_AXI4.buser);
+      Bit#(wd_user_AXI4L_S) user = truncate (wr_resp_AXI4.buser);
 
       AXI4_Lite_Wr_Resp #(wd_user_AXI4L_S)
           wr_resp_AXI4L = AXI4_Lite_Wr_Resp {bresp: unpack (wr_resp_AXI4.bresp),
@@ -173,16 +173,16 @@ module mkAXI4L_S_to_AXI4_M_Adapter (AXI4L_S_to_AXI4_M_Adapter_IFC #(wd_addr_AXI4
 
    // This FIFOF remembers addrs so returned data can properly lane-aligned.
    // For full pipelining, needs to be deep enough to cover latency to target and back.
-   FIFOF #(Bit #(wd_addr_AXI4L_S)) f_rd_addrs <- mkSizedFIFOF (32);
+   FIFOF #(Bit#(wd_addr_AXI4L_S)) f_rd_addrs <- mkSizedFIFOF (32);
 
    // ----------------
 
    rule rl_rd_addr;
       let araddr_AXI4L <- pop_o (xactor_AXI4L_S.o_rd_addr);
 
-      Bit #(wd_id_AXI4_M)   id_AXI4   = 1;
-      Bit #(wd_addr_AXI4_M) addr_AXI4 = zeroExtend (araddr_AXI4L.araddr);
-      Bit #(wd_user_AXI4_M) user_AXI4 = zeroExtend (araddr_AXI4L.aruser);
+      Bit#(wd_id_AXI4_M)   id_AXI4   = 1;
+      Bit#(wd_addr_AXI4_M) addr_AXI4 = zeroExtend (araddr_AXI4L.araddr);
+      Bit#(wd_user_AXI4_M) user_AXI4 = zeroExtend (araddr_AXI4L.aruser);
 
       AXI4_Rd_Addr #(wd_id_AXI4_M, wd_addr_AXI4_M, wd_user_AXI4_M)
           araddr_AXI4 = AXI4_Rd_Addr {arid:     id_AXI4,
@@ -219,14 +219,14 @@ module mkAXI4L_S_to_AXI4_M_Adapter (AXI4L_S_to_AXI4_M_Adapter_IFC #(wd_addr_AXI4
 
       // Lane-align rdata for the narrower AXI4L
 
-      Vector #(expansion_t, Bit #(wd_data_AXI4L_S))  v_data = unpack (rd_data_AXI4.rdata);
+      Vector #(expansion_t, Bit#(wd_data_AXI4L_S))  v_data = unpack (rd_data_AXI4.rdata);
 
       Integer hi = valueOf (addr_index_M_t) - 1;
       Integer lo = valueOf (addr_index_S_t);
-      Bit #(index_width_t) index = addr_AXI4L [hi:lo];
-      Bit #(wd_data_AXI4L_S) rdata_AXI4L = v_data [index];
+      Bit#(index_width_t) index = addr_AXI4L [hi:lo];
+      Bit#(wd_data_AXI4L_S) rdata_AXI4L = v_data [index];
 
-      Bit #(wd_user_AXI4L_S) ruser_AXI4L = truncate (rd_data_AXI4.ruser);
+      Bit#(wd_user_AXI4L_S) ruser_AXI4L = truncate (rd_data_AXI4.ruser);
 
       AXI4_Lite_Rd_Data #(wd_data_AXI4L_S, wd_user_AXI4L_S)
           rd_data_AXI4L = AXI4_Lite_Rd_Data {rresp: unpack (rd_data_AXI4.rresp),

@@ -55,8 +55,8 @@ deriving (Bits, Eq, FShow);
 
 typedef struct {
    Cache_Result_Type  outcome;
-   Bit #(64)          final_ld_val;
-   Bit #(64)          final_st_val;
+   Bit#(64)          final_ld_val;
+   Bit#(64)          final_st_val;
    } Cache_Result
 deriving (Bits, FShow);
 
@@ -91,9 +91,9 @@ interface Cache_IFC;
 
    // ----------------
    // Cache flush request/response
-   // Bit #(1) request specifies new meta-state: 0=INVALID, 1=CLEAN
+   // Bit#(1) request specifies new meta-state: 0=INVALID, 1=CLEAN
 
-   interface Server #(Bit #(1), Token) flush_server;
+   interface Server #(Bit#(1), Token) flush_server;
 
    // ----------------
    // Interface to next level cache or memory (for refills, writebacks, downgrades, ...)
@@ -144,7 +144,7 @@ deriving (Bits, FShow);
 typedef Vector #(Ways_per_CSet, Meta)  CSet_Meta;
 
 // A CSet of CWords
-typedef Vector #(Ways_per_CSet, Bit #(64)) CSet_CWord;
+typedef Vector #(Ways_per_CSet, Bit#(64)) CSet_CWord;
 
 function PA fn_cline_pa_from_tag_and_cset_in_cache (CTag  ctag, CSet_in_Cache  cset_in_cache);
    Byte_in_CLine byte_in_cline = 0;
@@ -183,10 +183,10 @@ endfunction
 
 function Way_in_CSet fn_incr_way (Way_in_CSet w);
    // The extend/truncate trickery below is because Way_in_CSet could
-   // be Bit #(0) (in direct-mapped case).  for which the '1' in the
+   // be Bit#(0) (in direct-mapped case).  for which the '1' in the
    // '+ 1' expr below is not a valid literal.  Extend/truncate here
-   // allows +1 to occur at a minimum of Bit #(1).
-   Bit #(TAdd #(1, Bits_per_Way_in_CSet)) tmp = extend (w);
+   // allows +1 to occur at a minimum of Bit#(1).
+   Bit#(TAdd #(1, Bits_per_Way_in_CSet)) tmp = extend (w);
    tmp = tmp + 1;
    Way_in_CSet new_way = truncate (tmp);
    return new_way;
@@ -222,9 +222,9 @@ endfunction
 // RAM read-output hit/miss info
 
 typedef struct {
-   Bit #(2)     num_valids;     // # of hits in set (should be 0 or 1; error if > 1)
+   Bit#(2)     num_valids;     // # of hits in set (should be 0 or 1; error if > 1)
    Meta_State   valid_state;    // M, E, S, I
-   Bit #(64)    data;           // if valid
+   Bit#(64)    data;           // if valid
    Way_in_CSet  way;            // if valid (for subsequent updates)
    } Valid_Info
 deriving (Bits, Eq, FShow);
@@ -234,9 +234,9 @@ deriving (Bits, Eq, FShow);
 
 function CSet_CWord fn_update_cset_cword (CSet_CWord   old_cset_cword,
 					  Way_in_CSet   way,
-					  Bit #(n)      addr,
-					  Bit #(3)      f3,
-					  Bit #(64)     cword);
+					  Bit#(n)      addr,
+					  Bit#(3)      f3,
+					  Bit#(64)     cword);
    let old_cword = old_cset_cword [way];
    let old_B0    = old_cword [7:0];
    let old_B1    = old_cword [15:8];
@@ -249,7 +249,7 @@ function CSet_CWord fn_update_cset_cword (CSet_CWord   old_cset_cword,
 
    let new_cset_cword = old_cset_cword;
    let new_cword      = old_cword;
-   Bit #(3) addr_lsbs = addr [2:0];
+   Bit#(3) addr_lsbs = addr [2:0];
 
    // Replace relevant bytes in new_cword
    case (f3)
@@ -284,7 +284,7 @@ endfunction: fn_update_cset_cword
 
 (* synthesize *)
 module mkCache #(parameter Bool      dcache_not_icache,
-		 parameter Bit #(3)  verbosity)
+		 parameter Bit#(3)  verbosity)
                (Cache_IFC);
 
    // Verbosity: 0: quiet; 1: rules; 2: loop iterations
@@ -300,9 +300,9 @@ module mkCache #(parameter Bool      dcache_not_icache,
    Reg #(WordXL)   rg_va         <- mkRegU;
 
    Reg #(CacheOp)  rg_cache_op   <- mkRegU;
-   Reg #(Bit #(3)) rg_f3         <- mkRegU;
+   Reg #(Bit#(3)) rg_f3         <- mkRegU;
 `ifdef ISA_A
-   Reg #(Bit #(7)) rg_amo_funct7 <- mkRegU;
+   Reg #(Bit#(7)) rg_amo_funct7 <- mkRegU;
 `endif
 
    // Phys addr
@@ -353,7 +353,7 @@ module mkCache #(parameter Bool      dcache_not_icache,
    FIFOF #(L2_to_L1_Rsp)  f_L2_to_L1_rsps <- mkFIFOF;
 
    // Buffer to hold a cache line from next-level during refill
-   Reg #(Vector #(CWords_per_CLine, Bit #(64))) rg_read_cline_buf <- mkRegU;
+   Reg #(Vector #(CWords_per_CLine, Bit#(64))) rg_read_cline_buf <- mkRegU;
 
    // ----------------
    // Requests/responses from next-level cache or Memory (for downgrades and writebacks)
@@ -362,7 +362,7 @@ module mkCache #(parameter Bool      dcache_not_icache,
    FIFOF #(L1_to_L2_Rsp)  f_L1_to_L2_rsps <- mkFIFOF;
 
    // Buffer to hold a cache line to next-level during writeback
-   Reg #(Vector #(CWords_per_CLine, Bit #(64))) rg_write_cline_buf <- mkRegU;
+   Reg #(Vector #(CWords_per_CLine, Bit#(64))) rg_write_cline_buf <- mkRegU;
 
    // ****************************************************************
    // ****************************************************************
@@ -390,10 +390,10 @@ module mkCache #(parameter Bool      dcache_not_icache,
    function Valid_Info fv_ram_A_valid_info (PA pa);
 
       // # of valids in set (should be 0 or 1; error if > 1)
-      Bit #(2)     num_valids  = 0;
+      Bit#(2)     num_valids  = 0;
       Meta_State   valid_state = META_INVALID;    // M, E, S, I
       Way_in_CSet  way_hit     = 0;
-      Bit #(64)    cword       = 0;
+      Bit#(64)    cword       = 0;
 
       CTag  pa_ctag = fn_PA_to_CTag (pa);
 
@@ -443,7 +443,7 @@ module mkCache #(parameter Bool      dcache_not_icache,
    // ****************************************************************
    // ****************************************************************
    // Write actions on a cache hit
-   function Action fa_write (PA pa, Bit #(3) f3, Bit #(64) st_value);
+   function Action fa_write (PA pa, Bit#(3) f3, Bit#(64) st_value);
       action
 	 let valid_info = fv_ram_A_valid_info (pa);
 	 let way        = valid_info.way;
@@ -527,8 +527,8 @@ module mkCache #(parameter Bool      dcache_not_icache,
    rule rl_writeback_loop (rg_fsm_state == FSM_WRITEBACK_LOOP);
       // Accumulate a cword into rg_write_cline_buf
       CSet_CWord  cset_cword = ram_cset_cword.a.read;
-      Bit #(64)   cword      = cset_cword [rg_way_in_cset];
-      Vector #(CWords_per_CLine, Bit #(64)) v_cword = shiftInAtN (rg_write_cline_buf, cword);
+      Bit#(64)   cword      = cset_cword [rg_way_in_cset];
+      Vector #(CWords_per_CLine, Bit#(64)) v_cword = shiftInAtN (rg_write_cline_buf, cword);
       rg_write_cline_buf <= v_cword;
 
       if (   ((verbosity >= 1) && (rg_cword_in_cline == 0))
@@ -707,7 +707,7 @@ module mkCache #(parameter Bool      dcache_not_icache,
 
       // On iteration 0, cline comes from f_L2_to_L1_rsps and is registered in rg_read_cline_buf
       // On subsequent iterations, cline comes from rg_read_cline_buf
-      Vector #(CWords_per_CLine, Bit #(64)) v_cword = ?;
+      Vector #(CWords_per_CLine, Bit#(64)) v_cword = ?;
       if (rg_cword_in_cline == 0) begin
 	 let cline_rsp <- pop (f_L2_to_L1_rsps);
 
@@ -791,7 +791,7 @@ module mkCache #(parameter Bool      dcache_not_icache,
    // If flush_req is 0, new meta-state is INVALID
    // If flush_req is 1, new meta-state is CLEAN
 
-   FIFOF #(Bit #(1))  f_flush_reqs <- mkFIFOF;
+   FIFOF #(Bit#(1))  f_flush_reqs <- mkFIFOF;
    FIFOF #(Token)     f_flush_rsps <- mkFIFOF;
 
    Bool last_cset_and_way = (   (rg_cset_in_cache == fromInteger (csets_per_cache - 1))

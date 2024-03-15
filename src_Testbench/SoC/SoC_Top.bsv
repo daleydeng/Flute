@@ -66,7 +66,7 @@ import AXI4_Accel     :: *;
 `endif
 
 `ifdef INCLUDE_TANDEM_VERIF
-import TV_Info :: *;
+import tv_info :: *;
 `endif
 
 `ifdef INCLUDE_GDB_CONTROL
@@ -92,25 +92,25 @@ interface SoC_Top_IFC;
    interface MemoryClient #(Bits_per_Raw_Mem_Addr, Bits_per_Raw_Mem_Word)  to_raw_mem;
 
    // UART0 to external console
-   interface Get #(Bit #(8)) get_to_console;
-   interface Put #(Bit #(8)) put_from_console;
+   interface Get #(Bit#(8)) get_to_console;
+   interface Put #(Bit#(8)) put_from_console;
 
    // Catch-all status; return-value can identify the origin (0 = none)
    (* always_ready *)
-   method Bit #(8) status;
+   method Bit#(8) status;
 
    // ----------------------------------------------------------------
    // Misc. control and status
 
    // ----------------
    // Debugging: set core's verbosity
-   method Action  set_verbosity (Bit #(4)  verbosity, Bit #(64)  logdelay);
+   method Action  set_verbosity (Bit#(4)  verbosity, Bit#(64)  logdelay);
 
    // ----------------
    // For ISA tests: watch memory writes to <tohost> addr
 `ifdef WATCH_TOHOST
    method Action set_watch_tohost (Bool  watch_tohost, Fabric_Addr  tohost_addr);
-   method Bit #(64) mv_tohost_value;
+   method Bit#(64) mv_tohost_value;
 `endif
 
    // ----------------
@@ -120,7 +120,7 @@ interface SoC_Top_IFC;
    // ----------------
    // Misc. status; 0 = running, no error
    (* always_ready *)
-   method Bit #(8) mv_status;
+   method Bit#(8) mv_status;
 
 endinterface
 
@@ -442,12 +442,12 @@ module mkSoC_Top (SoC_Top_IFC);
    interface put_from_console = uart0.put_from_console;
 
    // Catch-all status; return-value can identify the origin (0 = none)
-   method Bit #(8) status = 0;
+   method Bit#(8) status = 0;
 
    // ----------------------------------------------------------------
    // Misc. control and status
 
-   method Action  set_verbosity (Bit #(4)  verbosity1, Bit #(64)  logdelay);
+   method Action  set_verbosity (Bit#(4)  verbosity1, Bit#(64)  logdelay);
       core.set_verbosity (verbosity1, logdelay);
    endmethod
 
@@ -457,8 +457,8 @@ module mkSoC_Top (SoC_Top_IFC);
       core.set_watch_tohost (watch_tohost, tohost_addr);
    endmethod
 
-   method Bit #(64) mv_tohost_value;
-      Bit #(64) tohost_value = 0;
+   method Bit#(64) mv_tohost_value;
+      Bit#(64) tohost_value = 0;
       tohost_value = core.mv_tohost_value;
       return tohost_value;
    endmethod
@@ -468,7 +468,7 @@ module mkSoC_Top (SoC_Top_IFC);
       core.ma_ddr4_ready;
    endmethod
 
-   method Bit #(8) mv_status;
+   method Bit#(8) mv_status;
       return core.mv_status;    // 0 = running, no error
    endmethod
 endmodule: mkSoC_Top

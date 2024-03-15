@@ -73,16 +73,16 @@ deriving (Bits, Eq, FShow);
 
 typedef struct {
    Bool       read_not_write;
-   Bit #(64)  addr;
-   Bit #(64)  wdata;    // write-data (not relevant for reads)
-   Bit #(8)   wstrb;    // byte-enable strobe (for write-data)
+   Bit#(64)  addr;
+   Bit#(64)  wdata;    // write-data (not relevant for reads)
+   Bit#(8)   wstrb;    // byte-enable strobe (for write-data)
    } Near_Mem_IO_Req
 deriving (Bits, FShow);
 
 typedef struct {
    Bool       read_not_write;
    Bool       ok;
-   Bit #(64)  rdata;
+   Bit#(64)  rdata;
    } Near_Mem_IO_Rsp
 deriving (Bits, FShow);
 
@@ -91,10 +91,10 @@ deriving (Bits, FShow);
 
 interface Near_Mem_IO_IFC;
    // Reset
-   interface Server #(Bit #(0), Bit #(0))  server_reset;
+   interface Server #(Bit#(0), Bit#(0))  server_reset;
 
    // set_addr_map should be called after this module's reset
-   method Action set_addr_map (Bit #(64) addr_base, Bit #(64) addr_lim);
+   method Action set_addr_map (Bit#(64) addr_base, Bit#(64) addr_lim);
 
    // Memory-mapped Reqs/Rsps
    interface Server #(Near_Mem_IO_Req, Near_Mem_IO_Rsp)  server;
@@ -113,15 +113,15 @@ endinterface
 module mkNear_Mem_IO (Near_Mem_IO_IFC);
 
    // Verbosity: 0: quiet; 1: reset; 2: timer interrupts, all reads and writes
-   Reg #(Bit #(4)) cfg_verbosity <- mkConfigReg (1);
+   Reg #(Bit#(4)) cfg_verbosity <- mkConfigReg (1);
 
    Reg #(Module_State) rg_state     <- mkReg (MODULE_STATE_START);
 
-   Reg #(Bit #(64)) rg_addr_base <- mkRegU;
-   Reg #(Bit #(64)) rg_addr_lim  <- mkRegU;
+   Reg #(Bit#(64)) rg_addr_base <- mkRegU;
+   Reg #(Bit#(64)) rg_addr_lim  <- mkRegU;
 
-   FIFOF #(Bit #(0)) f_reset_reqs <- mkFIFOF;
-   FIFOF #(Bit #(0)) f_reset_rsps <- mkFIFOF;
+   FIFOF #(Bit#(0)) f_reset_reqs <- mkFIFOF;
+   FIFOF #(Bit#(0)) f_reset_rsps <- mkFIFOF;
 
    FIFOF #(Near_Mem_IO_Req) f_reqs <- mkFIFOF;
    FIFOF #(Near_Mem_IO_Rsp) f_rsps <- mkFIFOF;
@@ -129,8 +129,8 @@ module mkNear_Mem_IO (Near_Mem_IO_IFC);
    // ----------------
    // Timer registers
 
-   Reg #(Bit #(64)) crg_time [2]    <- mkCReg (2, 1);
-   Reg #(Bit #(64)) crg_timecmp [2] <- mkCReg (2, 0);
+   Reg #(Bit#(64)) crg_time [2]    <- mkCReg (2, 1);
+   Reg #(Bit#(64)) crg_timecmp [2] <- mkCReg (2, 0);
 
    Reg #(Bool) rg_mtip <- mkReg (True);
 
@@ -216,7 +216,7 @@ module mkNear_Mem_IO (Near_Mem_IO_IFC);
 
       let byte_addr = req.addr - rg_addr_base;
 
-      Bit #(64) rdata = 0;
+      Bit#(64) rdata = 0;
       Bool      rok   = True;
 
       case (byte_addr)
@@ -271,8 +271,8 @@ module mkNear_Mem_IO (Near_Mem_IO_IFC);
 		     end
 		  end
 	 'h_4000: begin
-		     Bit #(64) old_timecmp = crg_timecmp [1];
-		     Bit #(64) new_timecmp = fn_update_strobed_bytes (old_timecmp,
+		     Bit#(64) old_timecmp = crg_timecmp [1];
+		     Bit#(64) new_timecmp = fn_update_strobed_bytes (old_timecmp,
 								      zeroExtend (req.wdata),
 								      zeroExtend (req.wstrb));
 		     crg_timecmp [1] <= new_timecmp;
@@ -286,8 +286,8 @@ module mkNear_Mem_IO (Near_Mem_IO_IFC);
 		     end
 		  end
 	 'h_BFF8: begin
-		     Bit #(64) old_time = crg_time [1];
-		     Bit #(64) new_time = fn_update_strobed_bytes (old_time,
+		     Bit#(64) old_time = crg_time [1];
+		     Bit#(64) new_time = fn_update_strobed_bytes (old_time,
 								   zeroExtend (req.wdata),
 								   zeroExtend (req.wstrb));
 		     crg_time [1] <= new_time;
@@ -302,8 +302,8 @@ module mkNear_Mem_IO (Near_Mem_IO_IFC);
 	 // The following ALIGN4B writes are only needed for 32b fabrics
 	 'h_0004: noAction;
 	 'h_4004: begin
-		     Bit #(64) old_timecmp = crg_timecmp [1];
-		     Bit #(64) new_timecmp = fn_update_strobed_bytes (old_timecmp,
+		     Bit#(64) old_timecmp = crg_timecmp [1];
+		     Bit#(64) new_timecmp = fn_update_strobed_bytes (old_timecmp,
 								      { req.wdata [31:0], 32'h0 },
 								      { req.wstrb [3:0], 4'h0 });
 		     crg_timecmp [1] <= new_timecmp;
@@ -317,8 +317,8 @@ module mkNear_Mem_IO (Near_Mem_IO_IFC);
 		     end
 		  end
 	 'h_BFFC: begin
-		     Bit #(64) old_time = crg_time [1];
-		     Bit #(64) new_time = fn_update_strobed_bytes (old_time,
+		     Bit#(64) old_time = crg_time [1];
+		     Bit#(64) new_time = fn_update_strobed_bytes (old_time,
 								   { req.wdata [31:0], 32'h0 },
 								   { req.wstrb [3:0], 4'h0 });
 		     crg_time [1] <= new_time;
@@ -352,7 +352,7 @@ module mkNear_Mem_IO (Near_Mem_IO_IFC);
    interface  server_reset = toGPServer (f_reset_reqs, f_reset_rsps);
 
    // set_addr_map should be called after this module's reset
-   method Action  set_addr_map (Bit #(64) addr_base, Bit #(64) addr_lim);
+   method Action  set_addr_map (Bit#(64) addr_base, Bit#(64) addr_lim);
       if (addr_base [1:0] != 0)
 	 $display ("%0d: WARNING: Near_Mem_IO.set_addr_map: addr_base 0x%0h is not 4-Byte-aligned",
 		   cur_cycle, addr_base);

@@ -35,7 +35,7 @@ interface AXI4_Fabric_IFC #(numeric type tn_num_masters,
 			    numeric type wd_data,
 			    numeric type wd_user);
    method Action reset;
-   method Action set_verbosity (Bit #(4) verbosity);
+   method Action set_verbosity (Bit#(4) verbosity);
 
    // From masters
    interface Vector #(tn_num_masters,
@@ -52,8 +52,8 @@ endinterface
 // returns (True,  slave-port-num)  if address is mapped to slave-port-num
 //         (False, ?)               if address is unmapped to any slave port
 
-module mkAXI4_Fabric #(function Tuple2 #(Bool, Bit #(TLog #(tn_num_slaves)))
-			        fn_addr_to_slave_num (Bit #(wd_addr) addr))
+module mkAXI4_Fabric #(function Tuple2 #(Bool, Bit#(TLog #(tn_num_slaves)))
+			        fn_addr_to_slave_num (Bit#(wd_addr) addr))
 		     (AXI4_Fabric_IFC #(tn_num_masters, tn_num_slaves,
 					wd_id, wd_addr, wd_data, wd_user))
 
@@ -66,7 +66,7 @@ module mkAXI4_Fabric #(function Tuple2 #(Bool, Bit #(TLog #(tn_num_slaves)))
    Integer num_slaves  = valueOf (tn_num_slaves);
 
    // 0: quiet; 1: show transactions
-   Reg #(Bit #(4)) cfg_verbosity  <- mkConfigReg (0);
+   Reg #(Bit#(4)) cfg_verbosity  <- mkConfigReg (0);
 
    Reg #(Bool) rg_reset <- mkReg (True);
 
@@ -86,22 +86,22 @@ module mkAXI4_Fabric #(function Tuple2 #(Bool, Bit #(TLog #(tn_num_slaves)))
    // - to manage requests that do not map to any of the slaves.
    // Legal slaves are 0..(num_slaves-1)
    //     The "illegal" value of 'num_slaves' is used for decode errors (no such slave).
-   // num_masters could be 1 => Bit #(0) to identify a master, but
-   //     equality on Bit #(0) is dicey, so we always use num_masters+1.
+   // num_masters could be 1 => Bit#(0) to identify a master, but
+   //     equality on Bit#(0) is dicey, so we always use num_masters+1.
    // Size of SizedFIFOs is estimated: should cover round-trip latency to slave and back.
 
    // ----------------
    // Write-transaction book-keeping
 
    // On an mi->sj write-transaction, this fifo records sj for master mi
-   Vector #(tn_num_masters, FIFOF #(Bit #(log_ns_plus_1))) v_f_wr_sjs <- replicateM (mkSizedFIFOF (8));
+   Vector #(tn_num_masters, FIFOF #(Bit#(log_ns_plus_1))) v_f_wr_sjs <- replicateM (mkSizedFIFOF (8));
 
    // On an mi->sj write-transaction, this fifo records mi for slave sj
-   Vector #(tn_num_slaves,  FIFOF #(Bit #(log_nm_plus_1))) v_f_wr_mis  <- replicateM (mkSizedFIFOF (8));
+   Vector #(tn_num_slaves,  FIFOF #(Bit#(log_nm_plus_1))) v_f_wr_mis  <- replicateM (mkSizedFIFOF (8));
 
    // On an mi->sj write-transaction, this fifo records a task (sj, awlen) for W channel
    Vector #(tn_num_masters,
-	    FIFOF #(Tuple2 #(Bit #(log_ns_plus_1),
+	    FIFOF #(Tuple2 #(Bit#(log_ns_plus_1),
 			     AXI4_Len)))     v_f_wd_tasks <- replicateM (mkFIFOF);
    // On an mi->sj write-transaction, this register is the W-channel burst beat_count
    // (0 => ready for next burst)
@@ -109,17 +109,17 @@ module mkAXI4_Fabric #(function Tuple2 #(Bool, Bit #(TLog #(tn_num_slaves)))
 
    // On a write-transaction to non-existent slave, record id and user for error response
    Vector #(tn_num_masters,
-	    FIFOF #(Tuple2 #(Bit #(wd_id),
-			     Bit #(wd_user))))  v_f_wr_err_info <- replicateM (mkSizedFIFOF (8));
+	    FIFOF #(Tuple2 #(Bit#(wd_id),
+			     Bit#(wd_user))))  v_f_wr_err_info <- replicateM (mkSizedFIFOF (8));
 
    // ----------------
    // Read-transaction book-keeping
 
    // On an mi->sj read-transaction, records sj for master mi
-   Vector #(tn_num_masters, FIFOF #(Bit #(log_ns_plus_1))) v_f_rd_sjs <- replicateM (mkSizedFIFOF (8));
+   Vector #(tn_num_masters, FIFOF #(Bit#(log_ns_plus_1))) v_f_rd_sjs <- replicateM (mkSizedFIFOF (8));
    // On an mi->sj read-transaction, records (mi,arlen) for slave sj
    Vector #(tn_num_slaves,
-	    FIFOF #(Tuple2 #(Bit #(log_nm_plus_1),
+	    FIFOF #(Tuple2 #(Bit#(log_nm_plus_1),
 			     AXI4_Len)))            v_f_rd_mis <- replicateM (mkSizedFIFOF (8));
    // On an mi->sj read-transaction, this register is the R-channel burst beat_count
    // (0 => ready for next burst)
@@ -128,8 +128,8 @@ module mkAXI4_Fabric #(function Tuple2 #(Bool, Bit #(TLog #(tn_num_slaves)))
    // On a read-transaction to non-exisitent slave, record id and user for error response
    Vector #(tn_num_masters,
 	    FIFOF #(Tuple3 #(AXI4_Len,
-			     Bit #(wd_id),
-			     Bit #(wd_user)))) v_f_rd_err_info <- replicateM (mkSizedFIFOF (8));
+			     Bit#(wd_id),
+			     Bit#(wd_user)))) v_f_rd_err_info <- replicateM (mkSizedFIFOF (8));
 
    // On an mi->non-existent-slave read-transaction,
    // this register is the R-channel burst beat_count
@@ -417,7 +417,7 @@ module mkAXI4_Fabric #(function Tuple2 #(Bool, Bit #(TLog #(tn_num_slaves)))
       rule rl_rd_resp_err_to_master (v_f_rd_sjs [mi].first == fromInteger (num_slaves));
 	 match { .arlen, .arid, .aruser } = v_f_rd_err_info [mi].first;
 
-	 Bit #(wd_data) data = 0;
+	 Bit#(wd_data) data = 0;
 	 let r = AXI4_Rd_Data {rid:    arid,
 			       rdata:  data,
 			       rresp:  axi4_resp_decerr,
@@ -455,7 +455,7 @@ module mkAXI4_Fabric #(function Tuple2 #(Bool, Bit #(TLog #(tn_num_slaves)))
       rg_reset <= True;
    endmethod
 
-   method Action set_verbosity (Bit #(4) verbosity);
+   method Action set_verbosity (Bit#(4) verbosity);
       cfg_verbosity <= verbosity;
    endmethod
 

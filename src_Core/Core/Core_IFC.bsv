@@ -37,7 +37,7 @@ import AXI4_Lite_Types :: *;
 import PLIC  :: *;
 
 `ifdef INCLUDE_TANDEM_VERIF
-import TV_Info  :: *;
+import tv_info  :: *;
 `endif
 
 `ifdef INCLUDE_GDB_CONTROL
@@ -119,7 +119,7 @@ interface Core_IFC #(numeric type t_n_interrupt_sources);
    // ----------------
    // Debugging: set core's verbosity
 
-   method Action  set_verbosity (Bit #(4)  verbosity, Bit #(64)  logdelay);
+   method Action  set_verbosity (Bit#(4)  verbosity, Bit#(64)  logdelay);
 
    // ----------------
    // For ISA tests: watch memory writes to <tohost> addr
@@ -134,7 +134,7 @@ interface Core_IFC #(numeric type t_n_interrupt_sources);
 
    // Misc. status; 0 = running, no error
    (* always_ready *)
-   method Bit #(8) mv_status;
+   method Bit#(8) mv_status;
 
 endinterface
 

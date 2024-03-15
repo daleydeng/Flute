@@ -23,7 +23,7 @@ import GetPut_Aux :: *;
 // Project imports
 
 import isa_decls      :: *;
-import TV_Info        :: *;
+import tv_info        :: *;
 import SoC_Top        :: *;
 import Mem_Controller :: *;
 import Mem_Model      :: *;
@@ -67,8 +67,8 @@ module mkTop_HW_Side (Empty) ;
       // Set CPU verbosity and logdelay (simulation only)
       Bool v1 <- $test$plusargs ("v1");
       Bool v2 <- $test$plusargs ("v2");
-      Bit #(4)  verbosity = ((v2 ? 2 : (v1 ? 1 : 0)));
-      Bit #(64) logdelay  = 0;    // # of instructions after which to set verbosity
+      Bit#(4)  verbosity = ((v2 ? 2 : (v1 ? 1 : 0)));
+      Bit#(64) logdelay  = 0;    // # of instructions after which to set verbosity
       soc_top.set_verbosity  (verbosity, logdelay);
 
       // ----------------
@@ -82,7 +82,7 @@ module mkTop_HW_Side (Empty) ;
 
       // ----------------
       // Start timing the simulation
-      Bit #(32) cycle_num <- cur_cycle;
+      Bit#(32) cycle_num <- cur_cycle;
       c_start_timing (zeroExtend (cycle_num));
 
       // ----------------
@@ -119,7 +119,7 @@ module mkTop_HW_Side (Empty) ;
 		cur_cycle, soc_top.mv_status, soc_top.mv_status);
 
       // End timing the simulation
-      Bit #(32) cycle_num <- cur_cycle;
+      Bit#(32) cycle_num <- cur_cycle;
       c_end_timing (zeroExtend (cycle_num));
       $finish (0);
    endrule
@@ -138,7 +138,7 @@ module mkTop_HW_Side (Empty) ;
       else               $display ("    FAIL <test_%0d>", test_num);
 
       // End timing the simulation
-      Bit #(32) cycle_num <- cur_cycle;
+      Bit#(32) cycle_num <- cur_cycle;
       c_end_timing (zeroExtend (cycle_num));
       $finish (0);
    endrule
@@ -153,10 +153,10 @@ module mkTop_HW_Side (Empty) ;
       let n  = tv_info.num_bytes;
       let vb = tv_info.vec_bytes;
 
-      Bit #(32) success = 1;
+      Bit#(32) success = 1;
 
-      for (Bit #(32) j = 0; j < fromInteger (valueOf (TV_VB_SIZE)); j = j + 8) begin
-	 Bit #(64) w64 = { vb [j+7], vb [j+6], vb [j+5], vb [j+4], vb [j+3], vb [j+2], vb [j+1], vb [j] };
+      for (Bit#(32) j = 0; j < fromInteger (valueOf (TV_VB_SIZE)); j = j + 8) begin
+	 Bit#(64) w64 = { vb [j+7], vb [j+6], vb [j+5], vb [j+4], vb [j+3], vb [j+2], vb [j+1], vb [j] };
 	 let success1 <- c_trace_file_load_word64_in_buffer (j, w64);
       end
 
@@ -189,11 +189,11 @@ module mkTop_HW_Side (Empty) ;
    // Poll terminal input and relay any chars into system console input.
    // Note: rg_console_in_poll is used to poll only every N cycles, whenever it wraps around to 0.
 
-   Reg #(Bit #(12)) rg_console_in_poll <- mkReg (0);
+   Reg #(Bit#(12)) rg_console_in_poll <- mkReg (0);
 
    rule rl_relay_console_in;
       if (rg_console_in_poll == 0) begin
-	 Bit #(8) ch <- c_trygetchar (?);
+	 Bit#(8) ch <- c_trygetchar (?);
 	 if (ch != 0) begin
 	    soc_top.put_from_console.put (ch);
 	    /*
@@ -211,11 +211,11 @@ module mkTop_HW_Side (Empty) ;
 
 `ifdef INCLUDE_GDB_CONTROL
    rule rl_debug_client_request_recv;
-      Bit #(64) req <- c_debug_client_request_recv ('hAA);
-      Bit #(8)  status = req [63:56];
-      Bit #(32) data   = req [55:24];
-      Bit #(16) addr   = req [23:8];
-      Bit #(8)  op     = req [7:0];
+      Bit#(64) req <- c_debug_client_request_recv ('hAA);
+      Bit#(8)  status = req [63:56];
+      Bit#(32) data   = req [55:24];
+      Bit#(16) addr   = req [23:8];
+      Bit#(8)  op     = req [7:0];
       if (status == dmi_status_err) begin
 	 $display ("%0d: Top_HW_Side.rl_debug_client_request_recv: receive error; aborting",
 		   cur_cycle);
@@ -241,7 +241,7 @@ module mkTop_HW_Side (Empty) ;
 	    $display ("Top_HW_Side.rl_debug_client_request_recv: SHUTDOWN");
 
 	    // End timing the simulation and print simulation speed stats
-	    Bit #(32) cycle_num <- cur_cycle;
+	    Bit#(32) cycle_num <- cur_cycle;
 	    c_end_timing (zeroExtend (cycle_num));
 	    $finish (0);
 	 end

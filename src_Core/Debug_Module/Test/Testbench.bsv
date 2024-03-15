@@ -40,7 +40,7 @@ module mkTestbench (Empty);
    // ================================================================
    // Cycle-counter and cycle-limit termination
 
-   Reg #(Bit #(32)) rg_cycle <- mkReg (0);
+   Reg #(Bit#(32)) rg_cycle <- mkReg (0);
 
    Integer cycle_limit = 100;
 
@@ -108,10 +108,10 @@ module mkTestbench (Empty);
    // ================================================================
    // Abstract command sequences (read/write GPR/CSR)
 
-   Reg #(Bit #(32)) rg_abstractcs <- mkRegU;
+   Reg #(Bit#(32)) rg_abstractcs <- mkRegU;
 
    // Read a register
-   function Stmt fn_stmt_read_reg (Bit #(16) regno);
+   function Stmt fn_stmt_read_reg (Bit#(16) regno);
       return
       seq
 	 $display ("----------------\nRead RISC-V reg");
@@ -146,7 +146,7 @@ module mkTestbench (Empty);
    endfunction
 
    // Write a register
-   function Stmt fn_stmt_write_reg (Bit #(16) regno, Bit #(32) data);
+   function Stmt fn_stmt_write_reg (Bit#(16) regno, Bit#(32) data);
       return
       seq
 	 $display ("----------------\nWrite RISC-V reg");
@@ -182,9 +182,9 @@ module mkTestbench (Empty);
 
    Reg #(Bool)      rg_busy <- mkRegU;
 
-   Reg #(Bit #(32)) rg_j    <- mkRegU;
-   Reg #(Bit #(32)) rg_addr <- mkRegU;
-   Reg #(Bit #(32)) rg_data <- mkRegU;
+   Reg #(Bit#(32)) rg_j    <- mkRegU;
+   Reg #(Bit#(32)) rg_addr <- mkRegU;
+   Reg #(Bit#(32)) rg_data <- mkRegU;
 
    Stmt stmt_wait_for_sb_nonbusy = (
       seq
@@ -482,7 +482,7 @@ endinterface
 
 
 (* synthesize *)
-module mkHart_Model #(parameter Bit #(10) hart_id) (Hart_DM_IFC);
+module mkHart_Model #(parameter Bit#(10) hart_id) (Hart_DM_IFC);
 
    Reg #(Bool) rg_hart_running <- mkReg (False);
 
@@ -542,7 +542,7 @@ module mkHart_Model #(parameter Bit #(10) hart_id) (Hart_DM_IFC);
 
    rule rl_read_gpr;
       let rda <- pop_o (trx_buf_gprs.master.fo_rda);
-      Bit #(32) data = extend (rda.addr) + 'h1000;
+      Bit#(32) data = extend (rda.addr) + 'h1000;
       let rdr = TRX_RdR {trans_id: rda.trans_id,
 			 status:   TRX_OKAY,
 			 data:     data};
@@ -552,7 +552,7 @@ module mkHart_Model #(parameter Bit #(10) hart_id) (Hart_DM_IFC);
 
    rule rl_read_csr;
       let rda <- pop_o (trx_buf_csrs.master.fo_rda);
-      Bit #(32) data = extend (rda.addr) + 'h2000;
+      Bit#(32) data = extend (rda.addr) + 'h2000;
       let rdr = TRX_RdR {trans_id: rda.trans_id,
 			 status:   TRX_OKAY,
 			 data:     data};

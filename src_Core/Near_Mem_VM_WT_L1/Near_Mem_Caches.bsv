@@ -67,7 +67,7 @@ deriving (Bits, Eq, FShow);
 (* synthesize *)
 module mkNear_Mem (Near_Mem_IFC);
 
-   Reg #(Bit #(4)) cfg_verbosity <- mkConfigReg (0);
+   Reg #(Bit#(4)) cfg_verbosity <- mkConfigReg (0);
    Reg #(State)    rg_state      <- mkReg (STATE_READY);
 
    // ----------------
@@ -153,15 +153,15 @@ module mkNear_Mem (Near_Mem_IFC);
    // CPU side
    interface IMem_IFC imem;
       // CPU side: IMem request
-      method Action  req (Bit #(3) f3,
+      method Action  req (Bit#(3) f3,
 			  WordXL addr,
 			  // The following  args for VM
-			  Priv_Mode  priv,
-			  Bit #(1)   sstatus_SUM,
-			  Bit #(1)   mstatus_MXR,
+			  PrivMode  priv,
+			  Bit#(1)   sstatus_SUM,
+			  Bit#(1)   mstatus_MXR,
 			  WordXL     satp);    // { VM_Mode, ASID, PPN_for_page_table }
-	 Bit #(7)  amo_funct7  = ?;
-	 Bit #(64) store_value = ?;
+	 Bit#(7)  amo_funct7  = ?;
+	 Bit#(64) store_value = ?;
 	 icache.req (CACHE_LD, f3,
 `ifdef ISA_A
 		     amo_funct7,
@@ -173,7 +173,7 @@ module mkNear_Mem (Near_Mem_IFC);
       method Bool     valid          = icache.valid;
       method Bool     is_i32_not_i16 = True;
       method WordXL   pc             = icache.addr;
-      method Instr    instr          = truncate (icache.cword);
+      method InstrBits    instr          = truncate (icache.cword);
       method Bool     exc            = icache.exc;
       method Exc_Code exc_code       = icache.exc_code;
       method WordXL   tval           = icache.addr;
@@ -189,16 +189,16 @@ module mkNear_Mem (Near_Mem_IFC);
    interface DMem_IFC dmem;
       // CPU side: DMem request
       method Action  req (CacheOp op,
-			  Bit #(3) f3,
+			  Bit#(3) f3,
 `ifdef ISA_A
-			  Bit #(7) amo_funct7,
+			  Bit#(7) amo_funct7,
 `endif
 			  WordXL addr,
-			  Bit #(64) store_value,
+			  Bit#(64) store_value,
 			  // The following  args for VM
-			  Priv_Mode  priv,
-			  Bit #(1)   sstatus_SUM,
-			  Bit #(1)   mstatus_MXR,
+			  PrivMode  priv,
+			  Bit#(1)   sstatus_SUM,
+			  Bit#(1)   mstatus_MXR,
 			  WordXL     satp);    // { VM_Mode, ASID, PPN_for_page_table }
 	 dcache.req (op, f3,
 `ifdef ISA_A
@@ -209,9 +209,9 @@ module mkNear_Mem (Near_Mem_IFC);
 
       // CPU side: DMem response
       method Bool       valid      = dcache.valid;
-      method Bit #(64)  word64     = dcache.cword;
+      method Bit#(64)  word64     = dcache.cword;
 `ifdef ISA_A
-      method Bit #(64)  st_amo_val = dcache.st_amo_val;
+      method Bit#(64)  st_amo_val = dcache.st_amo_val;
 `endif
       method Bool       exc        = dcache.exc;
       method Exc_Code   exc_code   = dcache.exc_code;
@@ -248,7 +248,7 @@ module mkNear_Mem (Near_Mem_IFC);
 
    interface Server server_fence;
       interface Put request;
-	 method Action put (Fence_Ordering t);
+	 method Action put (FenceOrdering t);
 	    dcache.server_flush.request.put (?);
 	 endmethod
       endinterface
@@ -280,11 +280,11 @@ module mkNear_Mem (Near_Mem_IFC);
    // For ISA tests: watch memory writes to <tohost> addr
 
 `ifdef WATCH_TOHOST
-   method Action set_watch_tohost (Bool watch_tohost, Bit #(64) tohost_addr);
+   method Action set_watch_tohost (Bool watch_tohost, Bit#(64) tohost_addr);
       dcache.set_watch_tohost (watch_tohost, tohost_addr);
    endmethod
 
-   method Bit #(64) mv_tohost_value = dcache.mv_tohost_value;
+   method Bit#(64) mv_tohost_value = dcache.mv_tohost_value;
 `endif
 
    // Inform core that DDR4 has been initialized and is ready to accept requests
@@ -294,7 +294,7 @@ module mkNear_Mem (Near_Mem_IFC);
    endmethod
 
    // Misc. status; 0 = running, no error
-   method Bit #(8) mv_status;
+   method Bit#(8) mv_status;
       return dcache.mv_status;
    endmethod
 

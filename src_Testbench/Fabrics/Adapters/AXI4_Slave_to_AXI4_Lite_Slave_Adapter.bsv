@@ -78,7 +78,7 @@ module mkAXI4_Slave_to_AXI4_Lite_Slave_Adapter
    // ----------------------------------------------------------------
    // Compute address for beat
 
-// function ActionValue#(Bit #(wd_addr)) fv_addr_for_beat (Bit #(wd_addr) start_addr,
+// function ActionValue#(Bit#(wd_addr)) fv_addr_for_beat (Bit#(wd_addr) start_addr,
 //      				     AXI4_Size      axsize,
 //      				     AXI4_Burst     axburst,
 //                                           AXI4_Len       axlen,
@@ -86,15 +86,15 @@ module mkAXI4_Slave_to_AXI4_Lite_Slave_Adapter
 //
 //    actionvalue
 //    // For incrementing bursts this address is the next address
-//    Bit #(wd_addr) addr = start_addr;
+//    Bit#(wd_addr) addr = start_addr;
 //    addr = start_addr + (1 << pack (axsize));
 //
 //    // The actual length of the burst is one more than indicated by axlen
-//    Bit #(wd_addr) burst_len = zeroExtend (axlen) + 1;
+//    Bit#(wd_addr) burst_len = zeroExtend (axlen) + 1;
 //
 //    // find the wrap boundary bit - this becomes the mask - will only work
 //    // for burst lengths which are a power of two
-//    Bit #(wd_addr) wrap_boundary = (burst_len << pack (axsize));
+//    Bit#(wd_addr) wrap_boundary = (burst_len << pack (axsize));
 //
 //    // For wrapping bursts the wrap_mask needs to be applied to check if the
 //    // wrapping boundary has been reached
@@ -111,22 +111,22 @@ module mkAXI4_Slave_to_AXI4_Lite_Slave_Adapter
 //    endactionvalue
 // endfunction
 
-   function Bit #(wd_addr) fv_addr_for_beat (Bit #(wd_addr) start_addr,
+   function Bit#(wd_addr) fv_addr_for_beat (Bit#(wd_addr) start_addr,
 					     AXI4_Size      axsize,
 					     AXI4_Burst     axburst,
                                              AXI4_Len       axlen,
 					     AXI4_Len       beat_count);
 
       // For incrementing bursts this address is the next address
-      Bit #(wd_addr) addr = start_addr;
+      Bit#(wd_addr) addr = start_addr;
       addr = start_addr + (1 << pack (axsize));
 
       // The actual length of the burst is one more than indicated by axlen
-      Bit #(wd_addr) burst_len = zeroExtend (axlen) + 1;
+      Bit#(wd_addr) burst_len = zeroExtend (axlen) + 1;
 
       // Compute the mask used to wrap the address, given that burst lenths are
       // always powers of two
-      Bit #(wd_addr) wrap_mask = (burst_len << pack (axsize)) - 1;
+      Bit#(wd_addr) wrap_mask = (burst_len << pack (axsize)) - 1;
 
       // For wrapping bursts the wrap_mask needs to be applied to wrap the
       // address round when it reaaches the boundary
@@ -169,7 +169,7 @@ module mkAXI4_Slave_to_AXI4_Lite_Slave_Adapter
 
    // AXI4 W-channel burst beat count (0 => start of burst)
    Reg #(AXI4_Len)            rg_w_beat_count    <- mkReg (0);
-   Reg #(Bit #(wd_addr_AXI4)) rg_last_beat_waddr <- mkRegU;
+   Reg #(Bit#(wd_addr_AXI4)) rg_last_beat_waddr <- mkRegU;
 
    // Index of AXI4L data word in AXI4 data word
    Reg #(AXI4_Len) rg_wdata_subword <- mkReg (0);
@@ -187,7 +187,7 @@ module mkAXI4_Slave_to_AXI4_Lite_Slave_Adapter
       // For the first AXI4 beat the address is same as address in the
       // input request; for remaining beats we have to update the
       // address based on the previous address used
-      Bit #(wd_addr_AXI4) beat_waddr = ((rg_w_beat_count != 0)
+      Bit#(wd_addr_AXI4) beat_waddr = ((rg_w_beat_count != 0)
 					? a_in.awaddr
 					: fv_addr_for_beat (rg_last_beat_waddr,
 							    a_in.awsize,
@@ -197,7 +197,7 @@ module mkAXI4_Slave_to_AXI4_Lite_Slave_Adapter
       rg_last_beat_waddr <= beat_waddr;
 
       // Output address
-      Bit #(wd_addr_AXI4L) addr_out = truncate (beat_waddr + rg_wdata_subword * bytes_per_AXI4L_word)
+      Bit#(wd_addr_AXI4L) addr_out = truncate (beat_waddr + rg_wdata_subword * bytes_per_AXI4L_word)
 
       a_out.awaddr = beat_waddr.awaddr + fromInteger (bytes_per_word_out);
 
@@ -212,8 +212,8 @@ module mkAXI4_Slave_to_AXI4_Lite_Slave_Adapter
 
       // Construct output AXI4L WD item
       // Set WLAST to true since this is always last beat of outgoing xaction (awlen=1)
-      Vector #(x_downsize_t, Bit #(wd_data_AXI4L_S)) v_data = unpack (pack (d_in.wdata));
-      Vector #(xstrb_t,      Bit #(wd_strb_AXI4L_S)) v_strb = unpack (pack (d_in.wstrb));
+      Vector #(x_downsize_t, Bit#(wd_data_AXI4L_S)) v_data = unpack (pack (d_in.wdata));
+      Vector #(xstrb_t,      Bit#(wd_strb_AXI4L_S)) v_strb = unpack (pack (d_in.wstrb));
       let d_out   = AXI4_Lite_Wr_Data {v_data [rg_wdata_subword],
 				       v_wstrb [rg_wdata_subword]};
 
@@ -331,7 +331,7 @@ module mkAXI4_Slave_to_AXI4_Lite_Slave_Adapter
    // Size of FIFO should cover slave latency
    FIFOF #(AXI4_Len)  f_r_arlen <- mkSizedFIFOF (16);
 
-   Reg #(Bit #(wd_addr)) rg_last_beat_raddr <- mkRegU;
+   Reg #(Bit#(wd_addr)) rg_last_beat_raddr <- mkRegU;
    rule rl_rd_xaction_master_to_slave;
       AXI4_Rd_Addr #(wd_id, wd_addr, wd_user) a_in = xactor_from_master.o_rd_addr.first;
 

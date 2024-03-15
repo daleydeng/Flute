@@ -92,9 +92,9 @@ interface SoC_Map_IFC;
    method  Bool  m_is_IO_addr (Fabric_Addr addr);
 
    // ---------------- Constants ----------------
-   (* always_ready *)  method  Bit #(64)  m_pc_reset_value;
-   (* always_ready *)  method  Bit #(64)  m_mtvec_reset_value;
-   (* always_ready *)  method  Bit #(64)  m_nmivec_reset_value;
+   (* always_ready *)  method  Bit#(64)  m_pc_reset_value;
+   (* always_ready *)  method  Bit#(64)  m_mtvec_reset_value;
+   (* always_ready *)  method  Bit#(64)  m_nmivec_reset_value;
 endinterface
 
 // ================================================================
@@ -213,9 +213,9 @@ module mkSoC_Map (SoC_Map_IFC);
    // ----------------------------------------------------------------
    // Constants
 
-   Bit #(64) pc_reset_value = 'h_8000_0000;
-   Bit #(64) mtvec_reset_value = 'h_0000_1000;
-   Bit #(64) nmivec_reset_value = 'h_0000_0000;
+   Bit#(64) pc_reset_value = 'h_8000_0000;
+   Bit#(64) mtvec_reset_value = 'h_0000_1000;
+   Bit#(64) nmivec_reset_value = 'h_0000_0000;
 
    // ----------------------------------------------------------------
    // INTERFACE
@@ -259,9 +259,9 @@ module mkSoC_Map (SoC_Map_IFC);
    method  Bool  m_is_mem_addr (Fabric_Addr addr) = fn_is_mem_addr (addr);
    method  Bool  m_is_IO_addr (Fabric_Addr addr) = fn_is_IO_addr (addr);
 
-   method  Bit #(64)  m_pc_reset_value = pc_reset_value;
-   method  Bit #(64)  m_mtvec_reset_value = mtvec_reset_value;
-   method  Bit #(64)  m_nmivec_reset_value = nmivec_reset_value;
+   method  Bit#(64)  m_pc_reset_value = pc_reset_value;
+   method  Bit#(64)  m_mtvec_reset_value = mtvec_reset_value;
+   method  Bit#(64)  m_nmivec_reset_value = nmivec_reset_value;
 endmodule
 
 // ================================================================

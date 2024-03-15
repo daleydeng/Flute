@@ -94,7 +94,7 @@ module mkBoot_ROM (Boot_ROM_IFC);
       let rda <- pop_o (slave_xactor.o_rd_addr);
 
       AXI4_Resp  rresp  = axi4_resp_okay;
-      Bit #(64)  data64 = 0;
+      Bit#(64)  data64 = 0;
 
       if (! fn_addr_is_ok (rg_addr_base, rda.araddr, rg_addr_lim, rda.arsize)) begin
 	 rresp = axi4_resp_slverr;
@@ -106,16 +106,16 @@ module mkBoot_ROM (Boot_ROM_IFC);
 	 // Byte offset
 	 let byte_offset = rda.araddr - rg_addr_base;
 	 let rom_addr_0 = (byte_offset & (~ 'b_111));
-	 Bit #(32) d0 = fn_read_ROM_0 (rom_addr_0);
+	 Bit#(32) d0 = fn_read_ROM_0 (rom_addr_0);
 	 let rom_addr_4 = (rom_addr_0 | 'b_100);
-	 Bit #(32) d4 = fn_read_ROM_4 (rom_addr_4);
+	 Bit#(32) d4 = fn_read_ROM_4 (rom_addr_4);
 	 if ((valueOf (Wd_Data) == 32) && (byte_offset [2] == 1'b_1))
 	    data64 = { 0, d4 };
 	 else
 	    data64 = { d4, d0 };
       end
 
-      Bit #(Wd_Data) rdata  = truncate (data64);
+      Bit#(Wd_Data) rdata  = truncate (data64);
       let rdr = AXI4_Rd_Data {rid:   rda.arid,
 			      rdata: rdata,
 			      rresp: rresp,

@@ -88,7 +88,7 @@ endinterface
 // ****************************************************************
 // Internal types and constants.
 
-typedef Bit #(Wd_Data_Dma)      Data;                   // Data on AXI4
+typedef Bit#(Wd_Data_Dma)      Data;                   // Data on AXI4
 typedef TDiv #(Wd_Data_Dma, 8)  Bytes_per_Data;         // 512/8 = 64
 typedef TLog #(Bytes_per_Data)  Bits_per_Byte_in_Data;  // log (64) = 6
 
@@ -98,19 +98,19 @@ typedef 1   DMA_Cache_Num_Ways;    // Direct-mapped, for now
 typedef 64  DMA_Cache_Num_Sets;    // Cache holds 64x64 bytes = 4 KB = 1 page
 
 typedef TLog #(DMA_Cache_Num_Sets)    DMA_Cache_Index_Width;
-typedef Bit #(DMA_Cache_Index_Width)  DMA_Cache_Index;
+typedef Bit#(DMA_Cache_Index_Width)  DMA_Cache_Index;
 
-function DMA_Cache_Index fn_addr_to_index (Bit #(64) addr);
+function DMA_Cache_Index fn_addr_to_index (Bit#(64) addr);
    return truncate (addr >> bits_per_byte_in_data);
 endfunction
 
-function Bit #(64) fn_addr_to_line_addr (Bit #(64) addr);
+function Bit#(64) fn_addr_to_line_addr (Bit#(64) addr);
    return ((addr >> bits_per_byte_in_data) << bits_per_byte_in_data);
 endfunction
 
 typedef struct {
    Meta_State          tag_state;
-   Bit #(Wd_Addr_Dma)  tag_addr;
+   Bit#(Wd_Addr_Dma)  tag_addr;
    } DMA_Cache_Tag
 deriving (Bits, FShow);
 
@@ -152,8 +152,8 @@ deriving (Bits, Eq, FShow);
 typedef struct {AXI4_Op                    req_op;
 
 		// AW and AR channel info
-		Bit #(Wd_Id_Dma)           id;
-		Bit #(Wd_Addr_Dma)         addr;
+		Bit#(Wd_Id_Dma)           id;
+		Bit#(Wd_Addr_Dma)         addr;
 		AXI4_Len                   len;
 		AXI4_Size                  size;
 		AXI4_Burst                 burst;
@@ -162,11 +162,11 @@ typedef struct {AXI4_Op                    req_op;
 		AXI4_Prot                  prot;
 		AXI4_QoS                   qos;
 		AXI4_Region                region;
-		Bit #(Wd_User_Dma)         user;
+		Bit#(Wd_User_Dma)         user;
 
 		// Write data info
-		Bit #(TDiv #(Wd_Data_Dma, 8))  wstrb;
-		Bit #(Wd_Data_Dma)             wdata;
+		Bit#(TDiv #(Wd_Data_Dma, 8))  wstrb;
+		Bit#(Wd_Data_Dma)             wdata;
    } AXI4_Req
 deriving (Bits, FShow);
 
@@ -186,7 +186,7 @@ module mkDMA_Cache (DMA_Cache_IFC);
    // SoC_Map needed for 'is_cached_addr' (vs. MMIO) check
    SoC_Map_IFC soc_map <- mkSoC_Map;
 
-   function Bool fn_is_cached_addr (Bit #(Wd_Addr_Dma) addr);
+   function Bool fn_is_cached_addr (Bit#(Wd_Addr_Dma) addr);
       return soc_map.m_is_mem_addr (addr);
    endfunction
 
@@ -222,7 +222,7 @@ module mkDMA_Cache (DMA_Cache_IFC);
    // ================================================================
    // Initialization: loop through all cache sets, setting all tags to INVALID
 
-   Reg #(Bit #(DMA_Cache_Index_Width)) rg_init_index <- mkReg (0);
+   Reg #(Bit#(DMA_Cache_Index_Width)) rg_init_index <- mkReg (0);
 
    rule rl_init (rg_state == STATE_INITIALIZING);
       if ((verbosity >= 1) && (rg_init_index == 0)) begin
@@ -459,9 +459,9 @@ module mkDMA_Cache (DMA_Cache_IFC);
 	 // For writes, modify cache using rdata, write-data, wstrb
 	 Data new_data = rdata;
 	 if (req_op == AXI4_OP_WR) begin
-	    Vector #(Bytes_per_Data, Bit #(8)) v_bytes_old = unpack (rdata);
-	    Vector #(Bytes_per_Data, Bit #(8)) v_bytes_wr  = unpack (req.wdata);
-	    Vector #(Bytes_per_Data, Bit #(8)) v_bytes_new = ?;
+	    Vector #(Bytes_per_Data, Bit#(8)) v_bytes_old = unpack (rdata);
+	    Vector #(Bytes_per_Data, Bit#(8)) v_bytes_wr  = unpack (req.wdata);
+	    Vector #(Bytes_per_Data, Bit#(8)) v_bytes_new = ?;
 	    for (Integer j = 0; j < valueOf (Bytes_per_Data); j = j + 1)
 	       v_bytes_new [j] = ((req.wstrb [j] == 1'b0) ? v_bytes_old [j] : v_bytes_wr [j]);
 	    new_data = pack (v_bytes_new);

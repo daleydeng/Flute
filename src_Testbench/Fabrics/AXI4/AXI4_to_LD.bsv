@@ -37,12 +37,12 @@ import AXI4_to_LDST_utils :: *;
 interface AXI4_to_LD_IFC #(numeric type wd_addr_t,
 			   numeric type wd_ldst_data_t);
 
-   interface FIFOF_O #(Tuple2 #(Bit #(2),             // width B/H/W/D
-				Bit #(wd_addr_t)))    // addr
+   interface FIFOF_O #(Tuple2 #(Bit#(2),             // width B/H/W/D
+				Bit#(wd_addr_t)))    // addr
              reqs;
 
    interface FIFOF_I #(Tuple2 #(Bool,                      // err <=> True
-				Bit #(wd_ldst_data_t)))    // rdata
+				Bit#(wd_ldst_data_t)))    // rdata
 	     rsps;
 endinterface
 
@@ -97,13 +97,13 @@ module mkAXI4_to_LD
    // STATE
 
    // Outgoing requests
-   FIFOF #(Tuple2 #(Bit #(2),                  // width B/H/W/D
-		    Bit #(wd_addr_t)))         // addr,
+   FIFOF #(Tuple2 #(Bit#(2),                  // width B/H/W/D
+		    Bit#(wd_addr_t)))         // addr,
          f_reqs <- mkFIFOF;
 
    // Incoming err/ok responses
    FIFOF #(Tuple2 #(Bool,                      // True <=> err
-		    Bit #(wd_ldst_data_t)))    // rdata
+		    Bit#(wd_ldst_data_t)))    // rdata
          f_rsps <- mkFIFOF;
 
    // ----------------
@@ -114,14 +114,14 @@ module mkAXI4_to_LD
    // These are followed by a sentinel indicating 'done' with this
    // axi transaction (this token is just a sentinel; no load response).
    FIFOF #(Tuple2 #(Rsp_Action,
-		    Bit #(8)))    // left byte-shift amount for load-response data
+		    Bit#(8)))    // left byte-shift amount for load-response data
    f_ld_rsp_info <- mkSizedFIFOF (16);
 
    // This fifo has info for the AXI response after seeing the last response
    // (illegal_req, rid, rdata, ruser)
    FIFOF #(Tuple3 #(Bool,
-		    Bit #(wd_id_t),
-		    Bit #(wd_user_t))) f_axi_rsp_info <- mkFIFOF;
+		    Bit#(wd_id_t),
+		    Bit#(wd_user_t))) f_axi_rsp_info <- mkFIFOF;
 
    // ----------------
 
@@ -130,19 +130,19 @@ module mkAXI4_to_LD
    // Vector of slices of rdata, while iterating through slices.
    // [0] always has next slice to process
    Reg #(Vector #(slices_per_axi_data_t,
-		  Bit #(wd_ldst_data_t))) rg_v_slice <- mkRegU;
+		  Bit#(wd_ldst_data_t))) rg_v_slice <- mkRegU;
 
    // Bytelane of current slice low byte
-   Reg #(Bit #(8))              rg_bytelane_slice_lo <- mkRegU;
+   Reg #(Bit#(8))              rg_bytelane_slice_lo <- mkRegU;
 
    // State while iterating partial slices within a slice
-   Reg #(Bit #(wd_ldst_data_t)) rg_slice       <- mkRegU;
-   Reg #(Bit #(8))              rg_bytelane_hi <- mkRegU;
-   Reg #(Bit #(8))              rg_bytelane_lo <- mkRegU;
+   Reg #(Bit#(wd_ldst_data_t)) rg_slice       <- mkRegU;
+   Reg #(Bit#(8))              rg_bytelane_hi <- mkRegU;
+   Reg #(Bit#(8))              rg_bytelane_lo <- mkRegU;
 
    Reg #(Bool) rg_cumulative_err <- mkReg (False);
 
-   Reg #(Bit #(TLog #(TAdd #(1, slices_per_axi_data_t))))
+   Reg #(Bit#(TLog #(TAdd #(1, slices_per_axi_data_t))))
    rg_remaining_slices <- mkReg (fromInteger (slices_per_axi_data_I));
 
    // ================================================================
@@ -150,22 +150,22 @@ module mkAXI4_to_LD
 
    let rd_addr_S = o_rd_addr.first;
 
-   Bit #(wd_addr_t) araddr           = rd_addr_S.araddr;
+   Bit#(wd_addr_t) araddr           = rd_addr_S.araddr;
    // Address of byte lane [0] of AXI data bus containing araddr
-   Bit #(wd_addr_t) addr_axi_bus_lo  = fn_addr_to_NAPOT (araddr,
+   Bit#(wd_addr_t) addr_axi_bus_lo  = fn_addr_to_NAPOT (araddr,
 							 fromInteger (wdB_axi_data_I));
    // Bytelane of araddr on AXI data
-   Bit #(8)         addr_bytelane    = fn_addr_to_axi_data_bytelane (araddr, wdB_axi_data_I);
+   Bit#(8)         addr_bytelane    = fn_addr_to_axi_data_bytelane (araddr, wdB_axi_data_I);
 
    // ARSIZE specifies a NAPOT window around araddr, ...
-   Bit #(8)         wdB_szwindow_B   = fv_AXI4_Size_to_num_bytes (rd_addr_S.arsize);
+   Bit#(8)         wdB_szwindow_B   = fv_AXI4_Size_to_num_bytes (rd_addr_S.arsize);
    // Address of NAPOT ARSIZE window containing araddr
-   Bit #(wd_addr_t) addr_szwindow_lo = fn_addr_to_NAPOT (araddr, wdB_szwindow_B);
+   Bit#(wd_addr_t) addr_szwindow_lo = fn_addr_to_NAPOT (araddr, wdB_szwindow_B);
 
    // Bytelanes of LSByte and MSByte of ARSIZE window
-   Bit #(8) szwindow_bytelane_lo = fn_addr_to_axi_data_bytelane (addr_szwindow_lo,
+   Bit#(8) szwindow_bytelane_lo = fn_addr_to_axi_data_bytelane (addr_szwindow_lo,
 								 wdB_axi_data_I);
-   Bit #(8) szwindow_bytelane_hi = szwindow_bytelane_lo + (wdB_szwindow_B - 1);
+   Bit#(8) szwindow_bytelane_hi = szwindow_bytelane_lo + (wdB_szwindow_B - 1);
 
    // ================================================================
    // BEHAVIOR
@@ -185,7 +185,7 @@ module mkAXI4_to_LD
    endfunction
 
    function Action fa_show_v_slices (Vector #(slices_per_axi_data_t,
-					      Bit #(wd_ldst_data_t)) v_slices);
+					      Bit#(wd_ldst_data_t)) v_slices);
       action
 	 for (Integer j = 0; j < valueOf (slices_per_axi_data_t); j = j + 1)
 	    $display ("    %016h", v_slices [j]);
@@ -196,22 +196,22 @@ module mkAXI4_to_LD
    // This function issues one aligned LB/LH/LW/LD request from the current slice.
    // Returns number of bytes remaining to be read for this slice.
 
-   function ActionValue #(Bit #(8)) fav_load_req (Bool     new_slice,
-						  Bit #(8) bytelane_hi,
-						  Bit #(8) bytelane_lo,
-						  Bit #(8) bytelane_slice_lo);
+   function ActionValue #(Bit#(8)) fav_load_req (Bool     new_slice,
+						  Bit#(8) bytelane_hi,
+						  Bit#(8) bytelane_lo,
+						  Bit#(8) bytelane_slice_lo);
       actionvalue
-	 Bit #(8) num_bytes = bytelane_hi - bytelane_lo + 1;
+	 Bit#(8) num_bytes = bytelane_hi - bytelane_lo + 1;
 	 if (verbosity > 0)
 	    $display ("    LOAD [%0h..%0h] (%0h bytes)",
 		      bytelane_hi, bytelane_lo, num_bytes);
 
-	 Bit #(wd_addr_t) op_addr = (addr_axi_bus_lo | zeroExtend (bytelane_lo));
+	 Bit#(wd_addr_t) op_addr = (addr_axi_bus_lo | zeroExtend (bytelane_lo));
 
-	 Bit #(8) shift_bytes = bytelane_lo - bytelane_slice_lo;
+	 Bit#(8) shift_bytes = bytelane_lo - bytelane_slice_lo;
 
-	 Bit #(2) szcode;
-	 Bit #(8) bytes_processed = 0;
+	 Bit#(2) szcode;
+	 Bit#(8) bytes_processed = 0;
 	 if ((num_bytes == 1) || (bytelane_lo [0] == 1'b1)) begin
 	    szcode          = ldst_b;
 	    bytes_processed = 1;
@@ -255,16 +255,16 @@ module mkAXI4_to_LD
    //     DONE if no more slices in szwindow
 
    function ActionValue #(STATE)
-            fav_start_slice (Bit #(8) bytelane_slice_lo,
-			     Bit #(8) bytelane_slice_hi);
+            fav_start_slice (Bit#(8) bytelane_slice_lo,
+			     Bit#(8) bytelane_slice_hi);
       actionvalue
 	 if (verbosity > 0)
 	    $display ("  fav_start_slice: bytelane_slice hi..lo: %0h..%0h",
 		      bytelane_slice_hi, bytelane_slice_lo);
 
-	 Bit #(8) bytelane_lo = max (bytelane_slice_lo, addr_bytelane);
-	 Bit #(8) bytelane_hi = bytelane_slice_hi;
-	 Bit #(8) rem_bytes   = 0;
+	 Bit#(8) bytelane_lo = max (bytelane_slice_lo, addr_bytelane);
+	 Bit#(8) bytelane_hi = bytelane_slice_hi;
+	 Bit#(8) rem_bytes   = 0;
 
 	 if (bytelane_hi < bytelane_lo) begin
 	    if (verbosity > 0) $display ("  ignore");
@@ -332,8 +332,8 @@ module mkAXI4_to_LD
 	 next_state = STATE_ILLEGAL_REQ;
       end
       else begin
-	 Bit #(8) bytelane_slice_lo = 0;
-	 Bit #(8) bytelane_slice_hi = fromInteger (wdB_ldst_data_I - 1);
+	 Bit#(8) bytelane_slice_lo = 0;
+	 Bit#(8) bytelane_slice_hi = fromInteger (wdB_ldst_data_I - 1);
 
 	 next_state <- fav_start_slice (bytelane_slice_lo, bytelane_slice_hi);
 
@@ -353,8 +353,8 @@ module mkAXI4_to_LD
       if (verbosity > 0)
 	 $display ("%0d: %m.AXI4_to_LD:rl_next_slice", cur_cycle);
 
-      Bit #(8) bytelane_slice_lo = rg_bytelane_slice_lo;
-      Bit #(8) bytelane_slice_hi = rg_bytelane_slice_lo + fromInteger (wdB_ldst_data_I - 1);
+      Bit#(8) bytelane_slice_lo = rg_bytelane_slice_lo;
+      Bit#(8) bytelane_slice_hi = rg_bytelane_slice_lo + fromInteger (wdB_ldst_data_I - 1);
 
       let next_state <- fav_start_slice (bytelane_slice_lo, bytelane_slice_hi);
 
@@ -374,12 +374,12 @@ module mkAXI4_to_LD
 		   rg_bytelane_hi, rg_bytelane_lo, rg_bytelane_slice_lo);
       end
 
-      Bit #(8) rem_bytes <- fav_load_req (False,    // not new slice
+      Bit#(8) rem_bytes <- fav_load_req (False,    // not new slice
 					  rg_bytelane_hi,
 					  rg_bytelane_lo,
 					  rg_bytelane_slice_lo);
 
-      Bit #(8) bytelane_slice_hi = rg_bytelane_slice_lo + fromInteger (wdB_ldst_data_I - 1);
+      Bit#(8) bytelane_slice_hi = rg_bytelane_slice_lo + fromInteger (wdB_ldst_data_I - 1);
 
       STATE next_state = (  (rem_bytes != 0)
 			  ? STATE_PARTIAL
@@ -473,7 +473,7 @@ module mkAXI4_to_LD
 	 match { .illegal_req, .rid, .ruser } = f_axi_rsp_info.first;
 	 f_axi_rsp_info.deq;
 
-	 Bit #(wd_axi_data_t) rdata = pack (rg_v_slice);
+	 Bit#(wd_axi_data_t) rdata = pack (rg_v_slice);
 
 	 let rd_data_S = AXI4_Rd_Data {rid:   rid,
 				       rresp: ((illegal_req || rg_cumulative_err)

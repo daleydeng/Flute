@@ -12,9 +12,9 @@ function AXI4_Lite_Slave_IFC #(wd_addr, wd_data, wd_user)
       // Wr Addr channel
       // input buses
       method Action m_awvalid (Bool           awvalid,    // in
-			       Bit #(wd_addr) awaddr,     // in
-			       Bit #(3)       awprot,     // in
-			       Bit #(wd_user) awuser);    // in
+			       Bit#(wd_addr) awaddr,     // in
+			       Bit#(3)       awprot,     // in
+			       Bit#(wd_user) awuser);    // in
 	 axi4.m_awvalid (awvalid,
 			 0,                     // awid
 			 awaddr,
@@ -36,8 +36,8 @@ function AXI4_Lite_Slave_IFC #(wd_addr, wd_data, wd_user)
       // Wr Data channel
       // input buses
       method Action m_wvalid (Bool                     wvalid,    // in
-			      Bit #(wd_data)           wdata,     // in
-			      Bit #(TDiv #(wd_data,8)) wstrb);    // in
+			      Bit#(wd_data)           wdata,     // in
+			      Bit#(TDiv #(wd_data,8)) wstrb);    // in
 	 axi4.m_wvalid(wvalid,
 		       wdata,
 		       wstrb,
@@ -64,9 +64,9 @@ function AXI4_Lite_Slave_IFC #(wd_addr, wd_data, wd_user)
       // Rd Addr channel
       // input buses
       method Action m_arvalid (Bool           arvalid,    // in
-			       Bit #(wd_addr) araddr,     // in
-			       Bit #(3)       arprot,     // in
-			       Bit #(wd_user) aruser);    // in
+			       Bit#(wd_addr) araddr,     // in
+			       Bit#(3)       arprot,     // in
+			       Bit#(wd_user) aruser);    // in
 	 axi4.m_arvalid (arvalid,
 			 0,                     // arid
 			 araddr,
@@ -88,9 +88,9 @@ function AXI4_Lite_Slave_IFC #(wd_addr, wd_data, wd_user)
       // Rd Data channel
       // input buses
       method Bool           m_rvalid = axi4.m_rvalid;    // out
-      method Bit #(2)       m_rresp  = axi4.m_rresp;     // out
-      method Bit #(wd_data) m_rdata  = axi4.m_rdata;     // out
-      method Bit #(wd_user) m_ruser  = axi4.m_ruser;     // out
+      method Bit#(2)       m_rresp  = axi4.m_rresp;     // out
+      method Bit#(wd_data) m_rdata  = axi4.m_rdata;     // out
+      method Bit#(wd_user) m_ruser  = axi4.m_ruser;     // out
 
       method Action m_rready  (Bool rready);    // in
 	 axi4.m_rready (rready);

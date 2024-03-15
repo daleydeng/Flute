@@ -211,23 +211,23 @@ endfunction
 
 function WordXL fv_fixup_mstatus (MISA misa, WordXL  wordxl);
    // MIE, WPRI_2, SIE, UIE
-   Bit #(1) uie    = ((misa.n == 0) ? 0 : wordxl [mstatus_uie_bitpos]);
-   Bit #(1) wpri_2 = wordxl [mstatus_WPRI_2_bitpos];
-   Bit #(1) sie    = ((misa.s == 0) ? 0 : wordxl [mstatus_sie_bitpos]);
-   Bit #(1) mie    = wordxl [mstatus_mie_bitpos];
+   Bit#(1) uie    = ((misa.n == 0) ? 0 : wordxl [mstatus_uie_bitpos]);
+   Bit#(1) wpri_2 = wordxl [mstatus_WPRI_2_bitpos];
+   Bit#(1) sie    = ((misa.s == 0) ? 0 : wordxl [mstatus_sie_bitpos]);
+   Bit#(1) mie    = wordxl [mstatus_mie_bitpos];
 
    // MPIE, WPRI_6, SPIE, UPIE
-   Bit #(1) upie   = ((misa.n == 0) ? 0 : wordxl [mstatus_upie_bitpos]);
-   Bit #(1) wpri_6 = wordxl [mstatus_WPRI_6_bitpos];
-   Bit #(1) spie   = ((misa.s == 0) ? 0 : wordxl [mstatus_spie_bitpos]);
-   Bit #(1) mpie   = wordxl [mstatus_mpie_bitpos];
+   Bit#(1) upie   = ((misa.n == 0) ? 0 : wordxl [mstatus_upie_bitpos]);
+   Bit#(1) wpri_6 = wordxl [mstatus_WPRI_6_bitpos];
+   Bit#(1) spie   = ((misa.s == 0) ? 0 : wordxl [mstatus_spie_bitpos]);
+   Bit#(1) mpie   = wordxl [mstatus_mpie_bitpos];
 
    // SPP, WPRI_9, MPP
-   Bit #(1) spp    = ((misa.s == 0) ? u_Priv_Mode [0] : wordxl [mstatus_spp_bitpos]);
-   Bit #(2) wpri_9 = fv_get_bits (wordxl, fromInteger (mstatus_WPRI_9_bitpos));
+   Bit#(1) spp    = ((misa.s == 0) ? u_Priv_Mode [0] : wordxl [mstatus_spp_bitpos]);
+   Bit#(2) wpri_9 = fv_get_bits (wordxl, fromInteger (mstatus_WPRI_9_bitpos));
 
    // MPP
-   Bit #(2) mpp = fv_get_bits (wordxl, fromInteger (mstatus_mpp_bitpos));
+   Bit#(2) mpp = fv_get_bits (wordxl, fromInteger (mstatus_mpp_bitpos));
    if (misa.u == 0) begin
       // Only M supported
       mpp = m_Priv_Mode;
@@ -246,31 +246,31 @@ function WordXL fv_fixup_mstatus (MISA misa, WordXL  wordxl);
    // FS: cf. Priv Arch 1.10, p.23: "In systems that do not
    // implement S-mode and do not have a floating-point unit,
    // the FS field is hardwired to zero."
-   Bit #(2) fs = (  ((misa.s == 0) && (misa.f == 0) && (misa.d == 0))
+   Bit#(2) fs = (  ((misa.s == 0) && (misa.f == 0) && (misa.d == 0))
 		  ? 0
 		  : fv_get_bits (wordxl, fromInteger (mstatus_fs_bitpos)));
 
    // XS
-   Bit #(2) xs = (  (misa.x == 0)
+   Bit#(2) xs = (  (misa.x == 0)
 		  ? 0
 		  : fv_get_bits (wordxl, fromInteger (mstatus_xs_bitpos)));
 
    // UXL and SXL UXL (RV64 only)
-   Bit #(2) uxl = ((misa.u == 1) ? misa_mxl_64 : 0);
-   Bit #(2) sxl = ((misa.s == 1) ? misa_mxl_64 : 0);
+   Bit#(2) uxl = ((misa.u == 1) ? misa_mxl_64 : 0);
+   Bit#(2) sxl = ((misa.s == 1) ? misa_mxl_64 : 0);
 
    // TSR, TW, TVM, MXR, SUM, MPRV
-   Bit #(1) tsr  = wordxl [mstatus_tsr_bitpos];
-   Bit #(1) tw   = wordxl [mstatus_tw_bitpos];
-   Bit #(1) tvm  = wordxl [mstatus_tvm_bitpos];
-   Bit #(1) mxr  = wordxl [mstatus_mxr_bitpos];
-   Bit #(1) sum  = wordxl [mstatus_sum_bitpos];
-   Bit #(1) mprv = wordxl [mstatus_mprv_bitpos];
+   Bit#(1) tsr  = wordxl [mstatus_tsr_bitpos];
+   Bit#(1) tw   = wordxl [mstatus_tw_bitpos];
+   Bit#(1) tvm  = wordxl [mstatus_tvm_bitpos];
+   Bit#(1) mxr  = wordxl [mstatus_mxr_bitpos];
+   Bit#(1) sum  = wordxl [mstatus_sum_bitpos];
+   Bit#(1) mprv = wordxl [mstatus_mprv_bitpos];
 
-   Bit #(1) sd   = (((fs == fs_xs_dirty) || (xs == fs_xs_dirty)) ? 1 : 0);
+   Bit#(1) sd   = (((fs == fs_xs_dirty) || (xs == fs_xs_dirty)) ? 1 : 0);
 
    // Assemble fixed-up mstatus
-   Bit #(23) fixed_up_val_23 = {tsr, tw, tvm, mxr, sum, mprv,
+   Bit#(23) fixed_up_val_23 = {tsr, tw, tvm, mxr, sum, mprv,
 				xs, fs,
 				mpp, wpri_9, spp,
 				mpie, wpri_6, spie, upie,

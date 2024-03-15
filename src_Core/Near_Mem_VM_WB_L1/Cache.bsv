@@ -54,8 +54,8 @@ deriving (Bits, Eq, FShow);
 
 typedef struct {
    Cache_Result_Type  outcome;
-   Bit #(64)          final_ld_val;
-   Bit #(64)          final_st_val;
+   Bit#(64)          final_ld_val;
+   Bit#(64)          final_st_val;
    } Cache_Result
 deriving (Bits, FShow);
 
@@ -84,15 +84,15 @@ interface Cache_IFC;
 
    // ----------------
    // Cache flush request/response
-   // Bit #(1) request specifies new meta-state: 0=INVALID, 1=SHARED
+   // Bit#(1) request specifies new meta-state: 0=INVALID, 1=SHARED
 
-   interface Server #(Bit #(1), Token) flush_server;
+   interface Server #(Bit#(1), Token) flush_server;
 
    // ----------------
    // Interface to next level (for refills, writebacks)
 
    interface Get #(Line_Req)  g_mem_req;
-   interface Get #(Bit #(64)) g_write_data;
+   interface Get #(Bit#(64)) g_write_data;
    interface Put #(Read_Data) p_mem_read_data;
 endinterface
 
@@ -135,7 +135,7 @@ deriving (Bits, FShow);
 typedef Vector #(Ways_per_CSet, Meta)  CSet_Meta;
 
 // A CSet of CWords
-typedef Vector #(Ways_per_CSet, Bit #(64)) CSet_CWord;
+typedef Vector #(Ways_per_CSet, Bit#(64)) CSet_CWord;
 
 function Fmt fshow_cset_meta (CSet_in_Cache  cset_in_cache,
 			      CSet_Meta      cset_meta);
@@ -167,10 +167,10 @@ endfunction
 
 function Way_in_CSet fn_incr_way (Way_in_CSet w);
    // The extend/truncate trickery below is because Way_in_CSet could
-   // be Bit #(0) (in direct-mapped case).  for which the '1' in the
+   // be Bit#(0) (in direct-mapped case).  for which the '1' in the
    // '+ 1' expr below is not a valid literal.  Extend/truncate here
-   // allows +1 to occur at a minimum of Bit #(1).
-   Bit #(TAdd #(1, Bits_per_Way_in_CSet)) tmp = extend (w);
+   // allows +1 to occur at a minimum of Bit#(1).
+   Bit#(TAdd #(1, Bits_per_Way_in_CSet)) tmp = extend (w);
    tmp = tmp + 1;
    Way_in_CSet new_way = truncate (tmp);
    return new_way;
@@ -207,7 +207,7 @@ endfunction
 
 typedef struct {
    Bool                 hit;
-   Bit #(64)            data;         // valid if hit
+   Bit#(64)            data;         // valid if hit
    Way_in_CSet          way;          // valid if hit, for subsequent updates
 
    // Assertion error if multi-way hit (at most one way should hit)
@@ -220,9 +220,9 @@ deriving (Bits, Eq, FShow);
 
 function CSet_CWord fn_update_cset_cword (CSet_CWord   old_cset_cword,
 					  Way_in_CSet   way,
-					  Bit #(n)      addr,
-					  Bit #(3)      f3,
-					  Bit #(64)     cword);
+					  Bit#(n)      addr,
+					  Bit#(3)      f3,
+					  Bit#(64)     cword);
    let old_cword = old_cset_cword [way];
    let old_B0    = old_cword [7:0];
    let old_B1    = old_cword [15:8];
@@ -235,7 +235,7 @@ function CSet_CWord fn_update_cset_cword (CSet_CWord   old_cset_cword,
 
    let new_cset_cword = old_cset_cword;
    let new_cword      = old_cword;
-   Bit #(3) addr_lsbs = addr [2:0];
+   Bit#(3) addr_lsbs = addr [2:0];
 
    // Replace relevant bytes in new_cword
    case (f3)
@@ -269,7 +269,7 @@ endfunction: fn_update_cset_cword
 // MODULE IMPLEMENTATION
 
 (* synthesize *)
-module mkCache #(parameter Bit #(3) verbosity)
+module mkCache #(parameter Bit#(3) verbosity)
                (Cache_IFC);
 
    // 0: quiet; 1: rules; 2: loop iterations
@@ -328,7 +328,7 @@ module mkCache #(parameter Bit #(3) verbosity)
    // Memory interface (for refills, writebacks)
 
    FIFOF #(Line_Req)   f_line_reqs  <- mkFIFOF;
-   FIFOF #(Bit #(64))  f_write_data <- mkFIFOF;
+   FIFOF #(Bit#(64))  f_write_data <- mkFIFOF;
    FIFOF #(Read_Data)  f_read_data  <- mkFIFOF;
 
    // ****************************************************************
@@ -359,7 +359,7 @@ module mkCache #(parameter Bit #(3) verbosity)
       Bool         hit           = False;
       Bool         multi_way_hit = False;
       Way_in_CSet  way_hit       = 0;
-      Bit #(64)    cword         = 0;
+      Bit#(64)    cword         = 0;
 
       CTag  pa_ctag = fn_PA_to_CTag (pa);
 
@@ -406,7 +406,7 @@ module mkCache #(parameter Bit #(3) verbosity)
    // ****************************************************************
    // ****************************************************************
    // Write actions on a cache hit
-   function Action fa_write (PA pa, Bit #(3) f3, Bit #(64) st_value);
+   function Action fa_write (PA pa, Bit#(3) f3, Bit#(64) st_value);
       action
 	 let hit_miss_info = fv_ram_A_hit_miss (pa);
 	 let way           = hit_miss_info.way;
@@ -488,7 +488,7 @@ module mkCache #(parameter Bit #(3) verbosity)
    rule rl_writeback_loop (rg_fsm_state == FSM_WRITEBACK_LOOP);
       // Writeback a cword
       CSet_CWord cset_cword = ram_cset_cword.a.read;
-      Bit #(64)  cword      = cset_cword [rg_way_in_cset];
+      Bit#(64)  cword      = cset_cword [rg_way_in_cset];
       f_write_data.enq (cword);
 
       if (   ((verbosity >= 1) && (rg_cword_in_cline == 0))
@@ -682,7 +682,7 @@ module mkCache #(parameter Bit #(3) verbosity)
    // If flush_req is 0, new meta-state is INVALID
    // If flush_req is 1, new meta-state is SHARED
 
-   FIFOF #(Bit #(1))  f_flush_reqs <- mkFIFOF;
+   FIFOF #(Bit#(1))  f_flush_reqs <- mkFIFOF;
    FIFOF #(Token)     f_flush_rsps <- mkFIFOF;
 
    Bool last_cset_and_way = (   (rg_cset_in_cache == fromInteger (csets_per_cache - 1))

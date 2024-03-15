@@ -20,3 +20,5 @@ worker_*
 log_*.txt
 RTL_Catamaran_Core*
 Verilog_RTL
+Logs/
+trace_out.dat

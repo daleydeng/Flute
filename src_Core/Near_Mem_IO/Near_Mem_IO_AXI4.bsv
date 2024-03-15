@@ -77,7 +77,7 @@ deriving (Bits, Eq, FShow);
 
 interface Near_Mem_IO_AXI4_IFC;
    // Reset
-   interface Server #(Bit #(0), Bit #(0))  server_reset;
+   interface Server #(Bit#(0), Bit#(0))  server_reset;
 
    // set_addr_map should be called after this module's reset
    method Action set_addr_map (Fabric_Addr addr_base, Fabric_Addr addr_lim);
@@ -87,7 +87,7 @@ interface Near_Mem_IO_AXI4_IFC;
 
    // Read MTIME to update shadow-copy TIME CSR
    (* always_ready *)
-   method Bit #(64) mv_read_mtime;
+   method Bit#(64) mv_read_mtime;
 
    // Timer interrupt
    // True/False = set/clear interrupt-pending in CPU's MTIP
@@ -103,14 +103,14 @@ endinterface
 module mkNear_Mem_IO_AXI4 (Near_Mem_IO_AXI4_IFC);
 
    // Verbosity: 0: quiet; 1: reset; 2: timer and sw interrupts, all reads and writes
-   Reg #(Bit #(4)) cfg_verbosity <- mkConfigReg (0);
+   Reg #(Bit#(4)) cfg_verbosity <- mkConfigReg (0);
 
    Reg #(Module_State) rg_state <- mkReg (MODULE_STATE_START);
 
    // ----------------
    // Soft reset requests and responses
-   FIFOF #(Bit #(0)) f_reset_reqs <- mkFIFOF;
-   FIFOF #(Bit #(0)) f_reset_rsps <- mkFIFOF;
+   FIFOF #(Bit#(0)) f_reset_reqs <- mkFIFOF;
+   FIFOF #(Bit#(0)) f_reset_rsps <- mkFIFOF;
 
    // ----------------
    // Memory-mapped access
@@ -125,8 +125,8 @@ module mkNear_Mem_IO_AXI4 (Near_Mem_IO_AXI4_IFC);
    // ----------------
    // Timer registers
 
-   Reg #(Bit #(64)) crg_time [2]    <- mkCReg (2, 0);
-   Reg #(Bit #(64)) crg_timecmp [2] <- mkCReg (2, '1);
+   Reg #(Bit#(64)) crg_time [2]    <- mkCReg (2, 0);
+   Reg #(Bit#(64)) crg_timecmp [2] <- mkCReg (2, '1);
 
    Reg #(Bool) rg_mtip      <- mkReg (False);
    Reg #(Bool) rg_mtip_prev <- mkReg (False);
@@ -214,7 +214,7 @@ module mkNear_Mem_IO_AXI4 (Near_Mem_IO_AXI4_IFC);
       end
 
       let        byte_addr = rda.araddr - rg_addr_base;
-      Bit #(64)  rdata = 0;
+      Bit#(64)  rdata = 0;
       AXI4_Resp  rresp = axi4_resp_okay;
 
       if (rda.araddr < rg_addr_base) begin
@@ -242,7 +242,7 @@ module mkNear_Mem_IO_AXI4 (Near_Mem_IO_AXI4_IFC);
 
       else if (byte_addr == 'h_4004) begin
 	 // MTIMECMPH
-	 Bit #(64) x64 = crg_timecmp [0];
+	 Bit#(64) x64 = crg_timecmp [0];
 	 if (valueOf (Wd_Data) == 32)
 	    x64 = { 0, x64 [63:32] };
 	 rdata = zeroExtend (x64);    // extends for 64b fabrics
@@ -250,7 +250,7 @@ module mkNear_Mem_IO_AXI4 (Near_Mem_IO_AXI4_IFC);
 
       else if (byte_addr == 'h_BFFC) begin
 	 // MTIMEH
-	 Bit #(64) x64 = crg_time [0];
+	 Bit#(64) x64 = crg_time [0];
 	 if (valueOf (Wd_Data) == 32)
 	    x64 = { 0, x64 [63:32] };
 	 rdata = zeroExtend (x64);    // extends for 64b fabrics
@@ -292,9 +292,9 @@ module mkNear_Mem_IO_AXI4 (Near_Mem_IO_AXI4_IFC);
 	 $display ("    ", fshow (wrd));
       end
 
-      Bit #(64) wdata     = zeroExtend (wrd.wdata);
-      Bit #(8)  wstrb     = zeroExtend (wrd.wstrb);
-      Bit #(8)  data_byte = wdata [7:0];
+      Bit#(64) wdata     = zeroExtend (wrd.wdata);
+      Bit#(8)  wstrb     = zeroExtend (wrd.wstrb);
+      Bit#(8)  data_byte = wdata [7:0];
 
       let        byte_addr = wra.awaddr - rg_addr_base;
       AXI4_Resp  bresp     = axi4_resp_okay;
@@ -324,8 +324,8 @@ module mkNear_Mem_IO_AXI4 (Near_Mem_IO_AXI4_IFC);
 
       // MTIMECMP and MTIMECMPH
       else if ((byte_addr == 'h_4000) || (byte_addr == 'h_4004)) begin
-	 Bit #(64) old_timecmp = crg_timecmp [1];
-	 Bit #(64) new_timecmp = ?;
+	 Bit#(64) old_timecmp = crg_timecmp [1];
+	 Bit#(64) new_timecmp = ?;
 
 	 if (byte_addr == 'h_4000) begin
 	    new_timecmp = fn_update_strobed_bytes (old_timecmp,
@@ -333,8 +333,8 @@ module mkNear_Mem_IO_AXI4 (Near_Mem_IO_AXI4_IFC);
 						   zeroExtend (wstrb));
 	 end
 	 else begin
-	    Bit #(64) x64      = zeroExtend (wdata);
-	    Bit #(8)  x64_strb = zeroExtend (wstrb);
+	    Bit#(64) x64      = zeroExtend (wdata);
+	    Bit#(8)  x64_strb = zeroExtend (wstrb);
 	    if (valueOf (Wd_Data) == 32) begin
 	       x64      = { x64 [31:0], 0 };
 	       x64_strb = { x64_strb [3:0], 0 };
@@ -361,8 +361,8 @@ module mkNear_Mem_IO_AXI4 (Near_Mem_IO_AXI4_IFC);
 
       else if (byte_addr == 'h_BFF8) begin
 	 // MTIME
-	 Bit #(64) old_time = crg_time [1];
-	 Bit #(64) new_time = fn_update_strobed_bytes (old_time,
+	 Bit#(64) old_time = crg_time [1];
+	 Bit#(64) new_time = fn_update_strobed_bytes (old_time,
 						       zeroExtend (wdata),
 						       zeroExtend (wstrb));
 	 crg_time [1] <= new_time;
@@ -376,14 +376,14 @@ module mkNear_Mem_IO_AXI4 (Near_Mem_IO_AXI4_IFC);
 
       else if (byte_addr == 'h_BFFC) begin
 	 // MTIMEH
-	 Bit #(64) old_time = crg_time [1];
-	 Bit #(64) x64      = zeroExtend (wdata);
-	 Bit #(8)  x64_strb = zeroExtend (wstrb);
+	 Bit#(64) old_time = crg_time [1];
+	 Bit#(64) x64      = zeroExtend (wdata);
+	 Bit#(8)  x64_strb = zeroExtend (wstrb);
 	 if (valueOf (Wd_Data) == 32) begin
 	    x64      = { x64 [31:0], 0 };
 	    x64_strb = { x64_strb [3:0], 0 };
 	 end
-	 Bit #(64) new_time = fn_update_strobed_bytes (old_time, x64, x64_strb);
+	 Bit#(64) new_time = fn_update_strobed_bytes (old_time, x64, x64_strb);
 	 crg_time [1] <= new_time;
 
 	 if (cfg_verbosity > 1) begin
@@ -441,7 +441,7 @@ module mkNear_Mem_IO_AXI4 (Near_Mem_IO_AXI4_IFC);
    interface  axi4_slave = slave_xactor.axi_side;
 
    // Read MTIME to update shadow-copy TIME CSR
-   method Bit #(64) mv_read_mtime;
+   method Bit#(64) mv_read_mtime;
       return crg_time [0];
    endmethod
 

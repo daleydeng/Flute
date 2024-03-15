@@ -52,13 +52,13 @@ interface TLB_IFC;
 					WordXL             satp,
 					Bool               dmem_not_imem,
 					Bool               read_not_write,
-					Priv_Mode          priv,
-					Bit #(1)           sstatus_SUM,
-					Bit #(1)           mstatus_MXR);
+					PrivMode          priv,
+					Bit#(1)           sstatus_SUM,
+					Bit#(1)           mstatus_MXR);
 
    // ----------------
    // Insert a PTE into the TLB
-   method Action ma_insert (ASID asid, VPN vpn, PTE pte, Bit #(2) level, PA pte_pa);
+   method Action ma_insert (ASID asid, VPN vpn, PTE pte, Bit#(2) level, PA pte_pa);
 
     // Invalidate all entries, in 1 cycle
    method Action ma_flush;
@@ -75,7 +75,7 @@ typedef struct {
    PTE       pte;            // The leaf PTE for this translation (contains PPN)
 
    // Information needed to write back updated PTE (A,D bits) to TLB and mem
-   Bit #(2)  pte_level;      // Level of leaf PTE for this translation
+   Bit#(2)  pte_level;      // Level of leaf PTE for this translation
    PA        pte_pa;         // PA from which PTE was loaded, for writeback if A,D bits are updated
    } TLB_Lookup_Result
 deriving (Bits, FShow);
@@ -87,9 +87,9 @@ function VM_Xlate_Result  fv_vm_xlate (WordXL             va,
 				       WordXL             satp,
 				       Bool               dmem_not_imem,
 				       Bool               read_not_write,
-				       Priv_Mode          priv,
-				       Bit #(1)           sstatus_SUM,
-				       Bit #(1)           mstatus_MXR,
+				       PrivMode          priv,
+				       Bit#(1)           sstatus_SUM,
+				       Bit#(1)           mstatus_MXR,
 				       TLB_Lookup_Result  tlb_result);
       // Translate if in VM mode (sv32, sv39), and priv <= s_Priv_Mode
       // Default PA (no translation) = va
@@ -203,11 +203,11 @@ endfunction: fv_vm_xlate
 
 typedef  4                     TLB2_Size;    // # of entries in TLB2
 typedef  TLog #(TLB2_Size)     TLB2_Index_sz;
-typedef  Bit #(TLB2_Index_sz)  TLB2_Index;
+typedef  Bit#(TLB2_Index_sz)  TLB2_Index;
 Integer  tlb2_index_sz = valueOf (TLB2_Index_sz);
 
 typedef  TSub #(VPN_J_sz, TLB2_Index_sz)  TLB2_Tag_sz;
-typedef  Bit #(TLB2_Tag_sz)  TLB2_Tag;
+typedef  Bit#(TLB2_Tag_sz)  TLB2_Tag;
 Integer  tlb2_tag_sz = valueOf (TLB2_Tag_sz);
 
 // ----------------
@@ -215,11 +215,11 @@ Integer  tlb2_tag_sz = valueOf (TLB2_Tag_sz);
 
 typedef  8                     TLB1_Size;    // # of entries in TLB1
 typedef  TLog #(TLB1_Size)     TLB1_Index_sz;
-typedef  Bit #(TLB1_Index_sz)  TLB1_Index;
+typedef  Bit#(TLB1_Index_sz)  TLB1_Index;
 Integer  tlb1_index_sz = valueOf (TLB1_Index_sz);
 
 typedef  TSub #(TMul #(2, VPN_J_sz), TLB1_Index_sz)  TLB1_Tag_sz;
-typedef  Bit #(TLB1_Tag_sz)  TLB1_Tag;
+typedef  Bit#(TLB1_Tag_sz)  TLB1_Tag;
 Integer  tlb1_tag_sz = valueOf (TLB1_Tag_sz);
 
 // ----------------
@@ -227,11 +227,11 @@ Integer  tlb1_tag_sz = valueOf (TLB1_Tag_sz);
 
 typedef  16                    TLB0_Size;    // # of entries in TLB0
 typedef  TLog #(TLB0_Size)     TLB0_Index_sz;
-typedef  Bit #(TLB0_Index_sz)  TLB0_Index;
+typedef  Bit#(TLB0_Index_sz)  TLB0_Index;
 Integer  tlb0_index_sz = valueOf (TLB0_Index_sz);
 
 typedef  TSub #(TMul #(3, VPN_J_sz), TLB0_Index_sz)  TLB0_Tag_sz;
-typedef  Bit #(TLB0_Tag_sz)  TLB0_Tag;
+typedef  Bit#(TLB0_Tag_sz)  TLB0_Tag;
 Integer  tlb0_tag_sz = valueOf (TLB0_Tag_sz);
 
 // ----------------
@@ -244,7 +244,7 @@ Integer  tlb0_tag_sz = valueOf (TLB0_Tag_sz);
 
 typedef struct {
    ASID           asid_tag;   // Address-space tag
-   Bit #(tag_sz)  vpn_tag;    // VPN tag (Tag_sz MSBs of VPN)
+   Bit#(tag_sz)  vpn_tag;    // VPN tag (Tag_sz MSBs of VPN)
    PTE            pte;        // Contains PPN + control bits
    PA             pte_pa;     // For future writes-back of this PTE
    } TLBE #(numeric type tag_sz)
@@ -373,9 +373,9 @@ module mkTLB (TLB_IFC);
 					WordXL             satp,
 					Bool               dmem_not_imem,
 					Bool               read_not_write,
-					Priv_Mode          priv,
-					Bit #(1)           sstatus_SUM,
-					Bit #(1)           mstatus_MXR);
+					PrivMode          priv,
+					Bit#(1)           sstatus_SUM,
+					Bit#(1)           mstatus_MXR);
 
       ASID asid = fn_satp_to_ASID (satp);
       VPN  vpn  = fn_Addr_to_VPN  (va);
@@ -421,7 +421,7 @@ module mkTLB (TLB_IFC);
    // ----------------
    // Insert a PTE into the TLB
 
-   method Action ma_insert (ASID asid, VPN vpn, PTE pte, Bit #(2) level, PA pte_pa);
+   method Action ma_insert (ASID asid, VPN vpn, PTE pte, Bit#(2) level, PA pte_pa);
       if (verbosity > 1)
 	 $display ("%0d: %m.ma_insert: asid 0x%0h  vpn 0x%0h  pa 0x%0h  level %0d  pte 0x%0h",
 		   cur_cycle, asid, vpn, pte, level, pte_pa);

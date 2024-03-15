@@ -66,7 +66,7 @@ typedef struct {
    PTE         pte;        // relevant if result == PTW_OK or PTW_PAGE_FAULT
 
    // Info for PTE insertion into TLB
-   Bit #(2)     level;
+   Bit#(2)     level;
    PA           pte_pa;
    } PTW_Rsp
 deriving (Bits, FShow);
@@ -120,7 +120,7 @@ deriving (Bits, Eq, FShow);
 // ================================================================
 
 (* synthesize *)
-module mkPTW #(parameter Bit #(3) verbosity) (PTW_IFC);
+module mkPTW #(parameter Bit#(3) verbosity) (PTW_IFC);
 
    // verbosity: 0: quiet; 1: rule firings
 

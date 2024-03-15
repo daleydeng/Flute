@@ -122,23 +122,23 @@ module mkMMU_Cache_Arbiter #(MMU_Cache_IFC cache)
    // until the first available opportunity.
    Vector #(num_masters, Array #(Reg #(Bool)))      v_req_valid       <- replicateM (mkCReg (2, False));
    Vector #(num_masters, Array #(Reg #(CacheOp)))   v_req_op          <- replicateM (mkCRegU (2));
-   Vector #(num_masters, Array #(Reg #(Bit #(3))))  v_req_f3          <- replicateM (mkCRegU (2));
+   Vector #(num_masters, Array #(Reg #(Bit#(3))))  v_req_f3          <- replicateM (mkCRegU (2));
 `ifdef ISA_A
-   Vector #(num_masters, Array #(Reg #(Bit #(7))))  v_req_amo_funct7  <- replicateM (mkCRegU (2));
+   Vector #(num_masters, Array #(Reg #(Bit#(7))))  v_req_amo_funct7  <- replicateM (mkCRegU (2));
 `endif
    Vector #(num_masters, Array #(Reg #(WordXL)))    v_req_addr        <- replicateM (mkCRegU (2));
-   Vector #(num_masters, Array #(Reg #(Bit #(64)))) v_req_st_value    <- replicateM (mkCRegU (2));
-   Vector #(num_masters, Array #(Reg #(Priv_Mode))) v_req_priv        <- replicateM (mkCRegU (2));
-   Vector #(num_masters, Array #(Reg #(Bit #(1))))  v_req_sstatus_SUM <- replicateM (mkCRegU (2));
-   Vector #(num_masters, Array #(Reg #(Bit #(1))))  v_req_mstatus_MXR <- replicateM (mkCRegU (2));
+   Vector #(num_masters, Array #(Reg #(Bit#(64)))) v_req_st_value    <- replicateM (mkCRegU (2));
+   Vector #(num_masters, Array #(Reg #(PrivMode))) v_req_priv        <- replicateM (mkCRegU (2));
+   Vector #(num_masters, Array #(Reg #(Bit#(1))))  v_req_sstatus_SUM <- replicateM (mkCRegU (2));
+   Vector #(num_masters, Array #(Reg #(Bit#(1))))  v_req_mstatus_MXR <- replicateM (mkCRegU (2));
    Vector #(num_masters, Array #(Reg #(WordXL)))    v_req_satp        <- replicateM (mkCRegU (2));
 
    // Latched cache output signals for when we've switched to another
    // master.
    Vector #(num_masters, Reg #(Bool))      v_rsp_valid      <- replicateM (mkReg (False));
    Vector #(num_masters, Reg #(WordXL))    v_rsp_addr       <- replicateM (mkRegU);
-   Vector #(num_masters, Reg #(Bit #(64))) v_rsp_word64     <- replicateM (mkRegU);
-   Vector #(num_masters, Reg #(Bit #(64))) v_rsp_st_amo_val <- replicateM (mkRegU);
+   Vector #(num_masters, Reg #(Bit#(64))) v_rsp_word64     <- replicateM (mkRegU);
+   Vector #(num_masters, Reg #(Bit#(64))) v_rsp_st_amo_val <- replicateM (mkRegU);
    Vector #(num_masters, Reg #(Bool))      v_rsp_exc        <- replicateM (mkReg (False));
    Vector #(num_masters, Reg #(Exc_Code))  v_rsp_exc_code   <- replicateM (mkRegU);
 
@@ -238,7 +238,7 @@ module mkMMU_Cache_Arbiter #(MMU_Cache_IFC cache)
    function MMU_Cache_IFC gen (Integer i);
       return
       interface MMU_Cache_IFC;
-	 method Action set_verbosity (Bit #(4) verbosity) if (fn_master_can_acquire (i));
+	 method Action set_verbosity (Bit#(4) verbosity) if (fn_master_can_acquire (i));
 	    fa_master_acquire (i);
 	    cache.set_verbosity (verbosity);
 	    // set_verbosity is a single-cycle synchronous operation.
@@ -266,15 +266,15 @@ module mkMMU_Cache_Arbiter #(MMU_Cache_IFC cache)
 	 endinterface
 
 	 method Action req (CacheOp   op,
-			    Bit #(3)  f3,
+			    Bit#(3)  f3,
 `ifdef ISA_A
-			    Bit #(7)  amo_funct7,
+			    Bit#(7)  amo_funct7,
 `endif
 			    WordXL    addr,
-			    Bit #(64) st_value,
-			    Priv_Mode priv,
-			    Bit #(1)  sstatus_SUM,
-			    Bit #(1)  mstatus_MXR,
+			    Bit#(64) st_value,
+			    PrivMode priv,
+			    Bit#(1)  sstatus_SUM,
+			    Bit#(1)  mstatus_MXR,
 			    WordXL    satp);
 	    v_req_valid       [i][0] <= True;
 	    v_req_op          [i][0] <= op;
@@ -306,11 +306,11 @@ module mkMMU_Cache_Arbiter #(MMU_Cache_IFC cache)
 	    return rg_master [i] ? cache.addr : v_rsp_addr [i];
 	 endmethod
 
-	 method Bit #(64) word64;
+	 method Bit#(64) word64;
 	    return rg_master [i] ? cache.word64 : v_rsp_word64 [i];
 	 endmethod
 
-	 method Bit #(64) st_amo_val;
+	 method Bit#(64) st_amo_val;
 	    return rg_master [i] ? cache.st_amo_val : v_rsp_st_amo_val [i];
 	 endmethod
 

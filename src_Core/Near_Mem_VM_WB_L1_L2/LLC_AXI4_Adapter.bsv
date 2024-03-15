@@ -55,7 +55,7 @@ interface LLC_AXI4_Adapter_IFC;
 
    // Misc. status; 0 = running, no error
    (* always_ready *)
-   method Bit #(8) mv_status;
+   method Bit#(8) mv_status;
 
 endinterface
 
@@ -113,7 +113,7 @@ module mkLLC_AXi4_Adapter #(MemFifoClient #(idT, childT) llc)
    endfunction
 
    // Send a write-request into the fabric
-   function Action fa_fabric_send_write_req (Fabric_Addr  addr, Fabric_Strb  strb, Bit #(64)  st_val);
+   function Action fa_fabric_send_write_req (Fabric_Addr  addr, Fabric_Strb  strb, Bit#(64)  st_val);
       action
 	 AXI4_Size  size = axsize_8;
 	 let mem_req_wr_addr = AXI4_Wr_Addr {awid:     fabric_default_id,
@@ -152,11 +152,11 @@ module mkLLC_AXi4_Adapter #(MemFifoClient #(idT, childT) llc)
    // Don't do reads while writes are outstanding.
 
    // Each 512b cache line takes 8 beats, each handling 64 bits
-   Reg #(Bit #(3)) rg_rd_req_beat <- mkReg (0);
-   Reg #(Bit #(3)) rg_rd_rsp_beat <- mkReg (0);
+   Reg #(Bit#(3)) rg_rd_req_beat <- mkReg (0);
+   Reg #(Bit#(3)) rg_rd_rsp_beat <- mkReg (0);
 
    FIFOF #(LdMemRq #(idT, childT)) f_pending_reads <- mkFIFOF;
-   Reg #(Bit #(512)) rg_cline <- mkRegU;
+   Reg #(Bit#(512)) rg_cline <- mkRegU;
 
    rule rl_handle_read_req (llc.toM.first matches tagged Ld .ld
 			    &&& (ctr_wr_rsps_pending.value == 0)
@@ -218,8 +218,8 @@ module mkLLC_AXi4_Adapter #(MemFifoClient #(idT, childT) llc)
    // Handle write requests and responses
 
    // Each 512b cache line takes 8 beats, each handling 64 bits
-   Reg #(Bit #(3)) rg_wr_req_beat <- mkReg (0);
-   Reg #(Bit #(3)) rg_wr_rsp_beat <- mkReg (0);
+   Reg #(Bit#(3)) rg_wr_req_beat <- mkReg (0);
+   Reg #(Bit#(3)) rg_wr_rsp_beat <- mkReg (0);
 
    FIFOF #(WbMemRs) f_pending_writes <- mkFIFOF;
 
@@ -232,11 +232,11 @@ module mkLLC_AXi4_Adapter #(MemFifoClient #(idT, childT) llc)
 
       Addr       line_addr = { wb.addr [63:6], 6'h0 };    // Addr of containing cache line
       Line       line_data = wb.data;
-      Vector #(8, Bit #(8)) line_bes = unpack (pack (wb.byteEn));
+      Vector #(8, Bit#(8)) line_bes = unpack (pack (wb.byteEn));
 
       Addr  offset = zeroExtend ( { rg_wr_req_beat, 3'b_000 } );    // Addr offset of 64b word for this beat
-      Bit #(64)  data64 = line_data [rg_wr_req_beat];
-      Bit #(8)   strb8  = line_bes  [rg_wr_req_beat];
+      Bit#(64)  data64 = line_data [rg_wr_req_beat];
+      Bit#(8)   strb8  = line_bes  [rg_wr_req_beat];
       fa_fabric_send_write_req (line_addr | offset, strb8, data64);
 
       if (rg_wr_req_beat == 0)
@@ -308,7 +308,7 @@ module mkLLC_AXi4_Adapter #(MemFifoClient #(idT, childT) llc)
    endmethod
 
    // Misc. status; 0 = running, no error
-   method Bit #(8) mv_status;
+   method Bit#(8) mv_status;
       return (rg_AXI4_error ? 1 : 0);
    endmethod
 

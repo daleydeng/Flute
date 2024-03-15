@@ -36,12 +36,12 @@ import Vector :: *;
 // ================================================================
 // Expand each bit in 'strobe' to a byte, creating a full-width mask.
 
-function Bit #(TMul #(n,8)) fn_strobe_to_mask (Bit #(n) strobe);
-   function Bit #(8) fn_bit_j_to_byte_j (Integer j);
+function Bit#(TMul #(n,8)) fn_strobe_to_mask (Bit#(n) strobe);
+   function Bit#(8) fn_bit_j_to_byte_j (Integer j);
       return signExtend (strobe [j]);
    endfunction
 
-   Vector #(n, Bit #(8)) v = genWith (fn_bit_j_to_byte_j);
+   Vector #(n, Bit#(8)) v = genWith (fn_bit_j_to_byte_j);
    return pack (v);
 endfunction
 
@@ -50,7 +50,7 @@ endfunction
 
 function Bit# (TMul #(n,8)) fn_update_strobed_bytes (Bit# (TMul #(n,8)) old_data,
 						     Bit# (TMul #(n,8)) new_data,
-						     Bit #(n)           strobe);
+						     Bit#(n)           strobe);
    Bit# (TMul #(n,8)) mask = fn_strobe_to_mask (strobe);
    return ((old_data & (~ mask))  |  (new_data & mask));
 endfunction
@@ -68,11 +68,11 @@ endfunction
 // 32b version
 
 function Tuple3 #(Bool,                // err: misaligned, or bad data_width
-		  Bit #(4),            // strobe
-		  Bit #(32))           // lane-adjusted data
-         fn_lane_adjust_32b (Bit #(32) addr, Bit #(3) dw, Bit #(32) data);
+		  Bit#(4),            // strobe
+		  Bit#(32))           // lane-adjusted data
+         fn_lane_adjust_32b (Bit#(32) addr, Bit#(3) dw, Bit#(32) data);
 
-   Bit #(4) strobe = 0;
+   Bit#(4) strobe = 0;
    Bool     err    = False;
 
    case (dw)
@@ -100,11 +100,11 @@ endfunction
 // 64b version
 
 function Tuple3 #(Bool,                // err: misaligned, or bad data_width
-		  Bit #(8),            // strobe
-		  Bit #(64))           // lane-adjusted data
-          fn_lane_adjust_64b (Bit #(64) addr, Bit #(4) dw, Bit #(64) data);
+		  Bit#(8),            // strobe
+		  Bit#(64))           // lane-adjusted data
+          fn_lane_adjust_64b (Bit#(64) addr, Bit#(4) dw, Bit#(64) data);
 
-   Bit #(8) strobe = 0;
+   Bit#(8) strobe = 0;
    Bool     err    = False;
 
    case (dw)
@@ -146,8 +146,8 @@ endfunction
 // 32b version
 
 function Tuple2 #(Bool,                // err: misaligned, or bad data_width
-		  Bit #(32))           // lane-unadjusted data
-          fn_lane_unadjust_32b (Bit #(32) addr, Bit #(3) dw, Bit #(32) data);
+		  Bit#(32))           // lane-unadjusted data
+          fn_lane_unadjust_32b (Bit#(32) addr, Bit#(3) dw, Bit#(32) data);
 
    Bool     err    = False;
 
@@ -176,8 +176,8 @@ endfunction
 // 64b version
 
 function Tuple2 #(Bool,                // err: misaligned, or bad data_width
-		  Bit #(64))           // lane-unadjusted data
-          fn_lane_unadjust_64b (Bit #(64) addr, Bit #(4) dw, Bit #(64) data);
+		  Bit#(64))           // lane-unadjusted data
+          fn_lane_unadjust_64b (Bit#(64) addr, Bit#(4) dw, Bit#(64) data);
 
    Bool     err    = False;
 

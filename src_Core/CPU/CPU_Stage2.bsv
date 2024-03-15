@@ -53,7 +53,7 @@ import Cur_Cycle  :: *;
 
 import isa_decls     :: *;
 
-import TV_Trace_Data :: *;
+import tv_trace_data :: *;
 
 import CPU_Globals      :: *;
 import Near_Mem_IFC     :: *;
@@ -98,7 +98,7 @@ endinterface
 // ================================================================
 // Implementation module
 
-module mkCPU_Stage2 #(Bit #(4)         verbosity,
+module mkCPU_Stage2 #(Bit#(4)         verbosity,
 		      CSR_RegFile_IFC  csr_regfile,    // for SATP and SSTATUS: TODO carry in Data_Stage1_to_Stage2
 		      DMem_IFC         dcache)
                     (CPU_Stage2_IFC);
@@ -322,7 +322,7 @@ module mkCPU_Stage2 #(Bit #(4)         verbosity,
 
                // Update MSTATUS.FS in trace packet
 	       let new_mstatus = csr_regfile.mv_update_mstatus_fs (fs_xs_dirty);
-               trace_data = fv_trace_update_mstatus_fs (trace_data, new_mstatus);
+               trace_data = trace_update_mstatus_fs (trace_data, new_mstatus);
             end else
 `endif
                trace_data.word1 = data_to_stage3.rd_val;
@@ -534,22 +534,22 @@ module mkCPU_Stage2 #(Bit #(4)         verbosity,
 	 // If DMem access, initiate it
 `ifdef ISA_A
 	 Bool op_stage2_amo = (x.op_stage2 == OP_Stage2_AMO);
-	 Bit #(7) amo_funct7 = x.val1 [6:0];
+	 Bit#(7) amo_funct7 = x.val1 [6:0];
 `else
 	 Bool op_stage2_amo = False;
-	 Bit #(7) amo_funct7 = 0;
+	 Bit#(7) amo_funct7 = 0;
 `endif
 	 if ((x.op_stage2 == OP_Stage2_LD)
 	     || (x.op_stage2 == OP_Stage2_ST)
 	     || op_stage2_amo) begin
 	    WordXL   mstatus     = csr_regfile.read_mstatus;
 `ifdef ISA_PRIV_S
-	    Bit #(1) sstatus_SUM = (csr_regfile.read_sstatus) [18];
+	    Bit#(1) sstatus_SUM = (csr_regfile.read_sstatus) [18];
 `else
-	    Bit #(1) sstatus_SUM = 0;
+	    Bit#(1) sstatus_SUM = 0;
 `endif
-	    Bit #(1) mstatus_MXR = mstatus [19];
-	    Priv_Mode  mem_priv = x.priv;
+	    Bit#(1) mstatus_MXR = mstatus [19];
+	    PrivMode  mem_priv = x.priv;
 	    if (mstatus [17] == 1'b1) begin
 	       mem_priv = mstatus [12:11];
 	       // $display ("    S2.fa_enq: mem_priv %0d => %0d (mstatus.MPP) due to mstatus.MPRV", x.priv, mem_priv);
@@ -602,7 +602,7 @@ module mkCPU_Stage2 #(Bit #(4)         verbosity,
 `ifdef ISA_M
 	 // If MBox op, initiate it
 	 else if (x.op_stage2 == OP_Stage2_M) begin
-            // Instr fields required for decode for F/D opcodes
+            // InstrBits fields required for decode for F/D opcodes
 	    Bool is_OP_not_OP_32 = (x.instr [3] == 1'b0);
             mbox.req (is_OP_not_OP_32, funct3, x.val1, x.val2);
 	 end
@@ -611,11 +611,11 @@ module mkCPU_Stage2 #(Bit #(4)         verbosity,
 `ifdef ISA_F
 	 // If FBox op, initiate it
 	 else if (x.op_stage2 == OP_Stage2_FD) begin
-	    // Instr fields required for decode for F/D opcodes
+	    // InstrBits fields required for decode for F/D opcodes
             let opcode = instr_opcode (x.instr);
 	    let funct7 = instr_funct7 (x.instr);
             let rs2    = instr_rs2    (x.instr);
-            Bit #(64) val1 = x.val1_frm_gpr ? extend (x.val1)
+            Bit#(64) val1 = x.val1_frm_gpr ? extend (x.val1)
                                             : extend (x.fval1);
 
 	    fbox.req (opcode,

@@ -10,26 +10,26 @@
 // ================================================================
 // Utility functions
 
-// In these functions, 'bitpos' is Bit #(6) which is enough to index
+// In these functions, 'bitpos' is Bit#(6) which is enough to index
 // 64-bit words in RV64.
 
-function Bit #(n) fv_assign_bit (Bit #(n) x, Bit #(6) bitpos, Bit #(1) b)
+function Bit#(n) fv_assign_bit (Bit#(n) x, Bit#(6) bitpos, Bit#(1) b)
    provisos (Add #(a__, 1, n));
-   Bit #(n) mask = (1          << bitpos);
-   Bit #(n) val  = (extend (b) << bitpos);
+   Bit#(n) mask = (1          << bitpos);
+   Bit#(n) val  = (extend (b) << bitpos);
    return ((x & (~ mask)) | val);
 endfunction
 
-function Bit #(n) fv_assign_bits (Bit #(n) x, Bit #(6) bitpos, Bit #(w) bs)
+function Bit#(n) fv_assign_bits (Bit#(n) x, Bit#(6) bitpos, Bit#(w) bs)
    provisos (Add #(a__, w, n));
-   Bit #(n) mask = (((1 << valueOf (w)) - 1) << bitpos);
-   Bit #(n) val  = (extend (bs)              << bitpos);
+   Bit#(n) mask = (((1 << valueOf (w)) - 1) << bitpos);
+   Bit#(n) val  = (extend (bs)              << bitpos);
    return ((x & (~ mask)) | val);
 endfunction
 
-function Bit #(w) fv_get_bits (Bit #(n) x, Bit #(6) bitpos)
+function Bit#(w) fv_get_bits (Bit#(n) x, Bit#(6) bitpos)
    provisos (Add #(a__, w, n));
-   Bit #(n) mask = ((1 << valueOf (w)) - 1);
+   Bit#(n) mask = ((1 << valueOf (w)) - 1);
    return truncate ((x >> bitpos) & mask);
 endfunction
 
@@ -186,18 +186,39 @@ CSRAddr   csr_addr_dscratch1 = 12'h7B3;    // Debug scratch1
 // MISA
 
 typedef struct {
-   Bit #(2) mxl;
-   Bit #(1) z;  Bit #(1) y;
-   Bit #(1) x;  Bit #(1) w;  Bit #(1) v;  Bit #(1) u;  Bit #(1) t;  Bit #(1) s;  Bit #(1) r;  Bit #(1) q;
-   Bit #(1) p;  Bit #(1) o;  Bit #(1) n;  Bit #(1) m;  Bit #(1) l;  Bit #(1) k;  Bit #(1) j;  Bit #(1) i;
-   Bit #(1) h;  Bit #(1) g;  Bit #(1) f;  Bit #(1) e;  Bit #(1) d;  Bit #(1) c;  Bit #(1) b;  Bit #(1) a;
-   } MISA
-deriving (Bits);
+   Bit#(2) mxl;
+   Bit#(1) z;  
+   Bit#(1) y;
+   Bit#(1) x;  
+   Bit#(1) w;  
+   Bit#(1) v;  
+   Bit#(1) u;  
+   Bit#(1) t;  
+   Bit#(1) s;  
+   Bit#(1) r;  
+   Bit#(1) q;
+   Bit#(1) p;  
+   Bit#(1) o;  
+   Bit#(1) n;  
+   Bit#(1) m;  
+   Bit#(1) l;  
+   Bit#(1) k;  
+   Bit#(1) j;  
+   Bit#(1) i;
+   Bit#(1) h;  
+   Bit#(1) g;  
+   Bit#(1) f;  
+   Bit#(1) e;  
+   Bit#(1) d;  
+   Bit#(1) c;  
+   Bit#(1) b;  
+   Bit#(1) a;
+} MISA deriving (Bits);
 
-Bit #(2) misa_mxl_zero  = 0;
-Bit #(2) misa_mxl_32    = 1;
-Bit #(2) misa_mxl_64    = 2;
-Bit #(2) misa_mxl_128   = 3;
+Bit#(2) misa_mxl_zero  = 0;
+Bit#(2) misa_mxl_32    = 1;
+Bit#(2) misa_mxl_64    = 2;
+Bit#(2) misa_mxl_128   = 3;
 
 function WordXL misa_to_word (MISA ms);
    return {ms.mxl,
@@ -289,29 +310,29 @@ Integer mstatus_uie_bitpos     =  0;
 
 // Values for FS and XS
 
-Bit #(2) fs_xs_off      = 2'h0;
-Bit #(2) fs_xs_initial  = 2'h1;
-Bit #(2) fs_xs_clean    = 2'h2;
-Bit #(2) fs_xs_dirty    = 2'h3;
+Bit#(2) fs_xs_off      = 2'h0;
+Bit#(2) fs_xs_initial  = 2'h1;
+Bit#(2) fs_xs_clean    = 2'h2;
+Bit#(2) fs_xs_dirty    = 2'h3;
 
 // Extract MSTATUS.FS field
-function Bit #(2) fv_mstatus_fs (WordXL mstatus);
+function Bit#(2) fv_mstatus_fs (WordXL mstatus);
    return (fv_get_bits (mstatus, fromInteger (mstatus_fs_bitpos)));
 endfunction
 
 // Virtual field SD is computed from FS and XS
-function Bit #(1) fv_mstatus_sd (WordXL  mstatus);
-   Bit #(2) xs = fv_get_bits (mstatus, fromInteger (mstatus_xs_bitpos));
-   Bit #(2) fs = fv_get_bits (mstatus, fromInteger (mstatus_fs_bitpos));
+function Bit#(1) fv_mstatus_sd (WordXL  mstatus);
+   Bit#(2) xs = fv_get_bits (mstatus, fromInteger (mstatus_xs_bitpos));
+   Bit#(2) fs = fv_get_bits (mstatus, fromInteger (mstatus_fs_bitpos));
    return (((fs == fs_xs_dirty) || (xs == fs_xs_dirty)) ? 1 : 0);
 endfunction
 
 function Fmt fshow_mstatus (MISA  misa, WordXL  mstatus);
-   Bit #(2) sxl = ((misa.mxl == misa_mxl_64) ? fv_get_bits (mstatus, fromInteger (mstatus_sxl_bitpos)) : 0);
-   Bit #(2) uxl = ((misa.mxl == misa_mxl_64) ? fv_get_bits (mstatus, fromInteger (mstatus_uxl_bitpos)) : 0);
-   Bit #(2) xs  = fv_get_bits (mstatus, fromInteger (mstatus_xs_bitpos));
-   Bit #(2) fs  = fv_get_bits (mstatus, fromInteger (mstatus_fs_bitpos));
-   Bit #(2) mpp = fv_get_bits (mstatus, fromInteger (mstatus_mpp_bitpos));
+   Bit#(2) sxl = ((misa.mxl == misa_mxl_64) ? fv_get_bits (mstatus, fromInteger (mstatus_sxl_bitpos)) : 0);
+   Bit#(2) uxl = ((misa.mxl == misa_mxl_64) ? fv_get_bits (mstatus, fromInteger (mstatus_uxl_bitpos)) : 0);
+   Bit#(2) xs  = fv_get_bits (mstatus, fromInteger (mstatus_xs_bitpos));
+   Bit#(2) fs  = fv_get_bits (mstatus, fromInteger (mstatus_fs_bitpos));
+   Bit#(2) mpp = fv_get_bits (mstatus, fromInteger (mstatus_mpp_bitpos));
 
    return (  $format ("MStatus{")
 	   + $format ("sd:%0d", fv_mstatus_sd (mstatus))
@@ -343,16 +364,16 @@ endfunction
 // ----------------
 // Help functions to manipulate mstatus on traps and trap-returns
 
-function Priv_Mode fv_new_priv_on_exception (MISA       misa,
-					     Priv_Mode  from_priv,
+function PrivMode fv_new_priv_on_exception (MISA       misa,
+					     PrivMode  from_priv,
 					     Bool       interrupt,
 					     Exc_Code   exc_code,
-					     Bit #(16)  medeleg,
-					     Bit #(12)  mideleg,
-					     Bit #(16)  sedeleg,
-					     Bit #(12)  sideleg);
-   Priv_Mode to_priv = m_Priv_Mode;
-   Bit #(1) deleg_bit = 1'b0;
+					     Bit#(16)  medeleg,
+					     Bit#(12)  mideleg,
+					     Bit#(16)  sedeleg,
+					     Bit#(12)  sideleg);
+   PrivMode to_priv = m_Priv_Mode;
+   Bit#(1) deleg_bit = 1'b0;
 
    // If the current priv mode is M, it cannot be delegated.
    if (from_priv < m_Priv_Mode) begin
@@ -397,9 +418,9 @@ function Priv_Mode fv_new_priv_on_exception (MISA       misa,
    return to_priv;
 endfunction
 
-function WordXL fv_new_mstatus_on_exception (WordXL mstatus, Priv_Mode from_y, Priv_Mode to_x);
-   Bit #(6) ie_to_x  = extend (to_x);
-   Bit #(6) pie_to_x = fromInteger (mstatus_upie_bitpos) + extend (to_x);
+function WordXL fv_new_mstatus_on_exception (WordXL mstatus, PrivMode from_y, PrivMode to_x);
+   Bit#(6) ie_to_x  = extend (to_x);
+   Bit#(6) pie_to_x = fromInteger (mstatus_upie_bitpos) + extend (to_x);
    // xPIE = xIE
    mstatus = fv_assign_bit (mstatus, pie_to_x, mstatus [ie_to_x]);
    // xIE = 0
@@ -412,11 +433,11 @@ function WordXL fv_new_mstatus_on_exception (WordXL mstatus, Priv_Mode from_y, P
    return mstatus;
 endfunction
 
-function Tuple2 #(WordXL, Priv_Mode) fv_new_mstatus_on_ret (MISA       misa,
+function Tuple2 #(WordXL, PrivMode) fv_new_mstatus_on_ret (MISA       misa,
 							    WordXL     mstatus,
-							    Priv_Mode  from_x);
-   Bit #(6) ie_from_x  = extend (from_x);
-   Bit #(6) pie_from_x = fromInteger (mstatus_upie_bitpos) + extend (from_x);
+							    PrivMode  from_x);
+   Bit#(6) ie_from_x  = extend (from_x);
+   Bit#(6) pie_from_x = fromInteger (mstatus_upie_bitpos) + extend (from_x);
 
    // Pop the interrupt-enable stack
    // (set xIE = xPIE)
@@ -429,8 +450,8 @@ function Tuple2 #(WordXL, Priv_Mode) fv_new_mstatus_on_ret (MISA       misa,
    // Pop the previous privilege mode
    // which empties the one-element stack, revealing the default value
    // (set xPP to U -- or M if U is not supported)
-   Priv_Mode to_y;
-   Priv_Mode default_pp = ((misa.u == 1'b1) ? u_Priv_Mode : m_Priv_Mode);
+   PrivMode to_y;
+   PrivMode default_pp = ((misa.u == 1'b1) ? u_Priv_Mode : m_Priv_Mode);
    if (from_x == m_Priv_Mode) begin
       to_y = fv_get_bits (mstatus, fromInteger (mstatus_mpp_bitpos));
       mstatus = fv_assign_bits (mstatus, fromInteger (mstatus_mpp_bitpos), default_pp);
@@ -450,7 +471,7 @@ typedef enum {DIRECT, VECTORED} MTVEC_Mode
 deriving (Bits, Eq, FShow);
 
 typedef struct {
-   Bit #(XLEN_MINUS_2) base;
+   Bit#(XLEN_MINUS_2) base;
    MTVEC_Mode mode;
 } MTVec
 deriving (Bits, FShow);
@@ -513,7 +534,7 @@ Integer mip_meip_bitpos = 11;
 // MCAUSE (reason for exception)
 
 typedef struct {
-   Bit #(1)  interrupt;
+   Bit#(1)  interrupt;
    Exc_Code  exc_code;
    } MCause
 deriving (Bits);
@@ -538,7 +559,7 @@ endfunction
 
 // Exception Codes in mcause
 
-typedef Bit #(4) Exc_Code;
+typedef Bit#(4) Exc_Code;
 
 // When Interrupt = 1 (interrupt)
 
@@ -635,13 +656,13 @@ function Maybe #(Exc_Code) fv_interrupt_pending (MISA       misa,
 						 WordXL     mstatus,
 						 WordXL     mip,
 						 WordXL     mie,
-						 Bit #(12)  mideleg,
-						 Bit #(12)  sideleg,
-						 Priv_Mode  cur_priv);
+						 Bit#(12)  mideleg,
+						 Bit#(12)  sideleg,
+						 PrivMode  cur_priv);
 
    function Maybe #(Exc_Code) fv_interrupt_i_pending (Exc_Code i);
       Bool intr_pending = ((mip [i] == 1) && (mie [i] == 1));
-      Priv_Mode handler_priv;
+      PrivMode handler_priv;
       if (mideleg [i] == 1)
 	 if (misa.u == 1)
 	    if (misa.s == 1)

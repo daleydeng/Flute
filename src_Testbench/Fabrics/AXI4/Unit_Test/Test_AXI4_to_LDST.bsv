@@ -114,11 +114,11 @@ module mkTest_AXI4_to_LDST (Empty);
 			     aruser: 0};
 
    // 'values' is a vector of bytes [0, 1, 2, ...]
-   function Bit #(8) fn_for_vector_gen (Integer i);
+   function Bit#(8) fn_for_vector_gen (Integer i);
       return fromInteger (i);
    endfunction
 
-   Vector #(TDiv #(Wd_AXI_Data, 8), Bit #(8)) values = genWith (fn_for_vector_gen);
+   Vector #(TDiv #(Wd_AXI_Data, 8), Bit#(8)) values = genWith (fn_for_vector_gen);
 
    AXI4_Wr_Data #(Wd_AXI_Data, Wd_User)
    wr_data_0 = AXI4_Wr_Data {wdata: pack (values),
@@ -126,10 +126,10 @@ module mkTest_AXI4_to_LDST (Empty);
 			     wlast: True,
 			     wuser: 0};
 
-   function Action fa_show_axi_data (Bit #(Wd_AXI_Data) axi_data);
+   function Action fa_show_axi_data (Bit#(Wd_AXI_Data) axi_data);
       action
 	 Vector #(TDiv #(Wd_AXI_Data, Wd_LDST_Data),
-		  Bit #(Wd_LDST_Data))               v_slices = unpack (axi_data);
+		  Bit#(Wd_LDST_Data))               v_slices = unpack (axi_data);
 
 	 Integer slices_per_axi_data_I = valueOf (TDiv #(Wd_AXI_Data, Wd_LDST_Data));
 
@@ -187,7 +187,7 @@ module mkTest_AXI4_to_LDST (Empty);
 		      || ((sizecode == ldst_d) && (addr [2:0] == 3'b000)));
 
       let shift_amt = ((addr & 'h3F) << 3);
-      Bit #(Wd_LDST_Data) rdata = truncate (pack (values) >> shift_amt);
+      Bit#(Wd_LDST_Data) rdata = truncate (pack (values) >> shift_amt);
       case (sizecode)
 	 2'b00: rdata = (rdata & 'h_FF);
 	 2'b01: rdata = (rdata & 'h_FFFF);
@@ -257,8 +257,8 @@ module mkTest_AXI4_to_LDST (Empty);
 
    function Action fa_wr_REQ (AXI4_Wr_Addr #(Wd_Id, Wd_Addr, Wd_User) wr_addr,
 			      AXI4_Wr_Data #(Wd_AXI_Data, Wd_User)    wr_data,
-			      Bit #(16) id,
-			      Bit #(64) addr,
+			      Bit#(16) id,
+			      Bit#(64) addr,
 			      AXI4_Size axsize);
       action
 	 await ((! rg_one_at_a_time) || rg_prev_done);
@@ -283,8 +283,8 @@ module mkTest_AXI4_to_LDST (Empty);
    // ----------------
 
    function Action fa_rd_REQ (AXI4_Rd_Addr #(Wd_Id, Wd_Addr, Wd_User) rd_addr,
-			      Bit #(16) id,
-			      Bit #(64) addr,
+			      Bit#(16) id,
+			      Bit#(64) addr,
 			      AXI4_Size axsize);
       action
 	 await ((! rg_one_at_a_time) || rg_prev_done);
@@ -306,7 +306,7 @@ module mkTest_AXI4_to_LDST (Empty);
    // ----------------
    // Stimulus tests
 
-   function Stmt test_illegal_wr_req (Bit #(16) id);
+   function Stmt test_illegal_wr_req (Bit#(16) id);
       return seq
 		// ----------------
 		// - num beats > 1
@@ -329,7 +329,7 @@ module mkTest_AXI4_to_LDST (Empty);
 	     endseq;
    endfunction
 
-   function Stmt test_illegal_rd_req (Bit #(16) id);
+   function Stmt test_illegal_rd_req (Bit#(16) id);
       return seq
 		// ----------------
 		// - num beats > 1
@@ -346,7 +346,7 @@ module mkTest_AXI4_to_LDST (Empty);
 	     endseq;
    endfunction
 
-   function Stmt test_writes (Bool mode, Bit #(16) id0);
+   function Stmt test_writes (Bool mode, Bit#(16) id0);
       return seq
 		fa_set_one_at_a_time (mode);    // True: one-at-a-time, False: Pipelined
 
@@ -373,7 +373,7 @@ module mkTest_AXI4_to_LDST (Empty);
 	     endseq;
    endfunction
 
-   function Stmt test_reads (Bool mode, Bit #(16) id0);
+   function Stmt test_reads (Bool mode, Bit#(16) id0);
       return seq
 		fa_set_one_at_a_time (mode);    // True: one-at-a-time, False: Pipelined
 

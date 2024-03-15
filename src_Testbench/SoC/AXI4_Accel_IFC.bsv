@@ -37,7 +37,7 @@ import Fabric_Defs :: *;
 // Interface
 
 interface AXI4_Accel_IFC;
-   method Action init (Bit# (Wd_Id) axi4_id, Bit #(Wd_Addr) addr_base, Bit #(Wd_Addr) addr_lim);
+   method Action init (Bit# (Wd_Id) axi4_id, Bit#(Wd_Addr) addr_base, Bit#(Wd_Addr) addr_lim);
 
    interface AXI4_Slave_IFC  #(Wd_Id, Wd_Addr, Wd_Data, Wd_User)  slave;
 

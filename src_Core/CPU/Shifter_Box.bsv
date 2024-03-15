@@ -57,7 +57,7 @@ endinterface
 module mkShifter_Box (Shifter_Box_IFC);
    Reg #(Bool)                rg_right       <- mkRegU;
    Reg #(Word)                rg_v1          <- mkRegU;
-   Reg #(Bit #(TLog #(XLEN))) rg_shamt       <- mkRegU;
+   Reg #(Bit#(TLog #(XLEN))) rg_shamt       <- mkRegU;
    Reg #(Bool)                rg_arith_shift <- mkRegU;
 
    // The 'execution_order' attibs below are to override the compiler

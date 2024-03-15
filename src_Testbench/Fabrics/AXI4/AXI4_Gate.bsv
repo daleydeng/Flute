@@ -122,7 +122,7 @@ module mkAXI4_Gate
       $display ("    %0d: %m", cur_cycle);
    endrule
  
-   Reg #(Bit #(9)) rg_rd_burst_len <- mkRegU;
+   Reg #(Bit#(9)) rg_rd_burst_len <- mkRegU;
 
    rule rl_rd_addr_disabled (respond_with_err && (! rg_enabled));
       let rda = xactor_from_M.o_rd_addr.first;
@@ -143,7 +143,7 @@ module mkAXI4_Gate
 					 && (! rg_enabled)
 					 && (rg_rd_burst_len != 0));
       let rda = xactor_from_M.o_rd_addr.first;
-      Bit #(wd_data_t) rdata = ?;
+      Bit#(wd_data_t) rdata = ?;
       let rdd = AXI4_Rd_Data {rid:   rda.arid,
 			      rresp: axi4_resp_slverr,
 			      rdata: rdata,

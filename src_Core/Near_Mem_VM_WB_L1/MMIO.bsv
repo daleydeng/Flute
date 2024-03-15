@@ -41,10 +41,10 @@ interface MMIO_IFC;
    method Action req (MMU_Cache_Req mmu_cache_req);
    method Action start (PA pa);
 
-   method Tuple3 #(Bool, Bit #(64), Bit #(64)) result;
+   method Tuple3 #(Bool, Bit#(64), Bit#(64)) result;
 
    interface Get #(Single_Req)  g_mem_req;
-   interface Get #(Bit #(64))   g_write_data;
+   interface Get #(Bit#(64))   g_write_data;
    interface Put #(Read_Data)   p_mem_read_data;
 endinterface
 
@@ -71,24 +71,24 @@ module mkMMIO (MMIO_IFC);
 
    // Results
    Reg #(Bool)          rg_err          <- mkReg (False);
-   Reg #(Bit #(64))     rg_ld_val       <- mkReg (0);
-   Reg #(Bit #(64))     rg_final_st_val <- mkReg (0);
+   Reg #(Bit#(64))     rg_ld_val       <- mkReg (0);
+   Reg #(Bit#(64))     rg_final_st_val <- mkReg (0);
 
    // ----------------
    // Memory interface
 
    FIFOF #(Single_Req)  f_single_reqs  <- mkFIFOF;
-   FIFOF #(Bit #(64))   f_write_data <- mkFIFOF;
+   FIFOF #(Bit#(64))   f_write_data <- mkFIFOF;
    FIFOF #(Read_Data)   f_read_data  <- mkFIFOF;
 
    // ----------------------------------------------------------------
    // Help-function for single-writes to mem
 
-   function Action fa_mem_single_write (Bit #(64) st_value);
+   function Action fa_mem_single_write (Bit#(64) st_value);
       action
 	 // Lane-align the outgoing data
-	 Bit #(6)  shamt_bits = { rg_pa [2:0], 3'b000 };
-	 Bit #(64) data       = (st_value << shamt_bits);
+	 Bit#(6)  shamt_bits = { rg_pa [2:0], 3'b000 };
+	 Bit#(64) data       = (st_value << shamt_bits);
 
 	 let req = Single_Req {is_read:   False,
 			       addr:      zeroExtend (rg_pa),
@@ -138,7 +138,7 @@ module mkMMIO (MMIO_IFC);
 
       // Successful read
       else begin
-	 Bit #(64) ld_val_bits = fv_from_byte_lanes (zeroExtend (rg_pa), rg_req.f3 [1:0], read_data.data);
+	 Bit#(64) ld_val_bits = fv_from_byte_lanes (zeroExtend (rg_pa), rg_req.f3 [1:0], read_data.data);
 
 	 // Loads and LR
 	 if ((rg_req.op == CACHE_LD) || fv_is_AMO_LR (rg_req)) begin
@@ -179,7 +179,7 @@ module mkMMIO (MMIO_IFC);
 	 $display ("%0d: %m.rl_write_req; f3 %0h  vaddr %0h  paddr %0h  word64 %0h",
 		   cur_cycle, rg_req.f3, rg_req.va, rg_pa, rg_req.st_value);
 
-      Bit #(64) data = fv_to_byte_lanes (zeroExtend (rg_pa), rg_req.f3 [1:0], rg_req.st_value);
+      Bit#(64) data = fv_to_byte_lanes (zeroExtend (rg_pa), rg_req.f3 [1:0], rg_req.st_value);
 
       fa_mem_single_write (data);
 

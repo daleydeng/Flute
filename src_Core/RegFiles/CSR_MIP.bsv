@@ -72,17 +72,17 @@ module mkCSR_MIP (CSR_MIP_IFC);
    
    Integer verbosity = 0;
 
-   Reg #(Bit #(1)) rg_meip <- mkReg (0);
-   Reg #(Bit #(1)) rg_seip <- mkReg (0);
-   Reg #(Bit #(1)) rg_ueip <- mkReg (0);
+   Reg #(Bit#(1)) rg_meip <- mkReg (0);
+   Reg #(Bit#(1)) rg_seip <- mkReg (0);
+   Reg #(Bit#(1)) rg_ueip <- mkReg (0);
 
-   Reg #(Bit #(1)) rg_mtip <- mkReg (0);
-   Reg #(Bit #(1)) rg_stip <- mkReg (0);
-   Reg #(Bit #(1)) rg_utip <- mkReg (0);
+   Reg #(Bit#(1)) rg_mtip <- mkReg (0);
+   Reg #(Bit#(1)) rg_stip <- mkReg (0);
+   Reg #(Bit#(1)) rg_utip <- mkReg (0);
 
-   Reg #(Bit #(1)) rg_msip <- mkReg (0);
-   Reg #(Bit #(1)) rg_ssip <- mkReg (0);
-   Reg #(Bit #(1)) rg_usip <- mkReg (0);
+   Reg #(Bit#(1)) rg_msip <- mkReg (0);
+   Reg #(Bit#(1)) rg_ssip <- mkReg (0);
+   Reg #(Bit#(1)) rg_usip <- mkReg (0);
 
    // ----------------------------------------------------------------
    // INTERFACE
@@ -94,7 +94,7 @@ module mkCSR_MIP (CSR_MIP_IFC);
    endmethod
 
    method WordXL mv_read;
-      Bit #(12) new_mip = {rg_meip, 1'b0, rg_seip, rg_ueip,
+      Bit#(12) new_mip = {rg_meip, 1'b0, rg_seip, rg_ueip,
 			   rg_mtip, 1'b0, rg_stip, rg_utip,
 			   rg_msip, 1'b0, rg_ssip, rg_usip};
       return zeroExtend (new_mip);
@@ -102,23 +102,23 @@ module mkCSR_MIP (CSR_MIP_IFC);
 
    method ActionValue #(WordXL) mav_write (MISA misa,  WordXL wordxl);
       // External-interrupt enables
-      Bit #(1) seip = ((misa.s == 1) ? wordxl [mip_seip_bitpos] : 0);
-      Bit #(1) ueip = ((misa.n == 1) ? wordxl [mip_ueip_bitpos] : 0);
+      Bit#(1) seip = ((misa.s == 1) ? wordxl [mip_seip_bitpos] : 0);
+      Bit#(1) ueip = ((misa.n == 1) ? wordxl [mip_ueip_bitpos] : 0);
 
       // Timer-interrupt enables
-      Bit #(1) stip = ((misa.s == 1) ? wordxl [mip_stip_bitpos] : 0);
-      Bit #(1) utip = ((misa.n == 1) ? wordxl [mip_utip_bitpos] : 0);
+      Bit#(1) stip = ((misa.s == 1) ? wordxl [mip_stip_bitpos] : 0);
+      Bit#(1) utip = ((misa.n == 1) ? wordxl [mip_utip_bitpos] : 0);
 
       // Software-interrupt enables
-      Bit #(1) ssip = ((misa.s == 1) ? wordxl [mip_ssip_bitpos] : 0);
-      Bit #(1) usip = ((misa.n == 1) ? wordxl [mip_usip_bitpos] : 0);
+      Bit#(1) ssip = ((misa.s == 1) ? wordxl [mip_ssip_bitpos] : 0);
+      Bit#(1) usip = ((misa.n == 1) ? wordxl [mip_usip_bitpos] : 0);
 
       // Note: meip, mtip and msip cannot be written from CSR instructions
       rg_seip <= seip;    rg_ueip <= ueip;
       rg_stip <= stip;    rg_utip <= utip;
       rg_ssip <= ssip;    rg_usip <= usip;
 
-      Bit #(12) new_mip = {rg_meip, 1'b0, seip, ueip,
+      Bit#(12) new_mip = {rg_meip, 1'b0, seip, ueip,
 			   rg_mtip, 1'b0, stip, utip,
 			   rg_msip, 1'b0, ssip, usip};
       return zeroExtend (new_mip);
@@ -127,7 +127,7 @@ module mkCSR_MIP (CSR_MIP_IFC);
 `ifdef ISA_PRIV_S
    // SIP is a view of MIP, when 'S' extension is implemented.
    method WordXL mv_sip_read;
-      Bit #(12) sip = {2'b0, rg_seip, rg_ueip,
+      Bit#(12) sip = {2'b0, rg_seip, rg_ueip,
 		       2'b0, rg_stip, rg_utip,
 		       2'b0, rg_ssip, rg_usip};
       return zeroExtend (sip);
@@ -143,7 +143,7 @@ module mkCSR_MIP (CSR_MIP_IFC);
       rg_ssip <= ssip;
       rg_usip <= usip;
 
-      Bit #(12) new_sip = {2'b0, rg_seip,    ueip,
+      Bit#(12) new_sip = {2'b0, rg_seip,    ueip,
 			   2'b0, rg_stip, rg_utip,
 			   2'b0, ssip,       usip};
       return zeroExtend (new_sip);
@@ -159,7 +159,7 @@ module mkCSR_MIP (CSR_MIP_IFC);
    method ActionValue #(WordXL) mav_uip_write (MISA misa,  WordXL wordxl);
       // All UIP bits are read-only
 
-      Bit #(12) new_uip = {3'b0, rg_ueip,
+      Bit#(12) new_uip = {3'b0, rg_ueip,
 			   3'b0, rg_utip,
 			   3'b0, rg_usip};
       return zeroExtend (new_uip);

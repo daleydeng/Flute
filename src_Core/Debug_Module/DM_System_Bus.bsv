@@ -68,14 +68,14 @@ endfunction
 // result:
 //  - word with correct byte(s) shifted into LSBs and zero extended
 
-function Bit #(64)  fn_extract_and_extend_bytes (DM_sbaccess  sbaccess,
-						 Bit #(64)    read_addr,
-						 Bit #(64)    word64);
-   Bit #(3) addr_lsbs = read_addr [2:0];
+function Bit#(64)  fn_extract_and_extend_bytes (DM_sbaccess  sbaccess,
+						 Bit#(64)    read_addr,
+						 Bit#(64)    word64);
+   Bit#(3) addr_lsbs = read_addr [2:0];
    if (valueOf (Wd_Data) == 32)
       addr_lsbs = (addr_lsbs & 'h3);
 
-   Bit #(64) result    = 0;
+   Bit#(64) result    = 0;
    case (sbaccess)
       DM_SBACCESS_8_BIT:  case (addr_lsbs)
 			     'h0: result = zeroExtend (word64 [ 7: 0]);
@@ -115,13 +115,13 @@ function Tuple4 #(Fabric_Addr,    // addr is 32b- or 64b-aligned
 		  Fabric_Strb,    // strobe
 		  AXI4_Size)      // 8 for 8-byte writes, else 4
    fn_to_fabric_write_fields (DM_sbaccess  sbaccess,    // size of access
-			      Bit #(64)    addr,
-			      Bit #(64)    word64);     // data is in lsbs
+			      Bit#(64)    addr,
+			      Bit#(64)    word64);     // data is in lsbs
 
    // First compute addr, data and strobe for a 64b-wide fabric
-   Bit #(8)   strobe64    = 0;
-   Bit #(3)   shift_bytes = addr [2:0];
-   Bit #(6)   shift_bits  = { shift_bytes, 3'b0 };
+   Bit#(8)   strobe64    = 0;
+   Bit#(3)   shift_bytes = addr [2:0];
+   Bit#(6)   shift_bits  = { shift_bytes, 3'b0 };
    AXI4_Size  axsize      = axsize_128;    // Will be updated in 'case' below
 
    case (sbaccess)
@@ -200,9 +200,9 @@ module mkDM_System_Bus (DM_System_Bus_IFC);
 
    // Saved address during a read rg_sbaddress0/1 may be autoincremented,
    // but we need original addr byte-lane extraction from response
-   Reg #(Bit #(64)) rg_sbaddress_reading <- mkRegU;
+   Reg #(Bit#(64)) rg_sbaddress_reading <- mkRegU;
 
-   Bit #(64) sbaddress = { rg_sbaddress1, rg_sbaddress0 };
+   Bit#(64) sbaddress = { rg_sbaddress1, rg_sbaddress0 };
 
    Reg #(DM_Word) rg_sbdata0    <- mkRegU;
 
@@ -244,9 +244,9 @@ module mkDM_System_Bus (DM_System_Bus_IFC);
 
    Integer addr_incr = fn_sbaccess_to_addr_incr (rg_sbcs_sbaccess);
 
-   function Action fa_sbaddress_incr (Bit #(64) addr64);
+   function Action fa_sbaddress_incr (Bit#(64) addr64);
       action
-	 Bit #(64) next_sbaddress = addr64 + fromInteger (addr_incr);
+	 Bit#(64) next_sbaddress = addr64 + fromInteger (addr_incr);
 `ifdef RV64
 	 rg_sbaddress1 <= next_sbaddress [63:32];
 `else
@@ -262,7 +262,7 @@ module mkDM_System_Bus (DM_System_Bus_IFC);
    // ----------------
    // Construction and sending of fabric read-requests
 
-   function Action fa_fabric_send_read_req (Bit #(64)  addr64);
+   function Action fa_fabric_send_read_req (Bit#(64)  addr64);
       action
 	 Fabric_Addr fabric_addr = truncate (addr64);
 	 let rda = AXI4_Rd_Addr {arid:     fabric_default_id,
@@ -294,7 +294,7 @@ module mkDM_System_Bus (DM_System_Bus_IFC);
    // ----------------
    // Construction and sending of fabric write-requests
 
-   function Action fa_fabric_send_write_req (Bit #(64) data64);
+   function Action fa_fabric_send_write_req (Bit#(64) data64);
       action
 	 match {.fabric_addr,
 		.fabric_data,
@@ -424,7 +424,7 @@ module mkDM_System_Bus (DM_System_Bus_IFC);
 	 end
 
 	 else if (dm_addr == dm_addr_sbaddress0) begin
-	    Bit #(64) addr64 = { rg_sbaddress1, dm_word };
+	    Bit#(64) addr64 = { rg_sbaddress1, dm_word };
 	    if (rg_sbcs_sbreadonaddr) begin
 	       fa_fabric_send_read_req  (addr64);
 	       if (rg_sbcs_sbautoincrement)
@@ -516,8 +516,8 @@ module mkDM_System_Bus (DM_System_Bus_IFC);
 	 $display ("%m.rl_sb_read_finish: rdr = ", fshow (rdr));
 
       // Extract relevant bytes from fabric data
-      Bit #(64) rdata64 = zeroExtend (rdr.rdata);
-      Bit #(64) data    = fn_extract_and_extend_bytes (rg_sbcs_sbaccess,
+      Bit#(64) rdata64 = zeroExtend (rdr.rdata);
+      Bit#(64) data    = fn_extract_and_extend_bytes (rg_sbcs_sbaccess,
 						       rg_sbaddress_reading,
 						       rdata64);
 

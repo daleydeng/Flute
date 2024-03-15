@@ -50,15 +50,15 @@ interface CPU_StageF_IFC;
    (* always_ready *)
    method Action enq (Epoch            epoch,
 		      WordXL           pc,
-		      Priv_Mode        priv,
-		      Bit #(1)         sstatus_SUM,
-		      Bit #(1)         mstatus_MXR,
+		      PrivMode        priv,
+		      Bit#(1)         sstatus_SUM,
+		      Bit#(1)         mstatus_MXR,
 		      WordXL           satp);
 
    (* always_ready *)
    method Action bp_train (WordXL   pc,
 			   Bool     is_i32_not_i16,
-			   Instr    instr,
+			   InstrBits    instr,
 			   CF_Info  cf_info);
 
    (* always_ready *)
@@ -68,7 +68,7 @@ endinterface
 // ================================================================
 // Implementation module
 
-module mkCPU_StageF #(Bit #(4)  verbosity,
+module mkCPU_StageF #(Bit#(4)  verbosity,
 		      IMem_IFC  imem)
                     (CPU_StageF_IFC);
 
@@ -79,7 +79,7 @@ module mkCPU_StageF #(Bit #(4)  verbosity,
 
    Reg #(Bool)       rg_full  <- mkReg (False);
    Reg #(Epoch)      rg_epoch <- mkReg (0);               // Toggles on redirections
-   Reg #(Priv_Mode)  rg_priv  <- mkRegU;
+   Reg #(PrivMode)  rg_priv  <- mkRegU;
 
    Branch_Predictor_IFC branch_predictor <- mkBranch_Predictor;
 
@@ -135,9 +135,9 @@ module mkCPU_StageF #(Bit #(4)  verbosity,
    // ---- Input
    method Action enq (Epoch            epoch,
 		      WordXL           pc,
-		      Priv_Mode        priv,
-		      Bit #(1)         sstatus_SUM,
-		      Bit #(1)         mstatus_MXR,
+		      PrivMode        priv,
+		      Bit#(1)         sstatus_SUM,
+		      Bit#(1)         mstatus_MXR,
 		      WordXL           satp);
       if (verbosity > 1) begin
 	 $write ("    %m.CPU_StageF.ma_enq:  pc:0x%0h  epoch:%0d  priv:%0d", pc, epoch, priv);
@@ -155,7 +155,7 @@ module mkCPU_StageF #(Bit #(4)  verbosity,
 
    method Action bp_train (WordXL   pc,
 			   Bool     is_i32_not_i16,
-			   Instr    instr,
+			   InstrBits    instr,
 			   CF_Info  cf_info);
       branch_predictor.bp_train (pc, is_i32_not_i16, instr, cf_info);
    endmethod

@@ -98,7 +98,7 @@ interface Debug_Module_IFC;
    // Reset and run-control
    interface Client #(Bool, Bool) hart0_reset_client;
    interface Client #(Bool, Bool) hart0_client_run_halt;
-   interface Get #(Bit #(4))      hart0_get_other_req;
+   interface Get #(Bit#(4))      hart0_get_other_req;
 
    // GPR access
    interface Client #(DM_CPU_Req #(5,  XLEN), DM_CPU_Rsp #(XLEN)) hart0_gpr_mem_client;

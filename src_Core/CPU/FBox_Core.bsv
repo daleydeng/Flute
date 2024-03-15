@@ -34,8 +34,8 @@ import FPU       :: *;
 // FBox interface
 
 typedef struct {
-   Bit #(64)   value;            // The result rd
-   Bit #(5)    flags;            // FCSR.FFLAGS update value
+   Bit#(64)   value;            // The result rd
+   Bit#(5)    flags;            // FCSR.FFLAGS update value
 } FBoxResult deriving (Bits, Eq, FShow);
 
 typedef enum {
@@ -53,29 +53,29 @@ interface FBox_Core_IFC;
    (* always_ready *)
    method Action req (
         Opcode                      opcode
-      , Bit #(7)                    f7
-      , Bit #(3)                    rm
+      , Bit#(7)                    f7
+      , Bit#(3)                    rm
       , RegIdx                     rs2
-      , Bit #(64)                   v1
-      , Bit #(64)                   v2
-      , Bit #(64)                   v3
+      , Bit#(64)                   v1
+      , Bit#(64)                   v2
+      , Bit#(64)                   v3
    );
 
    // FBox response
    (* always_ready *)
    method Bool valid;
    (* always_ready *)
-   method Tuple2 #(Bit #(64), Bit #(5)) word;
+   method Tuple2 #(Bit#(64), Bit#(5)) word;
 endinterface
 
 // ================================================================
 // Some helper function
 // Definitions of Q-NaNs for single and double precision
-Bit #(32) canonicalNaN32 = 32'h7fc00000;
-Bit #(64) canonicalNaN64 = 64'h7ff8000000000000;
+Bit#(32) canonicalNaN32 = 32'h7fc00000;
+Bit#(64) canonicalNaN64 = 64'h7ff8000000000000;
 
 // Convert the rounding mode into the format understood by the FPU/PNU
-function RoundMode fv_getRoundMode (Bit #(3) rm);
+function RoundMode fv_getRoundMode (Bit#(3) rm);
    case (rm)
       3'h0: return (Rnd_Nearest_Even);
       3'h1: return (Rnd_Zero);
@@ -87,7 +87,7 @@ function RoundMode fv_getRoundMode (Bit #(3) rm);
 endfunction
 
 // Converts the exception coming from the FPU/PNU to the format for the FCSR
-function Bit #(5) exception_to_fcsr( FloatingPoint::Exception x );
+function Bit#(5) exception_to_fcsr( FloatingPoint::Exception x );
    let nv  = x.invalid_op ? 1'b1 : 1'b0 ;
    let dz  = x.divide_0   ? 1'b1 : 1'b0 ;
    let of  = x.overflow   ? 1'b1 : 1'b0 ;
@@ -99,15 +99,15 @@ endfunction
 // Take a single precision value and nanboxes it to be able to write it to a
 // 64-bit FPR register file. This is necessary if single precision operands
 // used with a register file capable of holding double precision values
-function Bit #(64) fv_nanbox (Bit #(64) x);
-   Bit #(64) fill_bits = (64'h1 << 32) - 1;  // [31: 0] all ones
-   Bit #(64) fill_mask = (fill_bits << 32);  // [63:32] all ones
+function Bit#(64) fv_nanbox (Bit#(64) x);
+   Bit#(64) fill_bits = (64'h1 << 32) - 1;  // [31: 0] all ones
+   Bit#(64) fill_mask = (fill_bits << 32);  // [63:32] all ones
    return (x | fill_mask);
 endfunction
 
 // Take a 64-bit value and check if it is properly nanboxed if operating in a DP
 // capable environment. If not properly nanboxed, return canonicalNaN32
-function FSingle fv_unbox (Bit #(64) x);
+function FSingle fv_unbox (Bit#(64) x);
 `ifdef ISA_D
    if (x [63:32] == 32'hffffffff)
       return (unpack (x [31:0]));
@@ -131,7 +131,7 @@ endfunction
 // ================================================================
 
 (* synthesize *)
-module mkFBox_Core #(Bit #(4) verbosity) (FBox_Core_IFC);
+module mkFBox_Core #(Bit#(4) verbosity) (FBox_Core_IFC);
 
    FIFOF #(Token)          resetReqsF           <- mkFIFOF;
    FIFOF #(Token)          resetRspsF           <- mkFIFOF;
@@ -142,27 +142,27 @@ module mkFBox_Core #(Bit #(4) verbosity) (FBox_Core_IFC);
 
    Reg   #(Maybe #(Tuple7 #(
         Opcode
-      , Bit #(7)
+      , Bit#(7)
       , RegIdx 
-      , Bit #(3)
-      , Bit #(64)
-      , Bit #(64)
-      , Bit #(64))))       requestR             <- mkRegU;
+      , Bit#(3)
+      , Bit#(64)
+      , Bit#(64)
+      , Bit#(64))))       requestR             <- mkRegU;
 
    Reg   #(Bool)           dw_valid             <- mkDWire (False);
    Reg   #(Tuple2 #(
-        Bit #(64)
-      , Bit #(5)))         dw_result            <- mkDWire (?);
+        Bit#(64)
+      , Bit#(5)))         dw_result            <- mkDWire (?);
 
    Reg   #(Maybe #(Tuple2 #(
-        Bit #(64)
-      , Bit #(5))))        resultR              <- mkRegU;
+        Bit#(64)
+      , Bit#(5))))        resultR              <- mkRegU;
    
    FPU_IFC                 fpu                  <- mkFPU;
 
    // =============================================================
    // Drive response to the pipeline
-   function Action fa_driveResponse (Bit #(64) res, Bit #(5) flags);
+   function Action fa_driveResponse (Bit#(64) res, Bit#(5) flags);
       action
       dw_valid    <= True;
       dw_result   <= tuple2 (res, flags);
@@ -172,7 +172,7 @@ module mkFBox_Core #(Bit #(4) verbosity) (FBox_Core_IFC);
    // =============================================================
    // Decode sub-opcodes (a direct lift from the spec)
    match {.opc, .f7, .rs2, .rm, .v1, .v2, .v3} = requestR.Valid;
-   Bit #(2) f2 = f7[1:0];
+   Bit#(2) f2 = f7[1:0];
 `ifdef ISA_D
    let isFMADD_D     = (opc == op_FMADD)  && (f2 == 1);
    let isFMSUB_D     = (opc == op_FMSUB)  && (f2 == 1);
@@ -374,7 +374,7 @@ module mkFBox_Core #(Bit #(4) verbosity) (FBox_Core_IFC);
       let r1 = FSingle {  sign: sV2.sign
                         , exp:  sV1.exp
                         , sfd:  sV1.sfd};
-      Bit #(64) res = fv_nanbox (extend (pack (r1)));
+      Bit#(64) res = fv_nanbox (extend (pack (r1)));
 
       resultR     <= tagged Valid (tuple2 (res, 0));
       stateR      <= FBOX_RSP;
@@ -387,7 +387,7 @@ module mkFBox_Core #(Bit #(4) verbosity) (FBox_Core_IFC);
                             exp:   sV1.exp,
                             sfd:   sV1.sfd};
 
-      Bit #(64) res = fv_nanbox (extend (pack (r1)));
+      Bit#(64) res = fv_nanbox (extend (pack (r1)));
       resultR     <= tagged Valid (tuple2 (res, 0));
       stateR      <= FBOX_RSP;
    endrule
@@ -398,7 +398,7 @@ module mkFBox_Core #(Bit #(4) verbosity) (FBox_Core_IFC);
       FSingle r1 = FSingle {sign:  (sV1.sign != sV2.sign),
                             exp:   sV1.exp,
                             sfd:   sV1.sfd};
-      Bit #(64) res = fv_nanbox (extend (pack (r1)));
+      Bit#(64) res = fv_nanbox (extend (pack (r1)));
       resultR     <= tagged Valid (tuple2 (res, 0));
       stateR      <= FBOX_RSP;
    endrule
@@ -410,7 +410,7 @@ module mkFBox_Core #(Bit #(4) verbosity) (FBox_Core_IFC);
 
       Int#(64) v = unpack ( v1 );
       match {.f, .e} = Tuple2#(FSingle, FloatingPoint::Exception)'(vFixedToFloat( v, 6'd0, rmd));
-      Bit #(64) res = fv_nanbox (extend (pack ( f )));
+      Bit#(64) res = fv_nanbox (extend (pack ( f )));
       let fcsr = exception_to_fcsr(e);
       resultR     <= tagged Valid (tuple2 (res, fcsr));
       stateR      <= FBOX_RSP;
@@ -426,7 +426,7 @@ module mkFBox_Core #(Bit #(4) verbosity) (FBox_Core_IFC);
          $display ("%0d: FBox_Core.doFCVT_S_LU ", cur_cycle);
       UInt#(64) v = unpack ( v1 );
       match {.f, .e} = Tuple2#(FSingle, FloatingPoint::Exception)'(vFixedToFloat( v, 6'd0, rmd));
-      Bit #(64) res = fv_nanbox (extend (pack ( f )));
+      Bit#(64) res = fv_nanbox (extend (pack ( f )));
       let fcsr = exception_to_fcsr(e);
       resultR     <= tagged Valid (tuple2 (res, fcsr));
       stateR      <= FBOX_RSP;
@@ -438,7 +438,7 @@ module mkFBox_Core #(Bit #(4) verbosity) (FBox_Core_IFC);
          $display ("%0d: FBox_Core.doFCVT_S_W ", cur_cycle);
       Int#(32) v = unpack (truncate ( v1 ));
       match {.f, .e} = Tuple2#(FSingle, FloatingPoint::Exception)'(vFixedToFloat( v, 6'd0, rmd));
-      Bit #(64) res = fv_nanbox (extend (pack ( f )));
+      Bit#(64) res = fv_nanbox (extend (pack ( f )));
       let fcsr = exception_to_fcsr(e);
       resultR     <= tagged Valid (tuple2 (res, fcsr));
       stateR      <= FBOX_RSP;
@@ -449,7 +449,7 @@ module mkFBox_Core #(Bit #(4) verbosity) (FBox_Core_IFC);
          $display ("%0d: FBox_Core.doFCVT_S_WU ", cur_cycle);
       UInt#(32) v = unpack (truncate ( v1 ));
       match {.f, .e} = Tuple2#(FSingle, FloatingPoint::Exception)'(vFixedToFloat( v, 6'd0, rmd));
-      Bit #(64) res = fv_nanbox (extend (pack ( f )));
+      Bit#(64) res = fv_nanbox (extend (pack ( f )));
       let fcsr = exception_to_fcsr(e);
       resultR     <= tagged Valid (tuple2 (res, fcsr));
       stateR      <= FBOX_RSP;
@@ -467,7 +467,7 @@ module mkFBox_Core #(Bit #(4) verbosity) (FBox_Core_IFC);
           || (!(f.sign) && (isInfinity (f)))) 
          v = (1<<63) - 1;
 
-      Bit #(64) res = ( pack (v) );
+      Bit#(64) res = ( pack (v) );
       let fcsr = exception_to_fcsr(e);
       resultR     <= tagged Valid (tuple2 (res, fcsr));
       stateR      <= FBOX_RSP;
@@ -499,7 +499,7 @@ module mkFBox_Core #(Bit #(4) verbosity) (FBox_Core_IFC);
           || (!(f.sign) && (isInfinity (f)))) 
          v = 64'hffffffffffffffff;
 
-      Bit #(64) res = ( pack (v) );
+      Bit#(64) res = ( pack (v) );
       let fcsr = exception_to_fcsr(e);
       resultR     <= tagged Valid (tuple2 (res, fcsr));
       stateR      <= FBOX_RSP;
@@ -517,7 +517,7 @@ module mkFBox_Core #(Bit #(4) verbosity) (FBox_Core_IFC);
           || (!(f.sign) && (isInfinity (f)))) 
          v = (1<<31) - 1;
 
-      Bit #(64) res = signExtend (pack (v));
+      Bit#(64) res = signExtend (pack (v));
       let fcsr = exception_to_fcsr(e);
       resultR     <= tagged Valid (tuple2 (res, fcsr));
       stateR      <= FBOX_RSP;
@@ -551,7 +551,7 @@ module mkFBox_Core #(Bit #(4) verbosity) (FBox_Core_IFC);
 
       // This is meant for the GPR. If the GPR is 64-bit, the 32-bit result is
       // stored, sign-extended as per the v2.2 of the spec
-      Bit #(64) res = signExtend(pack (v));
+      Bit#(64) res = signExtend(pack (v));
       let fcsr = exception_to_fcsr(e);
       resultR     <= tagged Valid (tuple2 (res, fcsr));
       stateR      <= FBOX_RSP;
@@ -560,7 +560,7 @@ module mkFBox_Core #(Bit #(4) verbosity) (FBox_Core_IFC);
    rule doFMIN_S ( validReq && isFMIN_S );
       if (verbosity > 1)
          $display ("%0d: FBox_Core.doFMIN_S ", cur_cycle);
-      Bit #(64) res = ?;
+      Bit#(64) res = ?;
       let rs1IsPos0 = fv_FSingleIsPositiveZero (sV1);
       let rs2IsPos0 = fv_FSingleIsPositiveZero (sV2);
       let rs1IsNeg0 = isNegativeZero (sV1);
@@ -598,7 +598,7 @@ module mkFBox_Core #(Bit #(4) verbosity) (FBox_Core_IFC);
    rule doFMAX_S ( validReq && isFMAX_S );
       if (verbosity > 1)
          $display ("%0d: FBox_Core.doFMAX_S ", cur_cycle);
-      Bit #(64) res = ?;
+      Bit#(64) res = ?;
       let rs1IsPos0 = fv_FSingleIsPositiveZero (sV1);
       let rs2IsPos0 = fv_FSingleIsPositiveZero (sV2);
       let rs1IsNeg0 = isNegativeZero (sV1);
@@ -637,7 +637,7 @@ module mkFBox_Core #(Bit #(4) verbosity) (FBox_Core_IFC);
    rule doFMV_W_X ( validReq && isFMV_W_X );
       if (verbosity > 1)
          $display ("%0d: FBox_Core.doFMV_W_X ", cur_cycle);
-      Bit #(64) res = fv_nanbox (pack ( v1 ));
+      Bit#(64) res = fv_nanbox (pack ( v1 ));
       resultR     <= tagged Valid (tuple2 (res, 0));
       stateR      <= FBOX_RSP;
    endrule
@@ -648,7 +648,7 @@ module mkFBox_Core #(Bit #(4) verbosity) (FBox_Core_IFC);
       // The FMV treats the data in the FPR and GPR as raw data and does not
       // interpret it. So for this instruction we use the raw bits coming from
       // the FPR
-      Bit #(64) res = signExtend ( v1[31:0] );
+      Bit#(64) res = signExtend ( v1[31:0] );
 
       resultR     <= tagged Valid (tuple2 (res, 0));
       stateR      <= FBOX_RSP;
@@ -658,7 +658,7 @@ module mkFBox_Core #(Bit #(4) verbosity) (FBox_Core_IFC);
       if (verbosity > 1)
          $display ("%0d: FBox_Core.doFEQ_S ", cur_cycle);
       // Generate the results
-      Bit #(64) res = ?;
+      Bit#(64) res = ?;
       
       if (  isSNaN (sV1)
          || isSNaN (sV2)
@@ -680,7 +680,7 @@ module mkFBox_Core #(Bit #(4) verbosity) (FBox_Core_IFC);
       if (verbosity > 1)
          $display ("%0d: FBox_Core.doFLT_S ", cur_cycle);
       // Generate the results
-      Bit #(64) res = ?;
+      Bit#(64) res = ?;
       
       if (  isSNaN (sV1)
          || isSNaN (sV2)
@@ -702,7 +702,7 @@ module mkFBox_Core #(Bit #(4) verbosity) (FBox_Core_IFC);
       if (verbosity > 1)
          $display ("%0d: FBox_Core.doFLE_S ", cur_cycle);
       // Generate the results
-      Bit #(64) res = ?;
+      Bit#(64) res = ?;
       
       if (  isSNaN (sV1)
          || isSNaN (sV2)
@@ -723,7 +723,7 @@ module mkFBox_Core #(Bit #(4) verbosity) (FBox_Core_IFC);
    rule doFCLASS_S ( validReq && isFCLASS_S );
       if (verbosity > 1)
          $display ("%0d: FBox_Core.doFCLASS_S ", cur_cycle);
-      Bit #(64) res = 1;
+      Bit#(64) res = 1;
       if (isNaN(sV1)) begin
 	 res = isQNaN(sV1) ? (res << 9) : (res << 8);
       end
@@ -823,7 +823,7 @@ module mkFBox_Core #(Bit #(4) verbosity) (FBox_Core_IFC);
       let r1 = FDouble {  sign: dV2.sign
                         , exp:  dV1.exp
                         , sfd:  dV1.sfd};
-      Bit #(64) res = pack (r1);
+      Bit#(64) res = pack (r1);
 
       resultR     <= tagged Valid (tuple2 (res, 0));
       stateR      <= FBOX_RSP;
@@ -836,7 +836,7 @@ module mkFBox_Core #(Bit #(4) verbosity) (FBox_Core_IFC);
                         , exp:   dV1.exp
                         , sfd:   dV1.sfd};
 
-      Bit #(64) res = pack (r1);
+      Bit#(64) res = pack (r1);
       resultR     <= tagged Valid (tuple2 (res, 0));
       stateR      <= FBOX_RSP;
    endrule
@@ -847,7 +847,7 @@ module mkFBox_Core #(Bit #(4) verbosity) (FBox_Core_IFC);
       let r1 = FDouble {  sign:  (dV1.sign != dV2.sign)
                         , exp:   dV1.exp
                         , sfd:   dV1.sfd};
-      Bit #(64) res = pack (r1);
+      Bit#(64) res = pack (r1);
       resultR     <= tagged Valid (tuple2 (res, 0));
       stateR      <= FBOX_RSP;
    endrule
@@ -857,7 +857,7 @@ module mkFBox_Core #(Bit #(4) verbosity) (FBox_Core_IFC);
          $display ("%0d: FBox_Core.doFCVT_D_W ", cur_cycle);
       Int#(32) v = unpack (truncate ( v1 ));
       match {.f, .e} = Tuple2#(FDouble, FloatingPoint::Exception)'(vFixedToFloat( v, 6'd0, rmd ));
-      Bit #(64) res = pack ( f );
+      Bit#(64) res = pack ( f );
       let fcsr = exception_to_fcsr(e);
       resultR     <= tagged Valid (tuple2 (res, fcsr));
       stateR      <= FBOX_RSP;
@@ -868,7 +868,7 @@ module mkFBox_Core #(Bit #(4) verbosity) (FBox_Core_IFC);
          $display ("%0d: FBox_Core.doFCVT_D_WU ", cur_cycle);
       UInt#(32) v = unpack (truncate ( v1 ));
       match {.f, .e} = Tuple2#(FDouble, FloatingPoint::Exception)'(vFixedToFloat( v, 6'd0, rmd ));
-      Bit #(64) res = pack ( f );
+      Bit#(64) res = pack ( f );
       let fcsr = exception_to_fcsr(e);
       resultR     <= tagged Valid (tuple2 (res, fcsr));
       stateR      <= FBOX_RSP;
@@ -885,7 +885,7 @@ module mkFBox_Core #(Bit #(4) verbosity) (FBox_Core_IFC);
           || (!(f.sign) && (isInfinity (f)))) 
          v = (1<<31) - 1;
 
-      Bit #(64) res = signExtend(pack (v));
+      Bit#(64) res = signExtend(pack (v));
       let fcsr = exception_to_fcsr(e);
       resultR     <= tagged Valid (tuple2 (res, fcsr));
       stateR      <= FBOX_RSP;
@@ -919,7 +919,7 @@ module mkFBox_Core #(Bit #(4) verbosity) (FBox_Core_IFC);
 
       // This is meant for the GPR. If the GPR is 64-bit, the 32-bit result is
       // stored, sign-extended as per the v2.2 of the spec
-      Bit #(64) res = signExtend(pack(v));
+      Bit#(64) res = signExtend(pack(v));
       let fcsr = exception_to_fcsr(e);
       resultR     <= tagged Valid (tuple2 (res, fcsr));
       stateR      <= FBOX_RSP;
@@ -931,7 +931,7 @@ module mkFBox_Core #(Bit #(4) verbosity) (FBox_Core_IFC);
          $display ("%0d: FBox_Core.doFCVT_D_L ", cur_cycle);
       Int#(64) v = unpack ( v1 );
       match {.f, .e} = Tuple2#(FDouble, FloatingPoint::Exception)'(vFixedToFloat( v, 6'd0, rmd ));
-      Bit #(64) res = pack ( f );
+      Bit#(64) res = pack ( f );
       let fcsr = exception_to_fcsr(e);
       resultR     <= tagged Valid (tuple2 (res, fcsr));
       stateR      <= FBOX_RSP;
@@ -942,7 +942,7 @@ module mkFBox_Core #(Bit #(4) verbosity) (FBox_Core_IFC);
          $display ("%0d: FBox_Core.doFCVT_D_LU ", cur_cycle);
       UInt#(64) v = unpack ( v1 );
       match {.f, .e} = Tuple2#(FDouble, FloatingPoint::Exception)'(vFixedToFloat( v, 6'd0, rmd ));
-      Bit #(64) res = pack ( f );
+      Bit#(64) res = pack ( f );
       let fcsr = exception_to_fcsr(e);
       resultR     <= tagged Valid (tuple2 (res, fcsr));
       stateR      <= FBOX_RSP;
@@ -959,7 +959,7 @@ module mkFBox_Core #(Bit #(4) verbosity) (FBox_Core_IFC);
           || (!(f.sign) && (isInfinity (f)))) 
          v = (1<<63) - 1;
 
-      Bit #(64) res = pack (v);
+      Bit#(64) res = pack (v);
       let fcsr = exception_to_fcsr(e);
       resultR     <= tagged Valid (tuple2 (res, fcsr));
       stateR      <= FBOX_RSP;
@@ -991,7 +991,7 @@ module mkFBox_Core #(Bit #(4) verbosity) (FBox_Core_IFC);
           || (!(f.sign) && (isInfinity (f)))) 
          v = 64'hffffffffffffffff;
 
-      Bit #(64) res = pack (v);
+      Bit#(64) res = pack (v);
       let fcsr    = exception_to_fcsr(e);
       resultR     <= tagged Valid (tuple2 (res, fcsr));
       stateR      <= FBOX_RSP;
@@ -1001,7 +1001,7 @@ module mkFBox_Core #(Bit #(4) verbosity) (FBox_Core_IFC);
    rule doFCVT_S_D ( validReq && isFCVT_S_D );
       if (verbosity > 1)
          $display ("%0d: FBox_Core.doFCVT_S_D ", cur_cycle);
-      Bit #(64) res;
+      Bit#(64) res;
       Tuple2#(FSingle,FloatingPoint::Exception) f = convert( dV1 , rmd , False );
 
       // The convert function retains the original SFD bits in the conversion.
@@ -1020,7 +1020,7 @@ module mkFBox_Core #(Bit #(4) verbosity) (FBox_Core_IFC);
    rule doFCVT_D_S ( validReq && isFCVT_D_S );
       if (verbosity > 1)
          $display ("%0d: FBox_Core.doFCVT_D_S ", cur_cycle);
-      Bit #(64) res;
+      Bit#(64) res;
       Tuple2#(FDouble,FloatingPoint::Exception) f = convert( sV1 , rmd , False );
 
       // The convert function retains the original SFD bits in the conversion.
@@ -1040,7 +1040,7 @@ module mkFBox_Core #(Bit #(4) verbosity) (FBox_Core_IFC);
       if (verbosity > 1)
          $display ("%0d: FBox_Core.doFMIN_D ", cur_cycle);
       // One or both of the values are NaNs
-      Bit #(64) res = ?;
+      Bit#(64) res = ?;
       let rs1IsPos0 = fv_FDoubleIsPositiveZero (dV1);
       let rs2IsPos0 = fv_FDoubleIsPositiveZero (dV2);
       let rs1IsNeg0 = isNegativeZero (dV1);
@@ -1078,7 +1078,7 @@ module mkFBox_Core #(Bit #(4) verbosity) (FBox_Core_IFC);
       if (verbosity > 1)
          $display ("%0d: FBox_Core.doFMAX_D ", cur_cycle);
       // One or both of the values are NaNs
-      Bit #(64) res = ?;
+      Bit#(64) res = ?;
       let rs1IsPos0 = fv_FDoubleIsPositiveZero (dV1);
       let rs2IsPos0 = fv_FDoubleIsPositiveZero (dV2);
       let rs1IsNeg0 = isNegativeZero (dV1);
@@ -1116,7 +1116,7 @@ module mkFBox_Core #(Bit #(4) verbosity) (FBox_Core_IFC);
       if (verbosity > 1)
          $display ("%0d: FBox_Core.doFEQ_D ", cur_cycle);
       // Generate the results
-      Bit #(64) res = ?;
+      Bit#(64) res = ?;
       
       if (  isSNaN (dV1)
          || isSNaN (dV2)
@@ -1138,7 +1138,7 @@ module mkFBox_Core #(Bit #(4) verbosity) (FBox_Core_IFC);
       if (verbosity > 1)
          $display ("%0d: FBox_Core.doFLT_D ", cur_cycle);
       // Generate the results
-      Bit #(64) res = ?;
+      Bit#(64) res = ?;
       
       if (  isSNaN (dV1)
          || isSNaN (dV2)
@@ -1160,7 +1160,7 @@ module mkFBox_Core #(Bit #(4) verbosity) (FBox_Core_IFC);
       if (verbosity > 1)
          $display ("%0d: FBox_Core.doFLE_D ", cur_cycle);
       // Generate the results
-      Bit #(64) res = ?;
+      Bit#(64) res = ?;
       
       if (  isSNaN (dV1)
          || isSNaN (dV2)
@@ -1181,7 +1181,7 @@ module mkFBox_Core #(Bit #(4) verbosity) (FBox_Core_IFC);
    rule doFMV_D_X ( validReq && isFMV_D_X );
       if (verbosity > 1)
          $display ("%0d: FBox_Core.doFMV_D_X ", cur_cycle);
-      Bit #(64) res = pack ( v1 );
+      Bit#(64) res = pack ( v1 );
       resultR     <= tagged Valid (tuple2 (res, 0));
       stateR      <= FBOX_RSP;
    endrule
@@ -1189,7 +1189,7 @@ module mkFBox_Core #(Bit #(4) verbosity) (FBox_Core_IFC);
    rule doFMV_X_D ( validReq && isFMV_X_D );
       if (verbosity > 1)
          $display ("%0d: FBox_Core.doFMV_X_D ", cur_cycle);
-      Bit #(64) res = pack ( dV1 );
+      Bit#(64) res = pack ( dV1 );
       resultR     <= tagged Valid (tuple2 (res, 0));
       stateR      <= FBOX_RSP;
    endrule
@@ -1197,7 +1197,7 @@ module mkFBox_Core #(Bit #(4) verbosity) (FBox_Core_IFC);
    rule doFCLASS_D ( validReq && isFCLASS_D );
       if (verbosity > 1)
          $display ("%0d: FBox_Core.doFCLASS_D ", cur_cycle);
-      Bit #(64) res = 1;
+      Bit#(64) res = 1;
       if (isNaN(dV1)) begin
 	 res = isQNaN(dV1) ? (res << 9) : (res << 8);
       end
@@ -1225,7 +1225,7 @@ module mkFBox_Core #(Bit #(4) verbosity) (FBox_Core_IFC);
    rule rl_get_fpu_result ((stateR == FBOX_BUSY));
       Fpu_Rsp r      <- fpu.server_core.response.get();
       match {.v, .e}  = r;
-      Bit #(64) res = ?;
+      Bit#(64) res = ?;
 
       if (v matches tagged S .out)
          if (isNaN (out))
@@ -1260,12 +1260,12 @@ module mkFBox_Core #(Bit #(4) verbosity) (FBox_Core_IFC);
    // FBox interface: request
    method Action req (
         Opcode    opcode
-      , Bit #(7)  funct7
-      , Bit #(3)  rounding_mode
-      , Bit #(5)  rs2_name
-      , Bit #(64) val1
-      , Bit #(64) val2
-      , Bit #(64) val3
+      , Bit#(7)  funct7
+      , Bit#(3)  rounding_mode
+      , Bit#(5)  rs2_name
+      , Bit#(64) val1
+      , Bit#(64) val2
+      , Bit#(64) val3
    );
       // Legal instruction
       requestR <= tagged Valid (

@@ -34,14 +34,14 @@ import IntMulDiv :: *;
 // MBox interface
 
 interface RISCV_MBox_IFC;
-   method Action set_verbosity (Bit #(4) verbosity);
+   method Action set_verbosity (Bit#(4) verbosity);
 
    method Action                   req_reset;
-   method ActionValue #(Bit #(0))  rsp_reset;
+   method ActionValue #(Bit#(0))  rsp_reset;
 
    // MBox interface: request
    (* always_ready *)
-   method Action  req (Bool is_OP_not_OP_32, Bit #(3) f3, WordXL v1, WordXL v2);
+   method Action  req (Bool is_OP_not_OP_32, Bit#(3) f3, WordXL v1, WordXL v2);
 
    // MBox interface: response
    (* always_ready *)   method Bool    valid;
@@ -56,12 +56,12 @@ deriving (Bits, Eq, FShow);
 (* synthesize *)
 module mkRISCV_MBox (RISCV_MBox_IFC);
 
-   Reg #(Bit #(4)) cfg_verbosity <- mkConfigReg (0);
+   Reg #(Bit#(4)) cfg_verbosity <- mkConfigReg (0);
 
    Reg #(State)     rg_state <- mkRegU;
 
    Reg #(Bool)      rg_is_OP_not_OP_32 <- mkRegU;
-   Reg #(Bit #(3))  rg_f3              <- mkRegU;
+   Reg #(Bit#(3))  rg_f3              <- mkRegU;
    Reg #(WordXL)    rg_v1              <- mkRegU;
    Reg #(WordXL)    rg_v2              <- mkRegU;
    Reg #(WordXL)    rg_result          <- mkRegU;
@@ -175,7 +175,7 @@ module mkRISCV_MBox (RISCV_MBox_IFC);
    // ================================================================
    // INTERFACE
 
-   method Action set_verbosity (Bit #(4) verbosity);
+   method Action set_verbosity (Bit#(4) verbosity);
       cfg_verbosity <= verbosity;
    endmethod
 
@@ -183,12 +183,12 @@ module mkRISCV_MBox (RISCV_MBox_IFC);
       noAction;
    endmethod
 
-   method ActionValue #(Bit #(0))  rsp_reset;
+   method ActionValue #(Bit#(0))  rsp_reset;
       return (?);
    endmethod
 
    // MBox interface: request
-   method Action  req (Bool is_OP_not_OP_32, Bit #(3) f3, WordXL v1, WordXL v2);
+   method Action  req (Bool is_OP_not_OP_32, Bit#(3) f3, WordXL v1, WordXL v2);
 
       Bool is_signed = (f3 [0] == 1'b0);
 
@@ -321,16 +321,16 @@ endfunction
 
 `ifdef RV64
 
-function ActionValue #(Bit #(64)) fav_MULH (Bit #(64) v_rs1, Bit #(64) v_rs2);
+function ActionValue #(Bit#(64)) fav_MULH (Bit#(64) v_rs1, Bit#(64) v_rs2);
    actionvalue
       match { .neg1, .val1_64 } = fn_isneg_and_absval (v_rs1);
       match { .neg2, .val2_64 } = fn_isneg_and_absval (v_rs2);
 
-      Bit #(128) prod = fn_unsigned_mul_64_64 (val1_64, val2_64);
+      Bit#(128) prod = fn_unsigned_mul_64_64 (val1_64, val2_64);
       if (neg1 != neg2)
 	 prod = fn_twos_comp (prod);
 
-      Bit #(64) v_rd = prod [127:64];
+      Bit#(64) v_rd = prod [127:64];
       return v_rd;
    endactionvalue
 endfunction
@@ -344,9 +344,9 @@ endfunction
 
 function ActionValue #(WordXL) fav_MULHU (WordXL v_rs1, WordXL v_rs2);
    actionvalue
-      Bit #(XLEN_2) v1     = extend (v_rs1);
-      Bit #(XLEN_2) v2     = extend (v_rs2);
-      Bit #(XLEN_2) result = v1 * v2;
+      Bit#(XLEN_2) v1     = extend (v_rs1);
+      Bit#(XLEN_2) v2     = extend (v_rs2);
+      Bit#(XLEN_2) result = v1 * v2;
       WordXL v_rd = result [2 * xlen - 1: xlen];
       return v_rd;
    endactionvalue
@@ -356,10 +356,10 @@ endfunction
 
 `ifdef RV64
 
-function ActionValue #(Bit #(64)) fav_MULHU (Bit #(64) v_rs1, Bit #(64) v_rs2);
+function ActionValue #(Bit#(64)) fav_MULHU (Bit#(64) v_rs1, Bit#(64) v_rs2);
    actionvalue
-      Bit #(128) prod = fn_unsigned_mul_64_64 (v_rs1, v_rs2);
-      Bit #(64) v_rd = prod [127:64];
+      Bit#(128) prod = fn_unsigned_mul_64_64 (v_rs1, v_rs2);
+      Bit#(64) v_rd = prod [127:64];
       return v_rd;
    endactionvalue
 endfunction
@@ -388,16 +388,16 @@ endfunction
 
 `ifdef RV64
 
-function ActionValue #(Bit #(64)) fav_MULHSU (Bit #(64) v_rs1, Bit #(64) v_rs2);
+function ActionValue #(Bit#(64)) fav_MULHSU (Bit#(64) v_rs1, Bit#(64) v_rs2);
    actionvalue
       match { .neg1, .val1_64 } = fn_isneg_and_absval (v_rs1);
       match { .neg2, .val2_64 } = tuple2 (False, v_rs2);
 
-      Bit #(128) prod = fn_unsigned_mul_64_64 (val1_64, val2_64);
+      Bit#(128) prod = fn_unsigned_mul_64_64 (val1_64, val2_64);
       if (neg1 != neg2)
 	 prod = fn_twos_comp (prod);
 
-      Bit #(64) v_rd = prod [127:64];
+      Bit#(64) v_rd = prod [127:64];
       return v_rd;
    endactionvalue
 endfunction
@@ -424,25 +424,25 @@ endfunction
 // ================================================================
 // Help-functions for Vivado work-around codes above
 
-function Tuple2 #(Bool, Bit #(64)) fn_isneg_and_absval (Bit #(64) x);
+function Tuple2 #(Bool, Bit#(64)) fn_isneg_and_absval (Bit#(64) x);
    return (  (x[63] == 0)
 	   ? tuple2 (False, x)
 	   : tuple2 (True,  fn_twos_comp (x)));
 endfunction
 
-function Bit #(n) fn_twos_comp (Bit #(n) x);
+function Bit#(n) fn_twos_comp (Bit#(n) x);
    return (~ x) + 1;
 endfunction
 
-function Bit #(128) fn_unsigned_mul_64_64 (Bit #(64) v1, Bit #(64) v2);
+function Bit#(128) fn_unsigned_mul_64_64 (Bit#(64) v1, Bit#(64) v2);
    let zero_32b = 32'h0;
    let zero_64b = 64'h0;
 
-   Bit #(64) ll = { zero_32b, v1 [31: 0]} * { zero_32b, v2 [31: 0]};
-   Bit #(64) lh = { zero_32b, v1 [31: 0]} * { zero_32b, v2 [63:32]};
-   Bit #(64) hl = { zero_32b, v1 [63:32]} * { zero_32b, v2 [31: 0]};
-   Bit #(64) hh = { zero_32b, v1 [63:32]} * { zero_32b, v2 [63:32]};
-   Bit #(128) result = (  {    hh,    zero_64b }
+   Bit#(64) ll = { zero_32b, v1 [31: 0]} * { zero_32b, v2 [31: 0]};
+   Bit#(64) lh = { zero_32b, v1 [31: 0]} * { zero_32b, v2 [63:32]};
+   Bit#(64) hl = { zero_32b, v1 [63:32]} * { zero_32b, v2 [31: 0]};
+   Bit#(64) hh = { zero_32b, v1 [63:32]} * { zero_32b, v2 [63:32]};
+   Bit#(128) result = (  {    hh,    zero_64b }
 			+ { zero_32b, lh, zero_32b }
 			+ { zero_32b, hl, zero_32b }
 			+ { zero_64b, ll });

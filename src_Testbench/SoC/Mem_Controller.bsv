@@ -82,10 +82,10 @@ import AXI4_Types  :: *;
 // Raw mem address width: 64  (arbitrarily chosen generously large)
 
 typedef 256  Bits_per_Raw_Mem_Word;
-typedef Bit #(Bits_per_Raw_Mem_Word)  Raw_Mem_Word;
+typedef Bit#(Bits_per_Raw_Mem_Word)  Raw_Mem_Word;
 
 typedef 64  Bits_per_Raw_Mem_Addr;
-typedef Bit #(Bits_per_Raw_Mem_Addr)  Raw_Mem_Addr;
+typedef Bit#(Bits_per_Raw_Mem_Addr)  Raw_Mem_Addr;
 
 // ----------------
 // Views of raw mem word as bytes, word32s and word64s
@@ -103,14 +103,14 @@ Integer word32s_per_raw_mem_word = valueOf (Word32s_per_Raw_Mem_Word);
 // # of addr lsbs to index a Word32 in a Raw_Mem_Word seen as a vector of Word32s
 typedef TLog #(Word32s_per_Raw_Mem_Word)               Bits_per_Word32_in_Raw_Mem_Word;    //  3
 // Type of index of a Word32 in a Raw_Mem_Word seen as a vector of Word32s
-typedef Bit #(Bits_per_Word32_in_Raw_Mem_Word)         Word32_in_Raw_Mem_Word;
+typedef Bit#(Bits_per_Word32_in_Raw_Mem_Word)         Word32_in_Raw_Mem_Word;
 
 typedef TDiv #(Bits_per_Raw_Mem_Word, 64)              Word64s_per_Raw_Mem_Word;           //  4 x 64b words
 Integer word64s_per_raw_mem_word = valueOf (Word64s_per_Raw_Mem_Word);
 // # of addr lsbs to index a Word64 in a Raw_Mem_Word seen as a vector of Word64s
 typedef TLog #(Word64s_per_Raw_Mem_Word)               Bits_per_Word64_in_Raw_Mem_Word;    //  2
 // Type of index of a Word64 in a Raw_Mem_Word seen as a vector of Word64s
-typedef Bit #(Bits_per_Word64_in_Raw_Mem_Word)         Word64_in_Raw_Mem_Word;
+typedef Bit#(Bits_per_Word64_in_Raw_Mem_Word)         Word64_in_Raw_Mem_Word;
 
 typedef TDiv #(Bytes_per_Raw_Mem_Word, Bytes_per_Fabric_Data)  Fabric_Data_per_Raw_Mem_Word;
 
@@ -185,7 +185,7 @@ Integer status_mem_controller_terminated = 1;
 
 interface Mem_Controller_IFC;
    // Reset
-   interface Server #(Bit #(0), Bit #(0)) server_reset;
+   interface Server #(Bit#(0), Bit#(0)) server_reset;
 
    // set_addr_map should be called after this module's reset
    method Action set_addr_map (Fabric_Addr addr_base, Fabric_Addr addr_lim);
@@ -198,7 +198,7 @@ interface Mem_Controller_IFC;
 
    // Catch-all status; return-value can identify the origin (0 = none)
    (* always_ready *)
-   method Bit #(8) status;
+   method Bit#(8) status;
 
 `ifdef WATCH_TOHOST
    // For ISA tests: watch memory writes to <tohost> addr
@@ -227,10 +227,10 @@ typedef struct {Req_Op                     req_op;
 		AXI4_Prot                  prot;
 		AXI4_QoS                   qos;
 		AXI4_Region                region;
-		Bit #(Wd_User)             user;
+		Bit#(Wd_User)             user;
 
 		// Write data info
-		Bit #(TDiv #(Wd_Data, 8))  wstrb;
+		Bit#(TDiv #(Wd_Data, 8))  wstrb;
 		Fabric_Data                data;
    } Req
 deriving (Bits, FShow);
@@ -244,14 +244,14 @@ module mkMem_Controller (Mem_Controller_IFC);
    // verbosity 1: reset, initialized
    // verbosity 2: reads, writes
    // verbosity 3: more detail of local raw_mem interactions
-   Reg #(Bit #(4)) cfg_verbosity <- mkConfigReg (0);
+   Reg #(Bit#(4)) cfg_verbosity <- mkConfigReg (0);
 
    Reg #(State)       rg_state     <- mkReg (STATE_POWER_ON_RESET);
    Reg #(Fabric_Addr) rg_addr_base <- mkRegU;
    Reg #(Fabric_Addr) rg_addr_lim  <- mkRegU;
 
-   FIFOF #(Bit #(0)) f_reset_reqs <- mkFIFOF;
-   FIFOF #(Bit #(0)) f_reset_rsps <- mkFIFOF;
+   FIFOF #(Bit#(0)) f_reset_reqs <- mkFIFOF;
+   FIFOF #(Bit#(0)) f_reset_rsps <- mkFIFOF;
 
    // Communication with fabric
    AXI4_Slave_Xactor_IFC #(Wd_Id, Wd_Addr, Wd_Data, Wd_User) slave_xactor <- mkAXI4_Slave_Xactor;
@@ -279,7 +279,7 @@ module mkMem_Controller (Mem_Controller_IFC);
 `endif
 
    // Catch-all status
-   Reg #(Bit #(8)) rg_status <- mkReg (0);
+   Reg #(Bit#(8)) rg_status <- mkReg (0);
 
    // ================================================================
    // BEHAVIOR
@@ -474,16 +474,16 @@ module mkMem_Controller (Mem_Controller_IFC);
       // We need to select the fabric data word from the raw mem word that contains the target address.
 
       // View the raw mem word as a vector of fabric data words (Wd_Data width words)
-      Vector #(Fabric_Data_per_Raw_Mem_Word, Bit #(Wd_Data)) raw_mem_word_V_fabric_data = unpack (rg_cached_raw_mem_word);
+      Vector #(Fabric_Data_per_Raw_Mem_Word, Bit#(Wd_Data)) raw_mem_word_V_fabric_data = unpack (rg_cached_raw_mem_word);
 
       // Get the index into this vector of the fabric word containing the target address.
-      // For this index, use a generous size (here Bit #(16)), and let zeroExtend pad it automaticallly.
+      // For this index, use a generous size (here Bit#(16)), and let zeroExtend pad it automaticallly.
       Fabric_Addr addr = f_reqs.first.addr;
-      Bit #(Bits_per_Byte_in_Raw_Mem_Word) n = addr [hi_byte_in_raw_mem_word : 0];
+      Bit#(Bits_per_Byte_in_Raw_Mem_Word) n = addr [hi_byte_in_raw_mem_word : 0];
       n = (n >> lo_fabric_data);
 
       // Select the fabric data word of interest
-      Bit #(Wd_Data) rdata = raw_mem_word_V_fabric_data [n];
+      Bit#(Wd_Data) rdata = raw_mem_word_V_fabric_data [n];
 
       let rdr = AXI4_Rd_Data {rid:   f_reqs.first.id,
 			      rdata: rdata,
@@ -510,18 +510,18 @@ module mkMem_Controller (Mem_Controller_IFC);
 			    && (f_reqs.first.req_op == REQ_OP_WR));
       // Get the old (cached) value of the word64
       Word64_in_Raw_Mem_Word word64_in_raw_mem_word = f_reqs.first.addr [hi_byte_in_raw_mem_word : 3];
-      Vector #(Word64s_per_Raw_Mem_Word, Bit #(64)) raw_mem_word_V_Word64 = unpack (rg_cached_raw_mem_word);
-      Bit #(64) word64_old = raw_mem_word_V_Word64 [word64_in_raw_mem_word];
+      Vector #(Word64s_per_Raw_Mem_Word, Bit#(64)) raw_mem_word_V_Word64 = unpack (rg_cached_raw_mem_word);
+      Bit#(64) word64_old = raw_mem_word_V_Word64 [word64_in_raw_mem_word];
 
       // Lane-adjust the new word64
-      Bit #(64) word64_new = zeroExtend (f_reqs.first.data);
-      Bit #(8)  strobe     = zeroExtend (f_reqs.first.wstrb);
+      Bit#(64) word64_new = zeroExtend (f_reqs.first.data);
+      Bit#(8)  strobe     = zeroExtend (f_reqs.first.wstrb);
       if ((valueOf (Wd_Data) == 32) && (f_reqs.first.addr [2] == 1'b1)) begin
 	 // Upper 32b only
 	 word64_new = { word64_new [31:0], 0 };
 	 strobe     = { strobe     [3:0],  0 };
       end
-      Bit #(64) mask     = fn_strobe_to_mask (strobe);
+      Bit#(64) mask     = fn_strobe_to_mask (strobe);
       let updated_word64 = ((word64_old & (~ mask)) | (word64_new & mask));
 
       // Write it back into the cached raw_mem_word
@@ -664,7 +664,7 @@ module mkMem_Controller (Mem_Controller_IFC);
    interface  to_raw_mem = toGPClient (f_raw_mem_reqs, f_raw_mem_rsps);
 
    // Catch-all status; return-value can identify the origin (0 = none)
-   method Bit #(8) status;
+   method Bit#(8) status;
       return rg_status;
    endmethod
 

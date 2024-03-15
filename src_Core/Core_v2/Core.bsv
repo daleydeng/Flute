@@ -60,8 +60,8 @@ import Dma_Server_Mux :: *;
 `endif
 
 `ifdef INCLUDE_TANDEM_VERIF
-import TV_Trace_Data :: *;
-import TV_Info   :: *;
+import tv_trace_data :: *;
+import tv_info   :: *;
 import TV_Encode :: *;
 `endif
 
@@ -104,7 +104,7 @@ module mkCore
    FIFOF #(Bool) f_reset_rsps <- mkFIFOF;
 
 `ifdef INCLUDE_TANDEM_VERIF
-   // The TV encoder transforms Trace_Data structures produced by the CPU and DM
+   // The TV encoder transforms TraceData structures produced by the CPU and DM
    // into encoded byte vectors for transmission to the Tandem Verifier
    TV_Encode_IFC tv_encode <- mkTV_Encode;
 `endif
@@ -124,10 +124,10 @@ module mkCore
    // the CPU, and we remember which one was the requestor in
    // f_reset_requestor, so that we know whome to respond to.
 
-   Bit #(1) reset_requestor_dm  = 0;
-   Bit #(1) reset_requestor_soc = 1;
+   Bit#(1) reset_requestor_dm  = 0;
+   Bit#(1) reset_requestor_soc = 1;
 `ifdef INCLUDE_GDB_CONTROL
-   FIFOF #(Bit #(1)) f_reset_requestor <- mkFIFOF;
+   FIFOF #(Bit#(1)) f_reset_requestor <- mkFIFOF;
 `endif
 
    // Reset-hart0 request from SoC
@@ -173,7 +173,7 @@ module mkCore
       plic.set_addr_map (zeroExtend (soc_map.m_plic_addr_base),
 			 zeroExtend (soc_map.m_plic_addr_lim));
 
-      Bit #(1) requestor = reset_requestor_soc;
+      Bit#(1) requestor = reset_requestor_soc;
 `ifdef INCLUDE_GDB_CONTROL
       requestor <- pop (f_reset_requestor);
       if (requestor == reset_requestor_dm)
@@ -205,10 +205,10 @@ module mkCore
    // DM and TV both present. We instantiate 'taps' into connections
    // where the DM writes CPU GPRs, CPU FPRs, CPU CSRs, and main memory,
    // in order to produce corresponding writes for the Tandem Verifier.
-   // Then, we merge the Trace_Data from these three taps with the
-   // Trace_Data produced by the CPU.
+   // Then, we merge the TraceData from these three taps with the
+   // TraceData produced by the CPU.
 
-   FIFOF #(Trace_Data) f_trace_data_merged <- mkFIFOF;
+   FIFOF #(TraceData) f_trace_data_merged <- mkFIFOF;
 
    // Connect merged trace data to trace encoder
    mkConnection (toGet (f_trace_data_merged), tv_encode.trace_data_in);
@@ -449,7 +449,7 @@ module mkCore
 
    // ----------------
    // Debugging: set core's verbosity
-   method Action  set_verbosity (Bit #(4)  verbosity, Bit #(64)  logdelay);
+   method Action  set_verbosity (Bit#(4)  verbosity, Bit#(64)  logdelay);
       cpu.set_verbosity (verbosity, logdelay);
    endmethod
 
@@ -457,11 +457,11 @@ module mkCore
    // For ISA tests: watch memory writes to <tohost> addr
 
 `ifdef WATCH_TOHOST
-   method Action set_watch_tohost (Bool watch_tohost, Bit #(64) tohost_addr);
+   method Action set_watch_tohost (Bool watch_tohost, Bit#(64) tohost_addr);
       cpu.set_watch_tohost (watch_tohost, tohost_addr);
    endmethod
 
-   method Bit #(64) mv_tohost_value = cpu.mv_tohost_value;
+   method Bit#(64) mv_tohost_value = cpu.mv_tohost_value;
 `endif
 
    // Inform core that DDR4 has been initialized and is ready to accept requests
@@ -470,7 +470,7 @@ module mkCore
    endmethod
 
    // Misc. status; 0 = running, no error
-   method Bit #(8) mv_status;
+   method Bit#(8) mv_status;
       return cpu.mv_status;
    endmethod
 endmodule: mkCore

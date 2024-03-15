@@ -96,7 +96,7 @@ module mkAXI4_Deburster (AXI4_Deburster_IFC #(wd_id, wd_addr, wd_data, wd_user))
    // ----------------------------------------------------------------
    // Compute address for beat
 
-// function ActionValue#(Bit #(wd_addr)) fv_addr_for_beat (Bit #(wd_addr) start_addr,
+// function ActionValue#(Bit#(wd_addr)) fv_addr_for_beat (Bit#(wd_addr) start_addr,
 //      				     AXI4_Size      axsize,
 //      				     AXI4_Burst     axburst,
 //                                           AXI4_Len       axlen,
@@ -104,15 +104,15 @@ module mkAXI4_Deburster (AXI4_Deburster_IFC #(wd_id, wd_addr, wd_data, wd_user))
 //
 //    actionvalue
 //    // For incrementing bursts this address is the next address
-//    Bit #(wd_addr) addr = start_addr;
+//    Bit#(wd_addr) addr = start_addr;
 //    addr = start_addr + (1 << pack (axsize));
 //
 //    // The actual length of the burst is one more than indicated by axlen
-//    Bit #(wd_addr) burst_len = zeroExtend (axlen) + 1;
+//    Bit#(wd_addr) burst_len = zeroExtend (axlen) + 1;
 //
 //    // find the wrap boundary bit - this becomes the mask - will only work
 //    // for burst lengths which are a power of two
-//    Bit #(wd_addr) wrap_boundary = (burst_len << pack (axsize));
+//    Bit#(wd_addr) wrap_boundary = (burst_len << pack (axsize));
 //
 //    // For wrapping bursts the wrap_mask needs to be applied to check if the
 //    // wrapping boundary has been reached
@@ -129,22 +129,22 @@ module mkAXI4_Deburster (AXI4_Deburster_IFC #(wd_id, wd_addr, wd_data, wd_user))
 //    endactionvalue
 // endfunction
 
-   function Bit #(wd_addr) fv_addr_for_beat (Bit #(wd_addr) start_addr,
+   function Bit#(wd_addr) fv_addr_for_beat (Bit#(wd_addr) start_addr,
 					     AXI4_Size      axsize,
 					     AXI4_Burst     axburst,
                                              AXI4_Len       axlen,
 					     AXI4_Len       beat_count);
 
       // For incrementing bursts this address is the next address
-      Bit #(wd_addr) addr = start_addr;
+      Bit#(wd_addr) addr = start_addr;
       addr = start_addr + (1 << pack (axsize));
 
       // The actual length of the burst is one more than indicated by axlen
-      Bit #(wd_addr) burst_len = zeroExtend (axlen) + 1;
+      Bit#(wd_addr) burst_len = zeroExtend (axlen) + 1;
 
       // Compute the mask used to wrap the address, given that burst lenths are
       // always powers of two
-      Bit #(wd_addr) wrap_mask = (burst_len << pack (axsize)) - 1;
+      Bit#(wd_addr) wrap_mask = (burst_len << pack (axsize)) - 1;
 
       // For wrapping bursts the wrap_mask needs to be applied to wrap the
       // address round when it reaaches the boundary
@@ -177,7 +177,7 @@ module mkAXI4_Deburster (AXI4_Deburster_IFC #(wd_id, wd_addr, wd_data, wd_user))
 
    // ----------------------------------------------------------------
    // BEHAVIOR
-   Reg #(Bit #(wd_addr)) rg_last_beat_waddr <- mkRegU;
+   Reg #(Bit#(wd_addr)) rg_last_beat_waddr <- mkRegU;
 
    // ----------------
    // Wr requests (AW and W channels)
@@ -296,7 +296,7 @@ module mkAXI4_Deburster (AXI4_Deburster_IFC #(wd_id, wd_addr, wd_data, wd_user))
   // ----------------
    // Rd requests (AR channel)
 
-   Reg #(Bit #(wd_addr)) rg_last_beat_raddr <- mkRegU;
+   Reg #(Bit#(wd_addr)) rg_last_beat_raddr <- mkRegU;
    rule rl_rd_xaction_master_to_slave;
       AXI4_Rd_Addr #(wd_id, wd_addr, wd_user) a_in = xactor_from_master.o_rd_addr.first;
 

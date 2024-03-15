@@ -39,8 +39,8 @@ typedef AXI4_Lite_Fabric_IFC #(Num_Masters,
 			       Wd_Data,
 			       Wd_User)      AXI4_Lite_Fabric_IFC_Inst;
 
-function Tuple2 #(Bool, Bit #(TLog #(Num_Slaves)))
-         fn_addr_to_slave_num (Bit #(Wd_Addr) addr);
+function Tuple2 #(Bool, Bit#(TLog #(Num_Slaves)))
+         fn_addr_to_slave_num (Bit#(Wd_Addr) addr);
    if ((addr & 'h_FFFF_0000) == 0)
       return tuple2 (True, 0);
    else if ((addr & 'h_FFFF_0000) == 1)
@@ -76,35 +76,35 @@ module mkUnit_Test_Fabric (Empty);
    mkConnection (fabric.v_to_slaves [1], dummy_AXI4_Lite_Slave_ifc_inst);
    mkConnection (fabric.v_to_slaves [2], dummy_AXI4_Lite_Slave_ifc_inst);
 
-   Reg #(Bit #(32)) rg_test <- mkReg (0);    // Chooses which test to run
+   Reg #(Bit#(32)) rg_test <- mkReg (0);    // Chooses which test to run
 
-   FIFOF #(Bit #(64)) f_wdata <- mkFIFOF;
+   FIFOF #(Bit#(64)) f_wdata <- mkFIFOF;
 
-   Reg #(Bit #(32)) rg_idle_count <- mkReg (0);
+   Reg #(Bit#(32)) rg_idle_count <- mkReg (0);
 
    // ================================================================
    // Help function to create AXI4_Lite channel payloads
 
    function AXI4_Lite_Wr_Addr #(Wd_Addr, Wd_User)
-            fv_mk_wr_addr (Bit #(Wd_Addr)  addr, Bit #(Wd_User)  user);
+            fv_mk_wr_addr (Bit#(Wd_Addr)  addr, Bit#(Wd_User)  user);
 
       return AXI4_Lite_Wr_Addr {awaddr: addr, awprot: 0, awuser: user};
    endfunction
 
    function AXI4_Lite_Wr_Data #(Wd_Data)
-            fv_mk_wr_data (Bit #(Wd_Data)  data);
+            fv_mk_wr_data (Bit#(Wd_Data)  data);
 
       return AXI4_Lite_Wr_Data {wdata: data, wstrb: 'hFF};
    endfunction
 
    function AXI4_Lite_Wr_Resp #(Wd_User)
-            fv_mk_wr_resp (AXI4_Lite_Wr_Data #(Wd_Data) wd, Bit #(Wd_User) user);
+            fv_mk_wr_resp (AXI4_Lite_Wr_Data #(Wd_Data) wd, Bit#(Wd_User) user);
 
       return AXI4_Lite_Wr_Resp {bresp: AXI4_LITE_OKAY, buser: user};
    endfunction
 
    function AXI4_Lite_Rd_Addr #(Wd_Addr, Wd_User)
-            fv_mk_rd_addr (Bit #(Wd_Addr)  addr, Bit #(Wd_User)  user);
+            fv_mk_rd_addr (Bit#(Wd_Addr)  addr, Bit#(Wd_User)  user);
 
       return AXI4_Lite_Rd_Addr {araddr: addr, arprot: 0, aruser: user};
    endfunction
@@ -120,7 +120,7 @@ module mkUnit_Test_Fabric (Empty);
    // ================================================================
    // STIMULUS
 
-   Bit #(Wd_User) user1 = ((valueOf (Wd_User) == 0) ? 0 : ?);
+   Bit#(Wd_User) user1 = ((valueOf (Wd_User) == 0) ? 0 : ?);
 
    rule rl_step0_wra (rg_test == 0);
       let wa = fv_mk_wr_addr ('h1000, user1);

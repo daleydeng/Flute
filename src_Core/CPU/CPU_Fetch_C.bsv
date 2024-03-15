@@ -57,11 +57,11 @@ function Bool eq_b32_addr (WordXL a1, WordXL a2) = ((a1 >> 2) == (a2 >> 2));
 // ================================================================
 // Functions concerning whether an instr is 32b (RV) or 16b (RVC)
 
-function Bool is_32b_instr (Bit #(n) instr);
+function Bool is_32b_instr (Bit#(n) instr);
    return (instr [1:0] == 2'b11);
 endfunction
 
-function Bool is_16b_instr (Bit #(n) instr);
+function Bool is_16b_instr (Bit#(n) instr);
    return (instr [1:0] != 2'b11);
 endfunction
 
@@ -80,11 +80,11 @@ module mkCPU_Fetch_C #(IMem_IFC  imem32) (IMem_IFC);
    Integer verbosity = 0;
 
    // The following hold args of the 'req' method.
-   Reg #(Bit #(3))  rg_f3          <- mkRegU;
+   Reg #(Bit#(3))  rg_f3          <- mkRegU;
    Reg #(WordXL)    rg_pc          <- mkRegU;
-   Reg #(Priv_Mode) rg_priv        <- mkRegU;
-   Reg #(Bit #(1))  rg_sstatus_SUM <- mkRegU;
-   Reg #(Bit #(1))  rg_mstatus_MXR <- mkRegU;
+   Reg #(PrivMode) rg_priv        <- mkRegU;
+   Reg #(Bit#(1))  rg_sstatus_SUM <- mkRegU;
+   Reg #(Bit#(1))  rg_mstatus_MXR <- mkRegU;
    Reg #(WordXL)    rg_satp        <- mkRegU;
 
    // Holds a faulting address
@@ -92,7 +92,7 @@ module mkCPU_Fetch_C #(IMem_IFC  imem32) (IMem_IFC);
 
    // These registers caches the last output of imem32 (imem32.pc, and imem32.instr [31:16])
    Reg #(WordXL)    rg_cache_addr <- mkReg ('1);
-   Reg #(Bit #(16)) rg_cache_b16  <- mkRegU;
+   Reg #(Bit#(16)) rg_cache_b16  <- mkRegU;
 
    // ----------------------------------------------------------------
    // Conditions for selecting 16b and 32b instruction
@@ -130,8 +130,8 @@ module mkCPU_Fetch_C #(IMem_IFC  imem32) (IMem_IFC);
    // ----------------
    // Compose the 32b output 'instr' (either a 32b instr, or { 16'b0, 16b instr })
 
-   function Bit #(32) fn_instr_out ();
-      Bit #(32) instr_out = imem32.instr;
+   function Bit#(32) fn_instr_out ();
+      Bit#(32) instr_out = imem32.instr;
       if (cond_i32_odd)
 	 instr_out = { imem32.instr [15:0], rg_cache_b16 };
 
@@ -188,12 +188,12 @@ module mkCPU_Fetch_C #(IMem_IFC  imem32) (IMem_IFC);
    // INTERFACE
 
    // CPU side: IMem request
-   method Action  req (Bit #(3)   f3,
+   method Action  req (Bit#(3)   f3,
 		       WordXL     addr,
 		       // The following  args for VM
-		       Priv_Mode  priv,
-		       Bit #(1)   sstatus_SUM,
-		       Bit #(1)   mstatus_MXR,
+		       PrivMode  priv,
+		       Bit#(1)   sstatus_SUM,
+		       Bit#(1)   mstatus_MXR,
 		       WordXL     satp               // { VM_Mode, ASID, PPN_for_page_table }
 		       ) if (! cond_i32_odd_fetch_next);
       rg_f3          <= f3;
@@ -245,7 +245,7 @@ module mkCPU_Fetch_C #(IMem_IFC  imem32) (IMem_IFC);
    method Bool     is_i32_not_i16 = (cond_i32_odd || cond_i32_even);
 
    method WordXL   pc       = rg_pc;
-   method Instr    instr    = fn_instr_out ();
+   method InstrBits    instr    = fn_instr_out ();
    method Bool     exc      = imem32.exc;
    method Exc_Code exc_code = imem32.exc_code;
    method WordXL   tval     = rg_tval;        // Can be different from rg_pc

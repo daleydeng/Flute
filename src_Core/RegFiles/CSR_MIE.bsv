@@ -60,7 +60,7 @@ module mkCSR_MIE (CSR_MIE_IFC);
    
    Integer verbosity = 0;
 
-   Reg #(Bit #(12)) rg_mie <- mkReg (mie_reset_value);
+   Reg #(Bit#(12)) rg_mie <- mkReg (mie_reset_value);
 
    // ----------------------------------------------------------------
    // INTERFACE
@@ -122,13 +122,13 @@ endmodule
 // ================================================================
 // MIE reset value: 0 (all interrupts disabled)
 
-Bit #(12) mie_reset_value = 0;
+Bit#(12) mie_reset_value = 0;
 
 // ================================================================
 // Restricted view of MIE as SIE
 
 // Fields of mie that are visible in sie
-Bit #(12) sie_mask = (  ('b1 << mip_seip_bitpos)
+Bit#(12) sie_mask = (  ('b1 << mip_seip_bitpos)
 		      | ('b1 << mip_ueip_bitpos)
 		      | ('b1 << mip_stip_bitpos)
 		      | ('b1 << mip_utip_bitpos)
@@ -136,16 +136,16 @@ Bit #(12) sie_mask = (  ('b1 << mip_seip_bitpos)
 		      | ('b1 << mip_usip_bitpos));
 
 // Hide mie fields not visible in sie
-function Bit #(12) fv_mie_to_sie (Bit #(12) mie);
+function Bit#(12) fv_mie_to_sie (Bit#(12) mie);
    return (mie & sie_mask);
 endfunction
 
 // Preserve WPRI fields from mie into sie
-function Bit #(12)  fv_sie_to_mie (MISA misa, Bit #(12) mie, Bit #(12) sie);
+function Bit#(12)  fv_sie_to_mie (MISA misa, Bit#(12) mie, Bit#(12) sie);
    // Mask in new sie fields
-   Bit #(12) sie_a = (sie & sie_mask);
+   Bit#(12) sie_a = (sie & sie_mask);
    // Preserve remaining fields from mie
-   Bit #(12) mie_a = (mie & (~ sie_mask));
+   Bit#(12) mie_a = (mie & (~ sie_mask));
    return (sie_a | mie_a);
 endfunction
 
@@ -153,21 +153,21 @@ endfunction
 // Restricted view of MIE as UIE
 
 // Fields of mie that are visible in sie
-Bit #(12) uie_mask = (  ('b1 << mip_ueip_bitpos)
+Bit#(12) uie_mask = (  ('b1 << mip_ueip_bitpos)
 		      | ('b1 << mip_utip_bitpos)
 		      | ('b1 << mip_usip_bitpos));
 
 // Hide mie fields not visible in uie
-function Bit #(12) fv_mie_to_uie (Bit #(12) mie);
+function Bit#(12) fv_mie_to_uie (Bit#(12) mie);
    return (mie & uie_mask);
 endfunction
 
 // Preserve WPRI fields from mie into uie
-function Bit #(12)  fv_uie_to_mie (MISA misa, Bit #(12) mie, Bit #(12) uie);
+function Bit#(12)  fv_uie_to_mie (MISA misa, Bit#(12) mie, Bit#(12) uie);
    // Mask in new uie fields
-   Bit #(12) uie_a = (uie & uie_mask);
+   Bit#(12) uie_a = (uie & uie_mask);
    // Preserve remaining fields from mie
-   Bit #(12) mie_a = (mie & (~ uie_mask));
+   Bit#(12) mie_a = (mie & (~ uie_mask));
    return (uie_a | mie_a);
 endfunction
 
@@ -175,24 +175,24 @@ endfunction
 // Fix up word to be written to mie according to specs for
 // supported/ WPRI/ WLRL/ WARL fields.
 
-function Bit #(12) fv_fixup_mie (MISA misa, Bit #(12)  mie);
+function Bit#(12) fv_fixup_mie (MISA misa, Bit#(12)  mie);
    // Software-interrupt enables
-   Bit #(1) usie = ((misa.n == 0) ? 0 : mie [mip_usip_bitpos]);
-   Bit #(1) ssie = ((misa.s == 0) ? 0 : mie [mip_ssip_bitpos]);
-   Bit #(1) msie = mie [mip_msip_bitpos];
+   Bit#(1) usie = ((misa.n == 0) ? 0 : mie [mip_usip_bitpos]);
+   Bit#(1) ssie = ((misa.s == 0) ? 0 : mie [mip_ssip_bitpos]);
+   Bit#(1) msie = mie [mip_msip_bitpos];
 
    // Timer-interrupt enables
-   Bit #(1) utie = ((misa.n == 0) ? 0 : mie [mip_utip_bitpos]);
-   Bit #(1) stie = ((misa.s == 0) ? 0 : mie [mip_stip_bitpos]);
-   Bit #(1) mtie = mie [mip_mtip_bitpos];
+   Bit#(1) utie = ((misa.n == 0) ? 0 : mie [mip_utip_bitpos]);
+   Bit#(1) stie = ((misa.s == 0) ? 0 : mie [mip_stip_bitpos]);
+   Bit#(1) mtie = mie [mip_mtip_bitpos];
 
    // External-interrupt enables
-   Bit #(1) ueie = ((misa.n == 0) ? 0 : mie [mip_ueip_bitpos]);
-   Bit #(1) seie = ((misa.s == 0) ? 0 : mie [mip_seip_bitpos]);
-   Bit #(1) meie = mie [mip_meip_bitpos];
+   Bit#(1) ueie = ((misa.n == 0) ? 0 : mie [mip_ueip_bitpos]);
+   Bit#(1) seie = ((misa.s == 0) ? 0 : mie [mip_seip_bitpos]);
+   Bit#(1) meie = mie [mip_meip_bitpos];
 
    // Assemble fixed-up mie
-   Bit #(12) new_mie = {meie, 1'b0, seie, ueie,
+   Bit#(12) new_mie = {meie, 1'b0, seie, ueie,
 			mtie, 1'b0, stie, utie,
 			msie, 1'b0, ssie, usie};
 

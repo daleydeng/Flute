@@ -19,7 +19,7 @@ import SoC_Map     :: *;    // for Num_Masters, Num_Slaves
 // Slave address decoder
 // Identifies whether a given addr is legal and, if so, which  slave services it.
 
-typedef Bit #(TLog #(Num_Slaves))  Slave_Num;
+typedef Bit#(TLog #(Num_Slaves))  Slave_Num;
 
 // ================================================================
 // Specialization of parameterized AXI4 fabric for this SoC.

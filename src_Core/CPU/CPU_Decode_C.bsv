@@ -29,7 +29,7 @@ import isa_decls   :: *;
 
 // ================================================================
 
-function Instr fv_decode_C (MISA misa, Bit #(2) xl, Instr_C instr_C);
+function InstrBits fv_decode_C (MISA misa, Bit#(2) xl, Instr_C instr_C);
    // ----------------
    // Try each possible C instruction
    match { .valid_C_LWSP,     .i_C_LWSP }     = fv_decode_C_LWSP     (misa, xl, instr_C);
@@ -95,7 +95,7 @@ function Instr fv_decode_C (MISA misa, Bit #(2) xl, Instr_C instr_C);
    // ----------------
    // Pick the one (if any) that decodes
 
-   Instr instr = ?;
+   InstrBits instr = ?;
 
    if      (valid_C_LWSP)     instr = i_C_LWSP;
    else if (valid_C_SWSP)     instr = i_C_SWSP;
@@ -167,11 +167,11 @@ endfunction
 // 'C' Extension Stack-Pointer-Based Loads
 
 // LWSP: expands into LW
-function Tuple2 #(Bool, Instr) fv_decode_C_LWSP (MISA  misa, Bit #(2)  xl, Instr_C  instr_C);
+function Tuple2 #(Bool, InstrBits) fv_decode_C_LWSP (MISA  misa, Bit#(2)  xl, Instr_C  instr_C);
    begin
-      // Instr fields: I-type
+      // InstrBits fields: I-type
       match { .funct3, .imm_at_12, .rd, .imm_at_6_2, .op } = fv_ifields_CI_type (instr_C);
-      Bit #(8) offset = { imm_at_6_2 [1:0], imm_at_12, imm_at_6_2 [4:2], 2'b0};
+      Bit#(8) offset = { imm_at_6_2 [1:0], imm_at_12, imm_at_6_2 [4:2], 2'b0};
 
       Bool is_legal = ((misa.c == 1'b1)
 		       && (op == opcode_C2)
@@ -187,11 +187,11 @@ endfunction
 
 `ifdef RV64
 // LDSP: expands into LD
-function Tuple2 #(Bool, Instr) fv_decode_C_LDSP (MISA  misa, Bit #(2)  xl, Instr_C  instr_C);
+function Tuple2 #(Bool, InstrBits) fv_decode_C_LDSP (MISA  misa, Bit#(2)  xl, Instr_C  instr_C);
    begin
-      // Instr fields: I-type
+      // InstrBits fields: I-type
       match { .funct3, .imm_at_12, .rd, .imm_at_6_2, .op } = fv_ifields_CI_type  (instr_C);
-      Bit #(9) offset = { imm_at_6_2 [2:0], imm_at_12, imm_at_6_2 [4:3], 3'b0 };
+      Bit#(9) offset = { imm_at_6_2 [2:0], imm_at_12, imm_at_6_2 [4:3], 3'b0 };
 
       Bool is_legal = ((misa.c == 1'b1)
 		       && (op == opcode_C2)
@@ -210,11 +210,11 @@ endfunction
 
 `ifdef RV128
 // LQSP: expands into LQ
-function Tuple2 #(Bool, Instr) fv_decode_C_LQSP (MISA  misa, Bit #(2)  xl, Instr_C  instr_C);
+function Tuple2 #(Bool, InstrBits) fv_decode_C_LQSP (MISA  misa, Bit#(2)  xl, Instr_C  instr_C);
    begin
-      // Instr fields: I-type
+      // InstrBits fields: I-type
       match { .funct3, .imm_at_12, .rd, .imm_at_6_2, .op } = fv_ifields_CI_type  (instr_C);
-      Bit #(10) offset = { imm_at_6_2 [3:0], imm_at_12, imm_at_6_2 [4], 4'b0 };
+      Bit#(10) offset = { imm_at_6_2 [3:0], imm_at_12, imm_at_6_2 [4], 4'b0 };
 
       Bool is_legal = ((misa.c == 1'b1)
 		       && (op == opcode_C2)
@@ -232,11 +232,11 @@ endfunction
 
 `ifdef ISA_F
 // FLWSP: expands into FLW
-function Tuple2 #(Bool, Instr) fv_decode_C_FLWSP (MISA  misa, Bit #(2)  xl, Instr_C  instr_C);
+function Tuple2 #(Bool, InstrBits) fv_decode_C_FLWSP (MISA  misa, Bit#(2)  xl, Instr_C  instr_C);
    begin
-      // Instr fields: I-type
+      // InstrBits fields: I-type
       match { .funct3, .imm_at_12, .rd, .imm_at_6_2, .op } = fv_ifields_CI_type  (instr_C);
-      Bit #(8) offset = { imm_at_6_2 [1:0], imm_at_12, imm_at_6_2 [4:2], 2'b0 };
+      Bit#(8) offset = { imm_at_6_2 [1:0], imm_at_12, imm_at_6_2 [4:2], 2'b0 };
 
       Bool is_legal = ((misa.c == 1'b1)
 		       && (op == opcode_C2)
@@ -253,11 +253,11 @@ endfunction
 
 `ifdef ISA_D
 // FLDSP: expands into FLD
-function Tuple2 #(Bool, Instr) fv_decode_C_FLDSP (MISA  misa,  Bit #(2) xl, Instr_C  instr_C);
+function Tuple2 #(Bool, InstrBits) fv_decode_C_FLDSP (MISA  misa,  Bit#(2) xl, Instr_C  instr_C);
    begin
-      // Instr fields: I-type
+      // InstrBits fields: I-type
       match { .funct3, .imm_at_12, .rd, .imm_at_6_2, .op } = fv_ifields_CI_type  (instr_C);
-      Bit #(9) offset = { imm_at_6_2 [2:0], imm_at_12, imm_at_6_2 [4:3], 3'b0 };
+      Bit#(9) offset = { imm_at_6_2 [2:0], imm_at_12, imm_at_6_2 [4:3], 3'b0 };
 
       Bool is_legal = ((misa.c == 1'b1)
 		       && (op == opcode_C2)
@@ -276,11 +276,11 @@ endfunction
 // 'C' Extension Stack-Pointer-Based Stores
 
 // SWSP: expands to SW
-function Tuple2 #(Bool, Instr) fv_decode_C_SWSP (MISA  misa,  Bit #(2)  xl, Instr_C  instr_C);
+function Tuple2 #(Bool, InstrBits) fv_decode_C_SWSP (MISA  misa,  Bit#(2)  xl, Instr_C  instr_C);
    begin
-      // Instr fields: CSS-type
+      // InstrBits fields: CSS-type
       match { .funct3, .imm_at_12_7, .rs2, .op } = fv_ifields_CSS_type (instr_C);
-      Bit #(8) offset = { imm_at_12_7 [1:0], imm_at_12_7 [5:2], 2'b0 };
+      Bit#(8) offset = { imm_at_12_7 [1:0], imm_at_12_7 [5:2], 2'b0 };
 
       Bool is_legal = ((misa.c == 1'b1)
 		       && (op == opcode_C2)
@@ -295,11 +295,11 @@ endfunction
 
 `ifdef RV64
 // SDSP: expands to SD
-function Tuple2 #(Bool, Instr) fv_decode_C_SDSP (MISA  misa,  Bit #(2)  xl, Instr_C  instr_C);
+function Tuple2 #(Bool, InstrBits) fv_decode_C_SDSP (MISA  misa,  Bit#(2)  xl, Instr_C  instr_C);
    begin
-      // Instr fields: CSS-type
+      // InstrBits fields: CSS-type
       match { .funct3, .imm_at_12_7, .rs2, .op } = fv_ifields_CSS_type (instr_C);
-      Bit #(9) offset = { imm_at_12_7 [2:0], imm_at_12_7 [5:3], 3'b0 };
+      Bit#(9) offset = { imm_at_12_7 [2:0], imm_at_12_7 [5:3], 3'b0 };
 
       Bool is_legal = ((misa.c == 1'b1)
 		       && (op == opcode_C2)
@@ -317,11 +317,11 @@ endfunction
 
 `ifdef RV128
 // SQSP: expands to SQ
-function Tuple2 #(Bool, Instr) fv_decode_C_SQSP (MISA  misa,  Bit #(2)  xl, Instr_C  instr_C);
+function Tuple2 #(Bool, InstrBits) fv_decode_C_SQSP (MISA  misa,  Bit#(2)  xl, Instr_C  instr_C);
    begin
-      // Instr fields: CSS-type
+      // InstrBits fields: CSS-type
       match { .funct3, .imm_at_12_7, .rs2, .op } = fv_ifields_CSS_type (instr_C);
-      Bit #(10) offset = { imm_at_12_7 [3:0], imm_at_12_7 [5:4], 4'b0 };
+      Bit#(10) offset = { imm_at_12_7 [3:0], imm_at_12_7 [5:4], 4'b0 };
 
       Bool is_legal = ((misa.c == 1'b1)
 		       && (op == opcode_C2)
@@ -338,11 +338,11 @@ endfunction
 
 `ifdef ISA_F
 // FSWSP: expands to FSW
-function Tuple2 #(Bool, Instr) fv_decode_C_FSWSP (MISA  misa,  Bit #(2)  xl, Instr_C  instr_C);
+function Tuple2 #(Bool, InstrBits) fv_decode_C_FSWSP (MISA  misa,  Bit#(2)  xl, Instr_C  instr_C);
    begin
-      // Instr fields: CSS-type
+      // InstrBits fields: CSS-type
       match { .funct3, .imm_at_12_7, .rs2, .op } = fv_ifields_CSS_type (instr_C);
-      Bit #(8) offset = { imm_at_12_7 [1:0], imm_at_12_7 [5:2], 2'b0 };
+      Bit#(8) offset = { imm_at_12_7 [1:0], imm_at_12_7 [5:2], 2'b0 };
 
       Bool is_legal = ((misa.c == 1'b1)
 		       && (op == opcode_C2)
@@ -358,11 +358,11 @@ endfunction
 
 `ifdef ISA_D
 // FSDSP: expands to FSD
-function Tuple2 #(Bool, Instr) fv_decode_C_FSDSP (MISA  misa,  Bit #(2)  xl, Instr_C  instr_C);
+function Tuple2 #(Bool, InstrBits) fv_decode_C_FSDSP (MISA  misa,  Bit#(2)  xl, Instr_C  instr_C);
    begin
-      // Instr fields: CSS-type
+      // InstrBits fields: CSS-type
       match { .funct3, .imm_at_12_7, .rs2, .op } = fv_ifields_CSS_type (instr_C);
-      Bit #(9) offset = { imm_at_12_7 [2:0], imm_at_12_7 [5:3], 3'b0 };
+      Bit#(9) offset = { imm_at_12_7 [2:0], imm_at_12_7 [5:3], 3'b0 };
 
       Bool is_legal = ((misa.c == 1'b1)
 		       && (op == opcode_C2)
@@ -380,11 +380,11 @@ endfunction
 // 'C' Extension Register-Based Loads
 
 // C_LW: expands to LW
-function Tuple2 #(Bool, Instr) fv_decode_C_LW (MISA  misa,  Bit #(2)  xl,  Instr_C  instr_C);
+function Tuple2 #(Bool, InstrBits) fv_decode_C_LW (MISA  misa,  Bit#(2)  xl,  Instr_C  instr_C);
    begin
-      // Instr fields: CL-type
+      // InstrBits fields: CL-type
       match { .funct3, .imm_at_12_10, .rs1, .imm_at_6_5, .rd, .op } = fv_ifields_CL_type (instr_C);
-      Bit #(7) offset = { imm_at_6_5 [0], imm_at_12_10, imm_at_6_5 [1], 2'b0 };
+      Bit#(7) offset = { imm_at_6_5 [0], imm_at_12_10, imm_at_6_5 [1], 2'b0 };
 
       Bool is_legal = ((misa.c == 1'b1)
 		       && (op == opcode_C0)
@@ -398,11 +398,11 @@ endfunction
 
 `ifdef RV64
 // C_LD: expands to LD
-function Tuple2 #(Bool, Instr) fv_decode_C_LD (MISA  misa,  Bit #(2)  xl,  Instr_C  instr_C);
+function Tuple2 #(Bool, InstrBits) fv_decode_C_LD (MISA  misa,  Bit#(2)  xl,  Instr_C  instr_C);
    begin
-      // Instr fields: CL-type
+      // InstrBits fields: CL-type
       match { .funct3, .imm_at_12_10, .rs1, .imm_at_6_5, .rd, .op } = fv_ifields_CL_type (instr_C);
-      Bit #(8) offset = { imm_at_6_5, imm_at_12_10, 3'b0 };
+      Bit#(8) offset = { imm_at_6_5, imm_at_12_10, 3'b0 };
 
       Bool is_legal = ((misa.c == 1'b1)
 		       && (op == opcode_C0)
@@ -419,11 +419,11 @@ endfunction
 
 `ifdef RV128
 // C_LQ: expands to LQ
-function Tuple2 #(Bool, Instr) fv_decode_C_LQ (MISA  misa,  Bit #(2)  xl,  Instr_C  instr_C);
+function Tuple2 #(Bool, InstrBits) fv_decode_C_LQ (MISA  misa,  Bit#(2)  xl,  Instr_C  instr_C);
    begin
-      // Instr fields: CL-type
+      // InstrBits fields: CL-type
       match { .funct3, .imm_at_12_10, .rs1, .imm_at_6_5, .rd, .op } = fv_ifields_CL_type (instr_C);
-      Bit #(9) offset = { imm_at_12_10 [0], imm_at_6_5, imm_at_12_10 [2], imm_at_12_10 [1], 4'b0 };
+      Bit#(9) offset = { imm_at_12_10 [0], imm_at_6_5, imm_at_12_10 [2], imm_at_12_10 [1], 4'b0 };
 
       Bool is_legal = ((misa.c == 1'b1)
 		       && (op == opcode_C0)
@@ -439,11 +439,11 @@ endfunction
 
 `ifdef ISA_F
 // C_FLW: expands to FLW
-function Tuple2 #(Bool, Instr) fv_decode_C_FLW (MISA  misa,  Bit #(2)  xl,  Instr_C  instr_C);
+function Tuple2 #(Bool, InstrBits) fv_decode_C_FLW (MISA  misa,  Bit#(2)  xl,  Instr_C  instr_C);
    begin
-      // Instr fields: CL-type
+      // InstrBits fields: CL-type
       match { .funct3, .imm_at_12_10, .rs1, .imm_at_6_5, .rd, .op } = fv_ifields_CL_type (instr_C);
-      Bit #(7) offset = { imm_at_6_5 [0], imm_at_12_10, imm_at_6_5 [1], 2'b0 };
+      Bit#(7) offset = { imm_at_6_5 [0], imm_at_12_10, imm_at_6_5 [1], 2'b0 };
 
       Bool is_legal = ((misa.c == 1'b1)
 		       && (op == opcode_C0)
@@ -458,11 +458,11 @@ endfunction
 
 `ifdef ISA_D
 // C_FLD: expands to FLD
-function Tuple2 #(Bool, Instr) fv_decode_C_FLD (MISA  misa,  Bit #(2)  xl,  Instr_C  instr_C);
+function Tuple2 #(Bool, InstrBits) fv_decode_C_FLD (MISA  misa,  Bit#(2)  xl,  Instr_C  instr_C);
    begin
-      // Instr fields: CL-type
+      // InstrBits fields: CL-type
       match { .funct3, .imm_at_12_10, .rs1, .imm_at_6_5, .rd, .op } = fv_ifields_CL_type (instr_C);
-      Bit #(8) offset = { imm_at_6_5, imm_at_12_10, 3'b0 };
+      Bit#(8) offset = { imm_at_6_5, imm_at_12_10, 3'b0 };
 
       Bool is_legal = ((misa.c == 1'b1)
 		       && (op == opcode_C0)
@@ -481,11 +481,11 @@ endfunction
 // 'C' Extension Register-Based Stores
 
 // C_SW: expands to SW
-function Tuple2 #(Bool, Instr) fv_decode_C_SW (MISA  misa,  Bit #(2)  xl,  Instr_C  instr_C);
+function Tuple2 #(Bool, InstrBits) fv_decode_C_SW (MISA  misa,  Bit#(2)  xl,  Instr_C  instr_C);
    begin
-      // Instr fields: CS-type
+      // InstrBits fields: CS-type
       match { .funct3, .imm_at_12_10, .rs1, .imm_at_6_5, .rs2, .op } = fv_ifields_CS_type (instr_C);
-      Bit #(7) offset = { imm_at_6_5 [0], imm_at_12_10, imm_at_6_5 [1], 2'b0 };
+      Bit#(7) offset = { imm_at_6_5 [0], imm_at_12_10, imm_at_6_5 [1], 2'b0 };
 
       Bool is_legal = ((misa.c == 1'b1)
 		       && (op == opcode_C0)
@@ -499,11 +499,11 @@ endfunction
 
 `ifdef RV64
 // C_SD: expands to SD
-function Tuple2 #(Bool, Instr) fv_decode_C_SD (MISA  misa,  Bit #(2)  xl,  Instr_C  instr_C);
+function Tuple2 #(Bool, InstrBits) fv_decode_C_SD (MISA  misa,  Bit#(2)  xl,  Instr_C  instr_C);
    begin
-      // Instr fields: CS-type
+      // InstrBits fields: CS-type
       match { .funct3, .imm_at_12_10, .rs1, .imm_at_6_5, .rs2, .op } = fv_ifields_CS_type (instr_C);
-      Bit #(8) offset = { imm_at_6_5, imm_at_12_10, 3'b0 };
+      Bit#(8) offset = { imm_at_6_5, imm_at_12_10, 3'b0 };
 
       Bool is_legal = ((misa.c == 1'b1)
 		       && (op == opcode_C0)
@@ -518,11 +518,11 @@ endfunction
 
 `ifdef RV128
 // C_SQ: expands to SQ
-function Tuple2 #(Bool, Instr) fv_decode_C_SQ (MISA  misa,  Bit #(2)  xl,  Instr_C  instr_C);
+function Tuple2 #(Bool, InstrBits) fv_decode_C_SQ (MISA  misa,  Bit#(2)  xl,  Instr_C  instr_C);
    begin
-      // Instr fields: CS-type
+      // InstrBits fields: CS-type
       match { .funct3, .imm_at_12_10, .rs1, .imm_at_6_5, .rs2, .op } = fv_ifields_CS_type (instr_C);
-      Bit #(9) offset = { imm_at_12_10 [0], imm_at_6_5, imm_at_12_10 [2], imm_at_12_10 [1], 4'b0 };
+      Bit#(9) offset = { imm_at_12_10 [0], imm_at_6_5, imm_at_12_10 [2], imm_at_12_10 [1], 4'b0 };
 
       Bool is_legal = ((misa.c == 1'b1)
 		       && (op == opcode_C0)
@@ -537,11 +537,11 @@ endfunction
 
 `ifdef ISA_F
 // C_FSW: expands to FSW
-function Tuple2 #(Bool, Instr) fv_decode_C_FSW (MISA  misa,  Bit #(2)  xl,  Instr_C  instr_C);
+function Tuple2 #(Bool, InstrBits) fv_decode_C_FSW (MISA  misa,  Bit#(2)  xl,  Instr_C  instr_C);
    begin
-      // Instr fields: CS-type
+      // InstrBits fields: CS-type
       match { .funct3, .imm_at_12_10, .rs1, .imm_at_6_5, .rs2, .op } = fv_ifields_CS_type (instr_C);
-      Bit #(7) offset = { imm_at_6_5 [0], imm_at_12_10, imm_at_6_5 [1], 2'b0 };
+      Bit#(7) offset = { imm_at_6_5 [0], imm_at_12_10, imm_at_6_5 [1], 2'b0 };
 
       Bool is_legal = ((misa.c == 1'b1)
 		       && (op == opcode_C0)
@@ -556,11 +556,11 @@ endfunction
 
 `ifdef ISA_D
 // C_FSD: expands to FSD
-function Tuple2 #(Bool, Instr) fv_decode_C_FSD (MISA  misa,  Bit #(2)  xl,  Instr_C  instr_C);
+function Tuple2 #(Bool, InstrBits) fv_decode_C_FSD (MISA  misa,  Bit#(2)  xl,  Instr_C  instr_C);
    begin
-      // Instr fields: CS-type
+      // InstrBits fields: CS-type
       match { .funct3, .imm_at_12_10, .rs1, .imm_at_6_5, .rs2, .op } = fv_ifields_CS_type (instr_C);
-      Bit #(8) offset = { imm_at_6_5, imm_at_12_10, 3'b0 };
+      Bit#(8) offset = { imm_at_6_5, imm_at_12_10, 3'b0 };
 
       Bool is_legal = ((misa.c == 1'b1)
 		       && (op == opcode_C0)
@@ -578,11 +578,11 @@ endfunction
 // C.J, C.JAL, C.JR, C.JALR, C.BEQZ, C.BNEZ
 
 // C.J: expands to JAL
-function Tuple2 #(Bool, Instr) fv_decode_C_J (MISA  misa,  Bit #(2)  xl,  Instr_C  instr_C);
+function Tuple2 #(Bool, InstrBits) fv_decode_C_J (MISA  misa,  Bit#(2)  xl,  Instr_C  instr_C);
    begin
-      // Instr fields: CJ-type
+      // InstrBits fields: CJ-type
       match { .funct3, .imm_at_12_2, .op } = fv_ifields_CJ_type (instr_C);
-      Bit #(12) offset = {imm_at_12_2 [10],
+      Bit#(12) offset = {imm_at_12_2 [10],
 			  imm_at_12_2 [6],
 			  imm_at_12_2 [8:7],
 			  imm_at_12_2 [4],
@@ -597,7 +597,7 @@ function Tuple2 #(Bool, Instr) fv_decode_C_J (MISA  misa,  Bit #(2)  xl,  Instr_
 		       && (funct3 == funct3_C_J));
 
       RegIdx   rd    = reg_zero;
-      Bit #(21) imm21 = signExtend (offset);
+      Bit#(21) imm21 = signExtend (offset);
       let       instr = mkInstr_J_type (imm21, rd, op_JAL);
       
       return tuple2 (is_legal, instr);
@@ -605,11 +605,11 @@ function Tuple2 #(Bool, Instr) fv_decode_C_J (MISA  misa,  Bit #(2)  xl,  Instr_
 endfunction
 
 // C.JAL: expands to JAL
-function Tuple2 #(Bool, Instr) fv_decode_C_JAL (MISA  misa,  Bit #(2)  xl,  Instr_C  instr_C);
+function Tuple2 #(Bool, InstrBits) fv_decode_C_JAL (MISA  misa,  Bit#(2)  xl,  Instr_C  instr_C);
    begin
-      // Instr fields: CJ-type
+      // InstrBits fields: CJ-type
       match { .funct3, .imm_at_12_2, .op } = fv_ifields_CJ_type (instr_C);
-      Bit #(12) offset = {imm_at_12_2 [10],
+      Bit#(12) offset = {imm_at_12_2 [10],
 			  imm_at_12_2 [6],
 			  imm_at_12_2 [8:7],
 			  imm_at_12_2 [4],
@@ -625,7 +625,7 @@ function Tuple2 #(Bool, Instr) fv_decode_C_JAL (MISA  misa,  Bit #(2)  xl,  Inst
 		       && (xl == misa_mxl_32));
 
       RegIdx   rd    = reg_ra;
-      Bit #(21) imm21 = signExtend (offset);
+      Bit#(21) imm21 = signExtend (offset);
       let       instr = mkInstr_J_type  (imm21,  rd,  op_JAL);
       
       return tuple2 (is_legal, instr);
@@ -633,9 +633,9 @@ function Tuple2 #(Bool, Instr) fv_decode_C_JAL (MISA  misa,  Bit #(2)  xl,  Inst
 endfunction
 
 // C.JR: expands to JALR
-function Tuple2 #(Bool, Instr) fv_decode_C_JR (MISA  misa,  Bit #(2)  xl,  Instr_C  instr_C);
+function Tuple2 #(Bool, InstrBits) fv_decode_C_JR (MISA  misa,  Bit#(2)  xl,  Instr_C  instr_C);
    begin
-      // Instr fields: CR-type
+      // InstrBits fields: CR-type
       match { .funct4, .rs1, .rs2, .op } = fv_ifields_CR_type (instr_C);
 
       Bool is_legal = ((misa.c == 1'b1)
@@ -645,16 +645,16 @@ function Tuple2 #(Bool, Instr) fv_decode_C_JR (MISA  misa,  Bit #(2)  xl,  Instr
 		       && (rs2 == 0));
 
       RegIdx   rd    = reg_zero;
-      Bit #(12) imm12 = 0;
+      Bit#(12) imm12 = 0;
       let       instr = mkInstr_I_type (imm12, rs1, funct3_JALR, rd, op_JALR);
       return tuple2 (is_legal, instr);
    end
 endfunction
 
 // C.JALR: expands to JALR
-function Tuple2 #(Bool, Instr) fv_decode_C_JALR (MISA  misa,  Bit #(2)  xl,  Instr_C  instr_C);
+function Tuple2 #(Bool, InstrBits) fv_decode_C_JALR (MISA  misa,  Bit#(2)  xl,  Instr_C  instr_C);
    begin
-      // Instr fields: CR-type
+      // InstrBits fields: CR-type
       match { .funct4, .rs1, .rs2, .op } = fv_ifields_CR_type (instr_C);
 
       Bool is_legal = ((misa.c == 1'b1)
@@ -664,7 +664,7 @@ function Tuple2 #(Bool, Instr) fv_decode_C_JALR (MISA  misa,  Bit #(2)  xl,  Ins
 		       && (rs2 == 0));
 
       RegIdx   rd    = reg_ra;
-      Bit #(12) imm12 = 0;
+      Bit#(12) imm12 = 0;
       let       instr = mkInstr_I_type (imm12, rs1, funct3_JALR, rd, op_JALR);
 
       return tuple2 (is_legal, instr);
@@ -672,18 +672,18 @@ function Tuple2 #(Bool, Instr) fv_decode_C_JALR (MISA  misa,  Bit #(2)  xl,  Ins
 endfunction
 
 // C.BEQZ: expands to BEQ
-function Tuple2 #(Bool, Instr) fv_decode_C_BEQZ (MISA  misa,  Bit #(2)  xl,  Instr_C  instr_C);
+function Tuple2 #(Bool, InstrBits) fv_decode_C_BEQZ (MISA  misa,  Bit#(2)  xl,  Instr_C  instr_C);
    begin
-      // Instr fields: CB-type
+      // InstrBits fields: CB-type
       match { .funct3, .imm_at_12_10, .rs1, .imm_at_6_2, .op } = fv_ifields_CB_type (instr_C);
-      Bit #(9) offset = { imm_at_12_10 [2], imm_at_6_2 [4:3], imm_at_6_2 [0], imm_at_12_10 [1:0], imm_at_6_2 [2:1], 1'b0 };
+      Bit#(9) offset = { imm_at_12_10 [2], imm_at_6_2 [4:3], imm_at_6_2 [0], imm_at_12_10 [1:0], imm_at_6_2 [2:1], 1'b0 };
       
       Bool is_legal = ((misa.c == 1'b1)
 		       && (op == opcode_C1)
 		       && (funct3 == funct3_C_BEQZ));
 
       RegIdx   rs2   = reg_zero;
-      Bit #(13) imm13 = signExtend (offset);
+      Bit#(13) imm13 = signExtend (offset);
       let       instr = mkInstr_B_type (imm13, rs2, rs1, f3_BEQ, op_BRANCH);
 
       return tuple2 (is_legal, instr);
@@ -691,18 +691,18 @@ function Tuple2 #(Bool, Instr) fv_decode_C_BEQZ (MISA  misa,  Bit #(2)  xl,  Ins
 endfunction
 
 // C.BNEZ: expands to BNE
-function Tuple2 #(Bool, Instr) fv_decode_C_BNEZ (MISA  misa,  Bit #(2)  xl,  Instr_C  instr_C);
+function Tuple2 #(Bool, InstrBits) fv_decode_C_BNEZ (MISA  misa,  Bit#(2)  xl,  Instr_C  instr_C);
    begin
-      // Instr fields: CB-type
+      // InstrBits fields: CB-type
       match { .funct3, .imm_at_12_10, .rs1, .imm_at_6_2, .op } = fv_ifields_CB_type (instr_C);
-      Bit #(9) offset = { imm_at_12_10 [2], imm_at_6_2 [4:3], imm_at_6_2 [0], imm_at_12_10 [1:0], imm_at_6_2 [2:1], 1'b0 };
+      Bit#(9) offset = { imm_at_12_10 [2], imm_at_6_2 [4:3], imm_at_6_2 [0], imm_at_12_10 [1:0], imm_at_6_2 [2:1], 1'b0 };
       
       Bool is_legal = ((misa.c == 1'b1)
 		       && (op == opcode_C1)
 		       && (funct3 == funct3_C_BNEZ));
 
       RegIdx   rs2   = reg_zero;
-      Bit #(13) imm13 = signExtend (offset);
+      Bit#(13) imm13 = signExtend (offset);
       let       instr = mkInstr_B_type (imm13, rs2, rs1, f3_BNE, op_BRANCH);
 
       return tuple2 (is_legal, instr);
@@ -713,11 +713,11 @@ endfunction
 // 'C' Extension Integer Constant-Generation
 
 // C.LI: expands to ADDI
-function Tuple2 #(Bool, Instr) fv_decode_C_LI (MISA  misa,  Bit #(2)  xl,  Instr_C  instr_C);
+function Tuple2 #(Bool, InstrBits) fv_decode_C_LI (MISA  misa,  Bit#(2)  xl,  Instr_C  instr_C);
    begin
-      // Instr fields: CI-type
+      // InstrBits fields: CI-type
       match { .funct3, .imm_at_12, .rd, .imm_at_6_2, .op } = fv_ifields_CI_type (instr_C);
-      Bit #(6) imm6 = { imm_at_12, imm_at_6_2 };
+      Bit#(6) imm6 = { imm_at_12, imm_at_6_2 };
 
       Bool is_legal = ((misa.c == 1'b1)
 		       && (op == opcode_C1)
@@ -725,7 +725,7 @@ function Tuple2 #(Bool, Instr) fv_decode_C_LI (MISA  misa,  Bit #(2)  xl,  Instr
 		       && (rd != 0));
 
       RegIdx   rs1   = reg_zero;
-      Bit #(12) imm12 = signExtend (imm6);
+      Bit#(12) imm12 = signExtend (imm6);
       let       instr = mkInstr_I_type (imm12, rs1, f3_ADDI, rd, op_OP_IMM);
 
       return tuple2 (is_legal, instr);
@@ -733,11 +733,11 @@ function Tuple2 #(Bool, Instr) fv_decode_C_LI (MISA  misa,  Bit #(2)  xl,  Instr
 endfunction
 
 // C.LUI: expands to LUI
-function Tuple2 #(Bool, Instr) fv_decode_C_LUI (MISA  misa,  Bit #(2)  xl,  Instr_C  instr_C);
+function Tuple2 #(Bool, InstrBits) fv_decode_C_LUI (MISA  misa,  Bit#(2)  xl,  Instr_C  instr_C);
    begin
-      // Instr fields: CI-type
+      // InstrBits fields: CI-type
       match { .funct3, .imm_at_12, .rd, .imm_at_6_2, .op } = fv_ifields_CI_type (instr_C);
-      Bit #(6) nzimm6 = { imm_at_12, imm_at_6_2 };
+      Bit#(6) nzimm6 = { imm_at_12, imm_at_6_2 };
 
       Bool is_legal = ((misa.c == 1'b1)
 		       && (op == opcode_C1)
@@ -746,7 +746,7 @@ function Tuple2 #(Bool, Instr) fv_decode_C_LUI (MISA  misa,  Bit #(2)  xl,  Inst
 		       && (rd != 2)
 		       && (nzimm6 != 0));
 
-      Bit #(20) imm20 = signExtend (nzimm6);
+      Bit#(20) imm20 = signExtend (nzimm6);
       let       instr = mkInstr_U_type (imm20, rd, op_LUI);
 
       return tuple2 (is_legal, instr);
@@ -757,11 +757,11 @@ endfunction
 // 'C' Extension Integer Register-Immediate Operations
 
 // C.ADDI: expands to ADDI
-function Tuple2 #(Bool, Instr) fv_decode_C_ADDI (MISA  misa,  Bit #(2)  xl,  Instr_C  instr_C);
+function Tuple2 #(Bool, InstrBits) fv_decode_C_ADDI (MISA  misa,  Bit#(2)  xl,  Instr_C  instr_C);
    begin
-      // Instr fields: CI-type
+      // InstrBits fields: CI-type
       match { .funct3, .imm_at_12, .rd_rs1, .imm_at_6_2, .op } = fv_ifields_CI_type (instr_C);
-      Bit #(6) nzimm6 = { imm_at_12, imm_at_6_2 };
+      Bit#(6) nzimm6 = { imm_at_12, imm_at_6_2 };
 
       Bool is_legal = ((misa.c == 1'b1)
 		       && (op == opcode_C1)
@@ -769,7 +769,7 @@ function Tuple2 #(Bool, Instr) fv_decode_C_ADDI (MISA  misa,  Bit #(2)  xl,  Ins
 		       && (rd_rs1 != 0)
 		       && (nzimm6 != 0));
 
-      Bit #(12) imm12 = signExtend (nzimm6);
+      Bit#(12) imm12 = signExtend (nzimm6);
       let       instr = mkInstr_I_type (imm12, rd_rs1, f3_ADDI, rd_rs1, op_OP_IMM);
 
       return tuple2 (is_legal, instr);
@@ -777,11 +777,11 @@ function Tuple2 #(Bool, Instr) fv_decode_C_ADDI (MISA  misa,  Bit #(2)  xl,  Ins
 endfunction
 
 // C.NOP: expands to ADDI
-function Tuple2 #(Bool, Instr) fv_decode_C_NOP (MISA  misa,  Bit #(2)  xl,  Instr_C  instr_C);
+function Tuple2 #(Bool, InstrBits) fv_decode_C_NOP (MISA  misa,  Bit#(2)  xl,  Instr_C  instr_C);
    begin
-      // Instr fields: CI-type
+      // InstrBits fields: CI-type
       match { .funct3, .imm_at_12, .rd_rs1, .imm_at_6_2, .op } = fv_ifields_CI_type (instr_C);
-      Bit #(6) nzimm6 = { imm_at_12, imm_at_6_2 };
+      Bit#(6) nzimm6 = { imm_at_12, imm_at_6_2 };
 
       Bool is_legal = ((misa.c == 1'b1)
 		       && (op == opcode_C1)
@@ -789,7 +789,7 @@ function Tuple2 #(Bool, Instr) fv_decode_C_NOP (MISA  misa,  Bit #(2)  xl,  Inst
 		       && (rd_rs1 == 0)
 		       && (nzimm6 == 0));
 
-      Bit #(12) imm12 = signExtend (nzimm6);
+      Bit#(12) imm12 = signExtend (nzimm6);
       let       instr = mkInstr_I_type (imm12, rd_rs1, f3_ADDI, rd_rs1, op_OP_IMM);
 
       return tuple2 (is_legal, instr);
@@ -797,11 +797,11 @@ function Tuple2 #(Bool, Instr) fv_decode_C_NOP (MISA  misa,  Bit #(2)  xl,  Inst
 endfunction
 
 // C.ADDIW: expands to ADDIW
-function Tuple2 #(Bool, Instr) fv_decode_C_ADDIW (MISA  misa,  Bit #(2)  xl,  Instr_C  instr_C);
+function Tuple2 #(Bool, InstrBits) fv_decode_C_ADDIW (MISA  misa,  Bit#(2)  xl,  Instr_C  instr_C);
    begin
-      // Instr fields: CI-type
+      // InstrBits fields: CI-type
       match { .funct3, .imm_at_12, .rd_rs1, .imm_at_6_2, .op } = fv_ifields_CI_type (instr_C);
-      Bit #(6) imm6 = { imm_at_12, imm_at_6_2 };
+      Bit#(6) imm6 = { imm_at_12, imm_at_6_2 };
 
       Bool is_legal = ((misa.c == 1'b1)
 		       && (op == opcode_C1)
@@ -810,7 +810,7 @@ function Tuple2 #(Bool, Instr) fv_decode_C_ADDIW (MISA  misa,  Bit #(2)  xl,  In
 		       && (   (xl == misa_mxl_64)
 			   || (xl == misa_mxl_128)));
 
-      Bit #(12) imm12 = signExtend (imm6);
+      Bit#(12) imm12 = signExtend (imm6);
       let       instr = mkInstr_I_type (imm12, rd_rs1, f3_ADDIW, rd_rs1, op_OP_IMM_32);
 
       return tuple2 (is_legal, instr);
@@ -818,11 +818,11 @@ function Tuple2 #(Bool, Instr) fv_decode_C_ADDIW (MISA  misa,  Bit #(2)  xl,  In
 endfunction
 
 // C.ADDI16SP: expands to ADDI
-function Tuple2 #(Bool, Instr) fv_decode_C_ADDI16SP (MISA  misa,  Bit #(2)  xl,  Instr_C  instr_C);
+function Tuple2 #(Bool, InstrBits) fv_decode_C_ADDI16SP (MISA  misa,  Bit#(2)  xl,  Instr_C  instr_C);
    begin
-      // Instr fields: CI-type
+      // InstrBits fields: CI-type
       match { .funct3, .imm_at_12, .rd_rs1, .imm_at_6_2, .op } = fv_ifields_CI_type (instr_C);
-      Bit #(10) nzimm10 = { imm_at_12, imm_at_6_2 [2:1], imm_at_6_2 [3], imm_at_6_2 [0], imm_at_6_2 [4], 4'b0 };
+      Bit#(10) nzimm10 = { imm_at_12, imm_at_6_2 [2:1], imm_at_6_2 [3], imm_at_6_2 [0], imm_at_6_2 [4], 4'b0 };
 
       Bool is_legal = ((misa.c == 1'b1)
 		       && (op == opcode_C1)
@@ -830,7 +830,7 @@ function Tuple2 #(Bool, Instr) fv_decode_C_ADDI16SP (MISA  misa,  Bit #(2)  xl, 
 		       && (rd_rs1 == reg_sp)
 		       && (nzimm10 != 0));
 
-      Bit #(12) imm12 = signExtend (nzimm10);
+      Bit#(12) imm12 = signExtend (nzimm10);
       let       instr = mkInstr_I_type (imm12, rd_rs1, f3_ADDI, rd_rs1, op_OP_IMM);
 
       return tuple2 (is_legal, instr);
@@ -838,11 +838,11 @@ function Tuple2 #(Bool, Instr) fv_decode_C_ADDI16SP (MISA  misa,  Bit #(2)  xl, 
 endfunction
 
 // C.ADDI4SPN: expands to ADDI
-function Tuple2 #(Bool, Instr) fv_decode_C_ADDI4SPN (MISA  misa,  Bit #(2)  xl,  Instr_C  instr_C);
+function Tuple2 #(Bool, InstrBits) fv_decode_C_ADDI4SPN (MISA  misa,  Bit#(2)  xl,  Instr_C  instr_C);
    begin
-      // Instr fields: CIW-type
+      // InstrBits fields: CIW-type
       match { .funct3, .imm_at_12_5, .rd, .op } = fv_ifields_CIW_type (instr_C);
-      Bit #(10) nzimm10 = { imm_at_12_5 [5:2], imm_at_12_5 [7:6], imm_at_12_5 [0], imm_at_12_5 [1], 2'b0 };
+      Bit#(10) nzimm10 = { imm_at_12_5 [5:2], imm_at_12_5 [7:6], imm_at_12_5 [0], imm_at_12_5 [1], 2'b0 };
 
       Bool is_legal = ((misa.c == 1'b1)
 		       && (op == opcode_C0)
@@ -850,7 +850,7 @@ function Tuple2 #(Bool, Instr) fv_decode_C_ADDI4SPN (MISA  misa,  Bit #(2)  xl, 
 		       && (nzimm10 != 0));
 
       RegIdx   rs1   = reg_sp;
-      Bit #(12) imm12 = zeroExtend (nzimm10);
+      Bit#(12) imm12 = zeroExtend (nzimm10);
       let       instr = mkInstr_I_type (imm12, rs1, f3_ADDI, rd, op_OP_IMM);
 
       return tuple2 (is_legal, instr);
@@ -858,11 +858,11 @@ function Tuple2 #(Bool, Instr) fv_decode_C_ADDI4SPN (MISA  misa,  Bit #(2)  xl, 
 endfunction
 
 // C.SLLI: expands to SLLI
-function Tuple2 #(Bool, Instr) fv_decode_C_SLLI (MISA  misa,  Bit #(2)  xl,  Instr_C  instr_C);
+function Tuple2 #(Bool, InstrBits) fv_decode_C_SLLI (MISA  misa,  Bit#(2)  xl,  Instr_C  instr_C);
    begin
-      // Instr fields: CI-type
+      // InstrBits fields: CI-type
       match { .funct3, .imm_at_12, .rd_rs1, .imm_at_6_2, .op } = fv_ifields_CI_type (instr_C);
-      Bit #(6) shamt6 = { imm_at_12, imm_at_6_2 };
+      Bit#(6) shamt6 = { imm_at_12, imm_at_6_2 };
 
       Bool is_legal = ((misa.c == 1'b1)
 		       && (op == opcode_C2)
@@ -871,7 +871,7 @@ function Tuple2 #(Bool, Instr) fv_decode_C_SLLI (MISA  misa,  Bit #(2)  xl,  Ins
                        && (shamt6 != 0)
 		       && ((xl == misa_mxl_32) ? (imm_at_12 == 0) : True));
 
-      Bit #(12) imm12 = (  (xl == misa_mxl_32)
+      Bit#(12) imm12 = (  (xl == misa_mxl_32)
 			 ? { msbs7_SLLI, imm_at_6_2 }
 			 : { msbs6_SLLI, shamt6 } );
       let       instr = mkInstr_I_type (imm12, rd_rs1, f3_SLLI, rd_rs1, op_OP_IMM);
@@ -881,13 +881,13 @@ function Tuple2 #(Bool, Instr) fv_decode_C_SLLI (MISA  misa,  Bit #(2)  xl,  Ins
 endfunction
 
 // C.SRLI: expands to SRLI
-function Tuple2 #(Bool, Instr) fv_decode_C_SRLI (MISA  misa,  Bit #(2)  xl,  Instr_C  instr_C);
+function Tuple2 #(Bool, InstrBits) fv_decode_C_SRLI (MISA  misa,  Bit#(2)  xl,  Instr_C  instr_C);
    begin
-      // Instr fields: CB-type
+      // InstrBits fields: CB-type
       match { .funct3, .imm_at_12_10, .rd_rs1, .imm_at_6_2, .op } = fv_ifields_CB_type (instr_C);
-      Bit #(1) shamt6_5 = imm_at_12_10 [2];
-      Bit #(2) funct2   = imm_at_12_10 [1:0];
-      Bit #(6) shamt6   = { shamt6_5, imm_at_6_2 };
+      Bit#(1) shamt6_5 = imm_at_12_10 [2];
+      Bit#(2) funct2   = imm_at_12_10 [1:0];
+      Bit#(6) shamt6   = { shamt6_5, imm_at_6_2 };
 
       Bool is_legal = ((misa.c == 1'b1)
 		       && (op == opcode_C1)
@@ -897,7 +897,7 @@ function Tuple2 #(Bool, Instr) fv_decode_C_SRLI (MISA  misa,  Bit #(2)  xl,  Ins
                        && (shamt6 != 0)
 		       && ((xl == misa_mxl_32) ? (shamt6_5 == 0) : True));
 
-      Bit #(12) imm12 = (  (xl == misa_mxl_32)
+      Bit#(12) imm12 = (  (xl == misa_mxl_32)
 			 ? { msbs7_SRLI, imm_at_6_2 }
 			 : { msbs6_SRLI, shamt6 } );
       let       instr = mkInstr_I_type (imm12, rd_rs1, f3_SRLI, rd_rs1, op_OP_IMM);
@@ -907,13 +907,13 @@ function Tuple2 #(Bool, Instr) fv_decode_C_SRLI (MISA  misa,  Bit #(2)  xl,  Ins
 endfunction
 
 // C.SRAI: expands to SRAI
-function Tuple2 #(Bool, Instr) fv_decode_C_SRAI (MISA  misa,  Bit #(2)  xl,  Instr_C  instr_C);
+function Tuple2 #(Bool, InstrBits) fv_decode_C_SRAI (MISA  misa,  Bit#(2)  xl,  Instr_C  instr_C);
    begin
-      // Instr fields: CB-type
+      // InstrBits fields: CB-type
       match { .funct3, .imm_at_12_10, .rd_rs1, .imm_at_6_2, .op } = fv_ifields_CB_type (instr_C);
-      Bit #(1) shamt6_5 = imm_at_12_10 [2];
-      Bit #(2) funct2   = imm_at_12_10 [1:0];
-      Bit #(6) shamt6   = { shamt6_5, imm_at_6_2 };
+      Bit#(1) shamt6_5 = imm_at_12_10 [2];
+      Bit#(2) funct2   = imm_at_12_10 [1:0];
+      Bit#(6) shamt6   = { shamt6_5, imm_at_6_2 };
 
       Bool is_legal = ((misa.c == 1'b1)
 		       && (op == opcode_C1)
@@ -923,7 +923,7 @@ function Tuple2 #(Bool, Instr) fv_decode_C_SRAI (MISA  misa,  Bit #(2)  xl,  Ins
                        && (shamt6 != 0)
 		       && ((xl == misa_mxl_32) ? (shamt6_5 == 0) : True));
 
-      Bit #(12) imm12 = (  (xl == misa_mxl_32)
+      Bit#(12) imm12 = (  (xl == misa_mxl_32)
 			 ? { msbs7_SRAI, imm_at_6_2 }
 			 : { msbs6_SRAI, shamt6 } );
       let       instr = mkInstr_I_type (imm12, rd_rs1, f3_SRAI, rd_rs1, op_OP_IMM);
@@ -933,20 +933,20 @@ function Tuple2 #(Bool, Instr) fv_decode_C_SRAI (MISA  misa,  Bit #(2)  xl,  Ins
 endfunction
 
 // C.ANDI: expands to ANDI
-function Tuple2 #(Bool, Instr) fv_decode_C_ANDI (MISA  misa,  Bit #(2)  xl,  Instr_C  instr_C);
+function Tuple2 #(Bool, InstrBits) fv_decode_C_ANDI (MISA  misa,  Bit#(2)  xl,  Instr_C  instr_C);
    begin
-      // Instr fields: CB-type
+      // InstrBits fields: CB-type
       match { .funct3, .imm_at_12_10, .rd_rs1, .imm_at_6_2, .op } = fv_ifields_CB_type (instr_C);
-      Bit #(1) imm6_5 = imm_at_12_10 [2];
-      Bit #(6) imm6   = { imm6_5, imm_at_6_2 };
-      Bit #(2) funct2 = imm_at_12_10 [1:0];
+      Bit#(1) imm6_5 = imm_at_12_10 [2];
+      Bit#(6) imm6   = { imm6_5, imm_at_6_2 };
+      Bit#(2) funct2 = imm_at_12_10 [1:0];
 
       Bool is_legal = ((misa.c == 1'b1)
 		       && (op == opcode_C1)
 		       && (funct3 == funct3_C_ANDI)
 		       && (funct2 == funct2_C_ANDI));
 
-      Bit #(12) imm12 = signExtend (imm6);
+      Bit#(12) imm12 = signExtend (imm6);
       let       instr = mkInstr_I_type (imm12, rd_rs1, f3_ANDI, rd_rs1, op_OP_IMM);
 
       return tuple2 (is_legal, instr);
@@ -957,7 +957,7 @@ endfunction
 // 'C' Extension Integer Register-Register Operations
 
 // C.MV: expands to ADD
-function Tuple2 #(Bool, Instr) fv_decode_C_MV (MISA  misa,  Bit #(2)  xl,  Instr_C  instr_C);
+function Tuple2 #(Bool, InstrBits) fv_decode_C_MV (MISA  misa,  Bit#(2)  xl,  Instr_C  instr_C);
    begin
       match { .funct4, .rd_rs1, .rs2, .op } = fv_ifields_CR_type (instr_C);
 
@@ -968,14 +968,14 @@ function Tuple2 #(Bool, Instr) fv_decode_C_MV (MISA  misa,  Bit #(2)  xl,  Instr
 		       && (rs2 != 0));
 
       RegIdx rs1   = reg_zero;
-      let     instr = mkInstr_R_type (funct7_ADD, rs2, rs1, funct3_ADD, rd_rs1, op_OP);
+      let     instr = {f7_ADD, rs2, rs1, f3_ADD, rd_rs1, op_OP};
 
       return tuple2 (is_legal, instr);
    end
 endfunction
 
 // C.ADD: expands to ADD
-function Tuple2 #(Bool, Instr) fv_decode_C_ADD (MISA  misa,  Bit #(2)  xl,  Instr_C  instr_C);
+function Tuple2 #(Bool, InstrBits) fv_decode_C_ADD (MISA  misa,  Bit#(2)  xl,  Instr_C  instr_C);
    begin
       match { .funct4, .rd_rs1, .rs2, .op } = fv_ifields_CR_type (instr_C);
 
@@ -985,16 +985,16 @@ function Tuple2 #(Bool, Instr) fv_decode_C_ADD (MISA  misa,  Bit #(2)  xl,  Inst
 		       && (rd_rs1 != 0)
 		       && (rs2 != 0));
 
-      let     instr = mkInstr_R_type (funct7_ADD, rs2, rd_rs1, funct3_ADD, rd_rs1, op_OP);
+      let     instr = {f7_ADD, rs2, rd_rs1, f3_ADD, rd_rs1, op_OP};
 
       return tuple2 (is_legal, instr);
    end
 endfunction
 
 // C.AND: expands to AND
-function Tuple2 #(Bool, Instr) fv_decode_C_AND (MISA  misa,  Bit #(2)  xl,  Instr_C  instr_C);
+function Tuple2 #(Bool, InstrBits) fv_decode_C_AND (MISA  misa,  Bit#(2)  xl,  Instr_C  instr_C);
    begin
-      // Instr fields: CA-type
+      // InstrBits fields: CA-type
       match { .funct6, .rd_rs1, .funct2, .rs2, .op } = fv_ifields_CA_type (instr_C);
 
       Bool is_legal = ((misa.c == 1'b1)
@@ -1002,16 +1002,16 @@ function Tuple2 #(Bool, Instr) fv_decode_C_AND (MISA  misa,  Bit #(2)  xl,  Inst
 		       && (funct6 == funct6_C_AND)
 		       && (funct2 == funct2_C_AND));
 
-      let instr = mkInstr_R_type (funct7_AND, rs2, rd_rs1, funct3_AND, rd_rs1, op_OP);
+      let instr = {f7_AND, rs2, rd_rs1, f3_AND, rd_rs1, op_OP};
 
       return tuple2 (is_legal, instr);
    end
 endfunction
 
 // C.OR: expands to OR
-function Tuple2 #(Bool, Instr) fv_decode_C_OR (MISA  misa,  Bit #(2)  xl,  Instr_C  instr_C);
+function Tuple2 #(Bool, InstrBits) fv_decode_C_OR (MISA  misa,  Bit#(2)  xl,  Instr_C  instr_C);
    begin
-      // Instr fields: CA-type
+      // InstrBits fields: CA-type
       match { .funct6, .rd_rs1, .funct2, .rs2, .op } = fv_ifields_CA_type (instr_C);
 
       Bool is_legal = ((misa.c == 1'b1)
@@ -1019,16 +1019,16 @@ function Tuple2 #(Bool, Instr) fv_decode_C_OR (MISA  misa,  Bit #(2)  xl,  Instr
 		       && (funct6 == funct6_C_OR)
 		       && (funct2 == funct2_C_OR));
 
-      let instr = mkInstr_R_type (funct7_OR, rs2, rd_rs1, funct3_OR, rd_rs1, op_OP);
+      let instr = {f7_OR, rs2, rd_rs1, f3_OR, rd_rs1, op_OP};
 
       return tuple2 (is_legal, instr);
    end
 endfunction
 
 // C.XOR: expands to XOR
-function Tuple2 #(Bool, Instr) fv_decode_C_XOR (MISA  misa,  Bit #(2)  xl,  Instr_C  instr_C);
+function Tuple2 #(Bool, InstrBits) fv_decode_C_XOR (MISA  misa,  Bit#(2)  xl,  Instr_C  instr_C);
    begin
-      // Instr fields: CA-type
+      // InstrBits fields: CA-type
       match { .funct6, .rd_rs1, .funct2, .rs2, .op } = fv_ifields_CA_type (instr_C);
 
       Bool is_legal = ((misa.c == 1'b1)
@@ -1036,16 +1036,16 @@ function Tuple2 #(Bool, Instr) fv_decode_C_XOR (MISA  misa,  Bit #(2)  xl,  Inst
 		       && (funct6 == funct6_C_XOR)
 		       && (funct2 == funct2_C_XOR));
 
-      let instr = mkInstr_R_type (funct7_XOR, rs2, rd_rs1, funct3_XOR, rd_rs1, op_OP);
+      let instr = {f7_XOR, rs2, rd_rs1, f3_XOR, rd_rs1, op_OP};
 
       return tuple2 (is_legal, instr);
    end
 endfunction
 
 // C.SUB: expands to SUB
-function Tuple2 #(Bool, Instr) fv_decode_C_SUB (MISA  misa,  Bit #(2)  xl,  Instr_C  instr_C);
+function Tuple2 #(Bool, InstrBits) fv_decode_C_SUB (MISA  misa,  Bit#(2)  xl,  Instr_C  instr_C);
    begin
-      // Instr fields: CA-type
+      // InstrBits fields: CA-type
       match { .funct6, .rd_rs1, .funct2, .rs2, .op } = fv_ifields_CA_type (instr_C);
 
       Bool is_legal = ((misa.c == 1'b1)
@@ -1053,16 +1053,16 @@ function Tuple2 #(Bool, Instr) fv_decode_C_SUB (MISA  misa,  Bit #(2)  xl,  Inst
 		       && (funct6 == funct6_C_SUB)
 		       && (funct2 == funct2_C_SUB));
 
-      let instr = mkInstr_R_type (funct7_SUB, rs2, rd_rs1, funct3_SUB, rd_rs1, op_OP);
+      let instr = {f7_SUB, rs2, rd_rs1, f3_SUB, rd_rs1, op_OP};
 
       return tuple2 (is_legal, instr);
    end
 endfunction
 
 // C.ADDW: expands to ADDW
-function Tuple2 #(Bool, Instr) fv_decode_C_ADDW (MISA  misa,  Bit #(2)  xl,  Instr_C  instr_C);
+function Tuple2 #(Bool, InstrBits) fv_decode_C_ADDW (MISA  misa,  Bit#(2)  xl,  Instr_C  instr_C);
    begin
-      // Instr fields: CA-type
+      // InstrBits fields: CA-type
       match { .funct6, .rd_rs1, .funct2, .rs2, .op } = fv_ifields_CA_type (instr_C);
 
       Bool is_legal = ((misa.c == 1'b1)
@@ -1072,16 +1072,16 @@ function Tuple2 #(Bool, Instr) fv_decode_C_ADDW (MISA  misa,  Bit #(2)  xl,  Ins
 		       && (   (xl == misa_mxl_64)
 			   || (xl == misa_mxl_128)));
 
-      let instr = mkInstr_R_type (funct7_ADDW, rs2, rd_rs1, funct3_ADDW, rd_rs1, op_OP_32);
+      let instr = {funct7_ADDW, rs2, rd_rs1, funct3_ADDW, rd_rs1, op_OP_32};
 
       return tuple2 (is_legal, instr);
    end
 endfunction
 
 // C.SUBW: expands to SUBW
-function Tuple2 #(Bool, Instr) fv_decode_C_SUBW (MISA  misa,  Bit #(2)  xl,  Instr_C  instr_C);
+function Tuple2 #(Bool, InstrBits) fv_decode_C_SUBW (MISA  misa,  Bit#(2)  xl,  Instr_C  instr_C);
    begin
-      // Instr fields: CA-type
+      // InstrBits fields: CA-type
       match { .funct6, .rd_rs1, .funct2, .rs2, .op } = fv_ifields_CA_type (instr_C);
 
       Bool is_legal = ((misa.c == 1'b1)
@@ -1091,7 +1091,7 @@ function Tuple2 #(Bool, Instr) fv_decode_C_SUBW (MISA  misa,  Bit #(2)  xl,  Ins
 		       && (   (xl == misa_mxl_64)
 			   || (xl == misa_mxl_128)));
 
-      let instr = mkInstr_R_type (funct7_SUBW, rs2, rd_rs1, funct3_SUBW, rd_rs1, op_OP_32);
+      let instr = {funct7_SUBW, rs2, rd_rs1, funct3_SUBW, rd_rs1, op_OP_32};
 
       return tuple2 (is_legal, instr);
    end
@@ -1101,9 +1101,9 @@ endfunction
 // 'C' Extension EBREAK
 
 // C.EBREAK: expands to EBREAK
-function Tuple2 #(Bool, Instr) fv_decode_C_EBREAK (MISA  misa,  Bit #(2)  xl,  Instr_C  instr_C);
+function Tuple2 #(Bool, InstrBits) fv_decode_C_EBREAK (MISA  misa,  Bit#(2)  xl,  Instr_C  instr_C);
    begin
-      // Instr fields: CR-type
+      // InstrBits fields: CR-type
       match { .funct4, .rd_rs1, .rs2, .op } = fv_ifields_CR_type (instr_C);
 
       Bool is_legal = ((misa.c == 1'b1)
@@ -1112,8 +1112,8 @@ function Tuple2 #(Bool, Instr) fv_decode_C_EBREAK (MISA  misa,  Bit #(2)  xl,  I
 		       && (rd_rs1 == 0)
 		       && (rs2 == 0));
 
-      Bit #(12) imm12 = f12_EBREAK;
-      let       instr = mkInstr_I_type (imm12, rd_rs1, f3_PRIV,  rd_rs1, op_SYSTEM);
+      Bit#(12) imm12 = f12_EBREAK;
+      let       instr = {imm12, rd_rs1, f3_PRIV,  rd_rs1, op_SYSTEM};
 
       return tuple2 (is_legal, instr);
    end

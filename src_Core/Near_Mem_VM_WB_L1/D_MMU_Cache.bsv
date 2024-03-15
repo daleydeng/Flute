@@ -106,29 +106,29 @@ interface D_MMU_Cache_IFC;
    // CPU interface: request
    (* always_ready *)
    method Action  req (CacheOp    op,
-		       Bit #(3)   f3,
+		       Bit#(3)   f3,
 `ifdef ISA_A
-		       Bit #(7)   amo_funct7,
+		       Bit#(7)   amo_funct7,
 `endif
 		       WordXL     va,
-		       Bit #(64)  st_value,
+		       Bit#(64)  st_value,
 		       // The following  args for VM
-		       Priv_Mode  priv,
-		       Bit #(1)   sstatus_SUM,
-		       Bit #(1)   mstatus_MXR,
+		       PrivMode  priv,
+		       Bit#(1)   sstatus_SUM,
+		       Bit#(1)   mstatus_MXR,
 		       WordXL     satp);    // { VM_Mode, ASID, PPN_for_page_table }
 
 
    // CPU interface: response
    (* always_ready *)  method Bool       valid;
    (* always_ready *)  method WordXL     addr;        // req addr for which this is a response
-   (* always_ready *)  method Bit #(64)  word64;      // rd_val data for LD, LR, AMO, SC success/fail result)
-   (* always_ready *)  method Bit #(64)  st_amo_val;  // Final stored value for ST, SC, AMO
+   (* always_ready *)  method Bit#(64)  word64;      // rd_val data for LD, LR, AMO, SC success/fail result)
+   (* always_ready *)  method Bit#(64)  st_amo_val;  // Final stored value for ST, SC, AMO
    (* always_ready *)  method Bool       exc;
    (* always_ready *)  method Exc_Code   exc_code;
 
    // Cache flush request/response
-   interface Server #(Bit #(1), Token) flush_server;
+   interface Server #(Bit#(1), Token) flush_server;
 
 `ifdef ISA_PRIV_S
    // TLB flush
@@ -149,8 +149,8 @@ interface D_MMU_Cache_IFC;
    // ----------------
    // For ISA tests: watch memory writes to <tohost> addr (see NOTE: "tohost" above)
 
-   method Action set_watch_tohost (Bool watch_tohost, Bit #(64) tohost_addr);
-   method Bit #(64) mv_tohost_value;
+   method Action set_watch_tohost (Bool watch_tohost, Bit#(64) tohost_addr);
+   method Bit#(64) mv_tohost_value;
 `endif
 
    // Inform core that DDR4 has been initialized and is ready to accept requests
@@ -158,7 +158,7 @@ interface D_MMU_Cache_IFC;
 
    // Misc. status; 0 = running, no error
    (* always_ready *)
-   method Bit #(8) mv_status;
+   method Bit#(8) mv_status;
 
 endinterface
 
@@ -252,7 +252,7 @@ module mkD_MMU_Cache (D_MMU_Cache_IFC);
    //            1: Requests and responses
    //            2: rule firings
    //            3: + detail
-   Reg #(Bit #(3)) verbosity <- mkReg (0);
+   Reg #(Bit#(3)) verbosity <- mkReg (0);
    Integer verbosity_cache        = 0;
    Integer verbosity_axi4_adapter = 0;
 
@@ -309,22 +309,22 @@ module mkD_MMU_Cache (D_MMU_Cache_IFC);
    Reg #(Bool)      rg_valid        <- mkReg (False);
    Reg #(Bool)      rg_exc          <- mkRegU;
    Reg #(Exc_Code)  rg_exc_code     <- mkRegU;
-   Reg #(Bit #(64)) rg_ld_val       <- mkRegU;         // Load-value for LOAD/LR/AMO, success/fail for SC
-   Reg #(Bit #(64)) rg_final_st_val <- mkRegU;
+   Reg #(Bit#(64)) rg_ld_val       <- mkRegU;         // Load-value for LOAD/LR/AMO, success/fail for SC
+   Reg #(Bit#(64)) rg_final_st_val <- mkRegU;
 
    Reg #(Bool)      dw_valid        <- mkDWire (False);
    Reg #(Bool)      dw_exc          <- mkDWire (False);
    Reg #(Exc_Code)  dw_exc_code     <- mkDWire (?);
-   Reg #(Bit #(64)) dw_ld_val       <- mkDWire (?);
-   Reg #(Bit #(64)) dw_final_st_val <- mkDWire (?);
+   Reg #(Bit#(64)) dw_ld_val       <- mkDWire (?);
+   Reg #(Bit#(64)) dw_final_st_val <- mkDWire (?);
 
 `ifdef WATCH_TOHOST
    // See NOTE: "tohost" above.
    // "tohost" addr on which to monitor writes, for standard ISA tests.
    // These are set by the 'set_watch_tohost' method but are otherwise read-only.
    Reg #(Bool)      rg_watch_tohost <- mkReg (False);
-   Reg #(Bit #(64)) rg_tohost_addr  <- mkReg ('h_8000_1000);
-   Reg #(Bit #(64)) rg_tohost_value <- mkReg (0);
+   Reg #(Bit#(64)) rg_tohost_addr  <- mkReg ('h_8000_1000);
+   Reg #(Bit#(64)) rg_tohost_value <- mkReg (0);
 `endif
 
    // ****************************************************************
@@ -337,7 +337,7 @@ module mkD_MMU_Cache (D_MMU_Cache_IFC);
    // This Action function drives responses to CPU.
 
    function Action fa_cpu_response (Bool valid, Bool exc, Exc_Code exc_code,
-				    Bit #(64) ld_val, Bit #(64) final_st_val);
+				    Bit#(64) ld_val, Bit#(64) final_st_val);
       action
 	 dw_valid        <= valid;
 	 dw_exc          <= exc;
@@ -448,7 +448,7 @@ module mkD_MMU_Cache (D_MMU_Cache_IFC);
    // asynchronously w.r.t. data stream, and may be occupying the
    // cache.  The latter two conditions below stall this rule if so.
 
-   Reg #(Bit #(4)) rg_ctr <- mkRegU;
+   Reg #(Bit#(4)) rg_ctr <- mkRegU;
    rule rl_count;
       rg_ctr <= rg_ctr + 1;
    endrule
@@ -643,8 +643,8 @@ module mkD_MMU_Cache (D_MMU_Cache_IFC);
    // ****************************************************************
    // CACHE FLUSH
 
-   FIFOF #(Bit #(1))  f_cache_flush_reqs <- mkFIFOF;
-   FIFOF #(Bit #(0))  f_cache_flush_rsps <- mkFIFOF;
+   FIFOF #(Bit#(1))  f_cache_flush_reqs <- mkFIFOF;
+   FIFOF #(Bit#(0))  f_cache_flush_rsps <- mkFIFOF;
 
    rule rl_cache_flush_start ((rg_fsm_flush_state == FSM_FLUSH_IDLE)
 			      && fv_fsm_main_interruptable (rg_fsm_main_state));
@@ -833,16 +833,16 @@ module mkD_MMU_Cache (D_MMU_Cache_IFC);
    // NOTE: this has no flow control: CPU should only invoke it when consuming prev output.
    // As soon as this method is called, the module starts working on this new request.
    method Action  req (CacheOp    op,
-		       Bit #(3)   f3,
+		       Bit#(3)   f3,
 `ifdef ISA_A
-		       Bit #(7)   amo_funct7,
+		       Bit#(7)   amo_funct7,
 `endif
 		       WordXL     va,
-		       Bit #(64)  st_value,
+		       Bit#(64)  st_value,
 		       // The following  args for VM
-		       Priv_Mode  priv,
-		       Bit #(1)   sstatus_SUM,
-		       Bit #(1)   mstatus_MXR,
+		       PrivMode  priv,
+		       Bit#(1)   sstatus_SUM,
+		       Bit#(1)   mstatus_MXR,
 		       WordXL     satp);         // = { VM_Mode, ASID, PPN_for_page_table }
 
       let cache_req = MMU_Cache_Req {op:          op,
@@ -870,11 +870,11 @@ module mkD_MMU_Cache (D_MMU_Cache_IFC);
       return rg_req.va;
    endmethod
 
-   method Bit #(64)  word64;
+   method Bit#(64)  word64;
       return dw_ld_val;
    endmethod
 
-   method Bit #(64)  st_amo_val;
+   method Bit#(64)  st_amo_val;
       return dw_final_st_val;
    endmethod
 
@@ -910,14 +910,14 @@ module mkD_MMU_Cache (D_MMU_Cache_IFC);
    // For ISA tests: watch memory writes to <tohost> addr (see NOTE: "tohost" above)
 
 `ifdef WATCH_TOHOST
-   method Action set_watch_tohost (Bool watch_tohost, Bit #(64) tohost_addr);
+   method Action set_watch_tohost (Bool watch_tohost, Bit#(64) tohost_addr);
       rg_watch_tohost <= watch_tohost;
       rg_tohost_addr  <= tohost_addr;
       $display ("%0d: %m.set_watch_tohost: watch %0d, addr %0h",
 		cur_cycle, watch_tohost, tohost_addr);
    endmethod
 
-   method Bit #(64) mv_tohost_value;
+   method Bit#(64) mv_tohost_value;
       return rg_tohost_value;
    endmethod
 `endif
@@ -928,7 +928,7 @@ module mkD_MMU_Cache (D_MMU_Cache_IFC);
    endmethod
 
    // Misc. status; 0 = running, no error
-   method Bit #(8) mv_status;
+   method Bit#(8) mv_status;
       // Note: currently on looking at write-errors, which only happens in DMem
       return axi4_adapter.mv_status;
    endmethod

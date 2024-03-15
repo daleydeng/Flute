@@ -315,50 +315,50 @@ def generate_BSV_file (BSV_package_name, items):
 
     fout.write ("\n" +
                 "// Local synonyms (for use in this package)\n" +
-                "typedef Bit #(Bits_per_CWord)               CWord;\n" +
-                "typedef Bit #(Bits_per_CLine)               CLine;\n" +
-                "typedef Bit #(Bits_per_CTag)                CTag;\n" +
-                "typedef Bit #(Bits_per_Byte_in_CLine)       Byte_in_CLine;\n" +
-                "typedef Bit #(Bits_per_CWord_in_CLine)      CWord_in_CLine;\n" +
-                "typedef Bit #(Bits_per_Way_in_CSet)         Way_in_CSet;\n" +
-                "typedef Bit #(Bits_per_CSet_in_Cache)       CSet_in_Cache;\n" +
-                "typedef Bit #(Bits_per_CSet_CWord_in_Cache) CSet_CWord_in_Cache;\n")
+                "typedef Bit#(Bits_per_CWord)               CWord;\n" +
+                "typedef Bit#(Bits_per_CLine)               CLine;\n" +
+                "typedef Bit#(Bits_per_CTag)                CTag;\n" +
+                "typedef Bit#(Bits_per_Byte_in_CLine)       Byte_in_CLine;\n" +
+                "typedef Bit#(Bits_per_CWord_in_CLine)      CWord_in_CLine;\n" +
+                "typedef Bit#(Bits_per_Way_in_CSet)         Way_in_CSet;\n" +
+                "typedef Bit#(Bits_per_CSet_in_Cache)       CSet_in_Cache;\n" +
+                "typedef Bit#(Bits_per_CSet_CWord_in_Cache) CSet_CWord_in_Cache;\n")
 
     fout.write ("\n" +
                 "// ================================================================\n" +
                 "// Address-decode functions\n")
 
     fout.write ("\n" +
-                "function  Bit #({:0d})  fn_Addr_to_Byte_in_CWord (Bit #(n)  addr);\n"
+                "function  Bit#({:0d})  fn_Addr_to_Byte_in_CWord (Bit#(n)  addr);\n"
                 .format (int (math.log2 (sel (items, "Bytes_per_CWord")))) +
                 "   return  addr [{:0d}:0];\n"
                 .format (int (math.log2 (sel (items, "Bytes_per_CWord"))) - 1) +
                 "endfunction\n")
 
     fout.write ("\n" +
-                "function  CWord_in_CLine  fn_Addr_to_CWord_in_CLine (Bit #(n)  addr);\n" +
+                "function  CWord_in_CLine  fn_Addr_to_CWord_in_CLine (Bit#(n)  addr);\n" +
                 "   return  addr [addr_hi_cword_in_cline : addr_lo_cword_in_cline ];\n" +
                 "endfunction\n")
 
     fout.write ("\n" +
-                "function  CSet_in_Cache  fn_Addr_to_CSet_in_Cache (Bit #(n)  addr);\n" +
+                "function  CSet_in_Cache  fn_Addr_to_CSet_in_Cache (Bit#(n)  addr);\n" +
                 "   return  addr [addr_hi_cset_in_cache : addr_lo_cset_in_cache ];\n" +
                 "endfunction\n")
 
     fout.write ("\n" +
-                "function  CSet_CWord_in_Cache  fn_Addr_to_CSet_CWord_in_Cache (Bit #(n)  addr);\n" +
+                "function  CSet_CWord_in_Cache  fn_Addr_to_CSet_CWord_in_Cache (Bit#(n)  addr);\n" +
                 "   return  addr [addr_hi_cset_cword_in_cache : addr_lo_cset_cword_in_cache ];\n" +
                 "endfunction\n")
 
     fout.write ("\n" +
-                "function  CTag  fn_PA_to_CTag (Bit #(n)  pa);\n" +
+                "function  CTag  fn_PA_to_CTag (Bit#(n)  pa);\n" +
                 "   return  pa [(valueOf (n) - 1) : addr_lo_ctag ];\n" +
                 "endfunction\n")
 
     fout.write ("\n" +
                 "// Align to start of CLine\n" +
-                "function  Bit #(n)  fn_align_Addr_to_CLine (Bit #(n)  addr);\n" +
-                "   Bit #(n) mask = (1 << addr_lo_cset_in_cache) - 1;\n" +
+                "function  Bit#(n)  fn_align_Addr_to_CLine (Bit#(n)  addr);\n" +
+                "   Bit#(n) mask = (1 << addr_lo_cset_in_cache) - 1;\n" +
                 "   return  addr & (~ mask);\n" +
                 "endfunction\n")
 

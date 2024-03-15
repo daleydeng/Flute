@@ -49,8 +49,8 @@ import DM_CPU_Req_Rsp :: *;
 
 import Dma_Server_Mux :: *;
 
-import TV_Trace_Data :: *;
-import TV_Info       :: *;
+import tv_trace_data :: *;
+import tv_info       :: *;
 import TV_Encode     :: *;
 
 // TV_Taps needed when both GDB_CONTROL and TANDEM_VERIF are present
@@ -61,7 +61,7 @@ import TV_Taps :: *;
 
 typedef struct {
    // CPU's TV out
-   Get #(Trace_Data)                cpu_trace_data_out;
+   Get #(TraceData)                cpu_trace_data_out;
 
    // CPU's register debug interfaces
    Server #(DM_CPU_Req #(5,  XLEN),
@@ -176,13 +176,13 @@ module mkTVE_Wrapper1 #(TVE_Wrapper_Param param)
 
    // ================================================================
    // TV Encoder and connections
-   // TV Encoder transforms Trace_Data structures produced by the CPU and DM
+   // TV Encoder transforms TraceData structures produced by the CPU and DM
    // into encoded byte vectors for transmission to the Tandem Verifier
 
    TV_Encode_IFC tv_encode <- mkTV_Encode;
 
    // FIFOF to merge TV data from CPU and from Debug Module
-   FIFOF #(Trace_Data) f_trace_data_merged <- mkFIFOF;
+   FIFOF #(TraceData) f_trace_data_merged <- mkFIFOF;
 
    // Connect FIFOF to TV Encoder
    mkConnection (toGet (f_trace_data_merged), tv_encode.trace_data_in);
@@ -268,7 +268,7 @@ module mkTVE_Wrapper2 #(TVE_Wrapper_Param param)
 
    // ================================================================
    // TV Encoder and connections
-   // TV Encoder transforms Trace_Data structures produced by the CPU and DM
+   // TV Encoder transforms TraceData structures produced by the CPU and DM
    // into encoded byte vectors for transmission to the Tandem Verifier
 
    TV_Encode_IFC tv_encode <- mkTV_Encode;

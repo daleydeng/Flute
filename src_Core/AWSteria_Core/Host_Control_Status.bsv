@@ -34,7 +34,7 @@ import DM_CPU_Req_Rsp :: *;
 
 interface Host_Control_Status_IFC;
    // 32-bit control and status words to/from host-side
-   interface Server_Semi_FIFOF #(Bit #(32), Bit #(32)) se_control_status;
+   interface Server_Semi_FIFOF #(Bit#(32), Bit#(32)) se_control_status;
 
    // ----------------
    // Decoded control/status actions
@@ -42,22 +42,22 @@ interface Host_Control_Status_IFC;
    method Bool mv_assert_core_reset;
 
    // Watch tohost 'on/off' and tohost addr
-   interface FIFOF_O #(Tuple2 #(Bool, Bit #(64))) fo_watch_tohost_control;
+   interface FIFOF_O #(Tuple2 #(Bool, Bit#(64))) fo_watch_tohost_control;
 
    // Verbosity level and log-delay (during simulation)
-   interface FIFOF_O #(Tuple2 #(Bit #(4), Bit #(64))) fo_verbosity_control;
+   interface FIFOF_O #(Tuple2 #(Bit#(4), Bit#(64))) fo_verbosity_control;
 
    // PC trace on/off, and sampling interval (units: instructions)
-   interface FIFOF_O #(Tuple2 #(Bool, Bit #(64))) fo_pc_trace_control;
+   interface FIFOF_O #(Tuple2 #(Bool, Bit#(64))) fo_pc_trace_control;
 
    // Value written by RISC-V CPU to 'tohost' addr signalling end of test
-   method FIFOF_I #(Bit #(64)) fi_tohost_value;
+   method FIFOF_I #(Bit#(64)) fi_tohost_value;
 endinterface
 
 // ================================================================
 // Word 0 from host contains command and count of additional data words
 
-typedef Bit #(5) Host_Cmd;
+typedef Bit#(5) Host_Cmd;
 
 Host_Cmd cmd_ping                = 0;    // Supported
 Host_Cmd cmd_core_reset          = 1;    // Supported
@@ -76,9 +76,9 @@ Host_Cmd cmd_set_sim_verbosity   = 8;    // Supported
 // ================================================================
 // Word 0 returned to host has this status in [7:0]
 
-Bit #(32) status_ok          = 0;
-Bit #(32) status_err         = 1;
-Bit #(32) status_unsupported = 2;
+Bit#(32) status_ok          = 0;
+Bit#(32) status_err         = 1;
+Bit#(32) status_unsupported = 2;
 
 // ================================================================
 // Module FSM's state
@@ -100,29 +100,29 @@ module mkHost_Control_Status (Host_Control_Status_IFC);
    Integer verbosity = 0;
 
    // To/From host-side
-   FIFOF #(Bit #(32)) f_host_to_hw <- mkFIFOF;
-   FIFOF #(Bit #(32)) f_hw_to_host <- mkFIFOF;
+   FIFOF #(Bit#(32)) f_host_to_hw <- mkFIFOF;
+   FIFOF #(Bit#(32)) f_hw_to_host <- mkFIFOF;
 
    // Decoded commands/responses   
    Reg #(Bool)  rg_assert_core_reset <- mkReg (False);
 
-   FIFOF #(Tuple2 #(Bool, Bit #(64))) f_watch_tohost <- mkFIFOF;
+   FIFOF #(Tuple2 #(Bool, Bit#(64))) f_watch_tohost <- mkFIFOF;
 
-   FIFOF #(Bit #(64)) f_tohost_value       <- mkFIFOF;
-   Reg #(Bit #(16))   rg_tohost_value      <- mkReg (0);
-   Reg #(Bit #(16))   rg_prev_tohost_value <- mkReg (0);
+   FIFOF #(Bit#(64)) f_tohost_value       <- mkFIFOF;
+   Reg #(Bit#(16))   rg_tohost_value      <- mkReg (0);
+   Reg #(Bit#(16))   rg_prev_tohost_value <- mkReg (0);
 
-   FIFOF #(Tuple2 #(Bit #(4), Bit #(64))) f_verbosity <- mkFIFOF;
+   FIFOF #(Tuple2 #(Bit#(4), Bit#(64))) f_verbosity <- mkFIFOF;
 
-   FIFOF #(Tuple2 #(Bool,Bit #(64))) f_pc_trace_control <- mkFIFOF;
+   FIFOF #(Tuple2 #(Bool,Bit#(64))) f_pc_trace_control <- mkFIFOF;
 
    // State for FSM for multi-word requests/responses
    Reg #(FSM_State) rg_state <- mkReg (STATE_REQ0);
    // Multi-word requests
-   Reg #(Bit #(32)) rg_req0  <- mkRegU;
-   Reg #(Bit #(32)) rg_req1  <- mkRegU;
-   Reg #(Bit #(32)) rg_req2  <- mkRegU;
-   Reg #(Bit #(32)) rg_req3  <- mkRegU;
+   Reg #(Bit#(32)) rg_req0  <- mkRegU;
+   Reg #(Bit#(32)) rg_req1  <- mkRegU;
+   Reg #(Bit#(32)) rg_req2  <- mkRegU;
+   Reg #(Bit#(32)) rg_req3  <- mkRegU;
 
    // ================================================================
    // On command 'assert_reset' and 'deassert_reset'
@@ -143,25 +143,25 @@ module mkHost_Control_Status (Host_Control_Status_IFC);
    // FSM to receive a command and move to STATE_EXEC to execute it
 
    rule rl_req0 (rg_state == STATE_REQ0);
-      Bit #(32) req0 <- pop (f_host_to_hw);
+      Bit#(32) req0 <- pop (f_host_to_hw);
       rg_req0 <= req0;
       rg_state <= ((req0 [2:0] == 0) ? STATE_EXEC : STATE_REQ1);
    endrule
 
    rule rl_req1 (rg_state == STATE_REQ1);
-      Bit #(32) req1 <- pop (f_host_to_hw);
+      Bit#(32) req1 <- pop (f_host_to_hw);
       rg_req1 <= req1;
       rg_state <= ((rg_req0 [2:0] == 1) ? STATE_EXEC : STATE_REQ2);
    endrule
 
    rule rl_req2 (rg_state == STATE_REQ2);
-      Bit #(32) req2 <- pop (f_host_to_hw);
+      Bit#(32) req2 <- pop (f_host_to_hw);
       rg_req2 <= req2;
       rg_state <= ((rg_req0 [2:0] == 2) ? STATE_EXEC : STATE_REQ3);
    endrule
 
    rule rl_req3 (rg_state == STATE_REQ3);
-      Bit #(32) req3 <- pop (f_host_to_hw);
+      Bit#(32) req3 <- pop (f_host_to_hw);
       rg_req3 <= req3;
       rg_state <= STATE_EXEC;
    endrule
@@ -171,7 +171,7 @@ module mkHost_Control_Status (Host_Control_Status_IFC);
 
    rule rl_exec (rg_state == STATE_EXEC);
       Host_Cmd  cmd  = rg_req0 [7:3];
-      Bit #(32) rsp0 = status_ok;
+      Bit#(32) rsp0 = status_ok;
 
       if (cmd == cmd_ping) begin
 	 $display ("Host_Control_Status: host_to_hw_req: ping/noop");
@@ -197,7 +197,7 @@ module mkHost_Control_Status (Host_Control_Status_IFC);
 	 end
 	 else begin
 	    // ON
-	    Bit #(64) tohost_addr = { rg_req2, rg_req1 };
+	    Bit#(64) tohost_addr = { rg_req2, rg_req1 };
 	    f_watch_tohost.enq (tuple2 (True, tohost_addr));
 	    $display ("Host_Control_Status: watch_tohost_on, addr %0h",
 		      tohost_addr);
@@ -228,8 +228,8 @@ module mkHost_Control_Status (Host_Control_Status_IFC);
       end
       // ----------------
       else if (cmd == cmd_set_sim_verbosity) begin
-	 Bit #(4)  verbosity = rg_req0 [11:8];
-	 Bit #(64) logdelay  = { rg_req2, rg_req1 };
+	 Bit#(4)  verbosity = rg_req0 [11:8];
+	 Bit#(64) logdelay  = { rg_req2, rg_req1 };
 	 f_verbosity.enq (tuple2 (verbosity, logdelay));
 	 $display ("Host_Control_Status: set_sim_verbosity %0d logdelay %0h",
 		   verbosity, logdelay);
@@ -250,7 +250,7 @@ module mkHost_Control_Status (Host_Control_Status_IFC);
    // Drain tohost value from CPU
 
    rule rl_tohost_value;
-      Bit #(64) x <- pop (f_tohost_value);
+      Bit#(64) x <- pop (f_tohost_value);
       rg_tohost_value <= truncate (x);
    endrule
 

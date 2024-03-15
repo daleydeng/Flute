@@ -34,7 +34,7 @@ interface AXI4_Lite_Fabric_IFC #(numeric type num_masters,
 				 numeric type wd_data,
 				 numeric type wd_user);
    method Action reset;
-   method Action set_verbosity (Bit #(4) verbosity);
+   method Action set_verbosity (Bit#(4) verbosity);
 
    // From masters
    interface Vector #(num_masters, AXI4_Lite_Slave_IFC #(wd_addr, wd_data, wd_user))  v_from_masters;
@@ -49,8 +49,8 @@ endinterface
 // returns (True,  slave-port-num)  if address is mapped to slave-port-num
 //         (False, ?)               if address is unmapped to any port
 
-module mkAXI4_Lite_Fabric #(function Tuple2 #(Bool, Bit #(TLog #(num_slaves)))
-			             fn_addr_to_slave_num (Bit #(wd_addr) addr))
+module mkAXI4_Lite_Fabric #(function Tuple2 #(Bool, Bit#(TLog #(num_slaves)))
+			             fn_addr_to_slave_num (Bit#(wd_addr) addr))
                           (AXI4_Lite_Fabric_IFC #(num_masters, num_slaves, wd_addr, wd_data, wd_user))
 
    provisos (Log #(num_masters, log_nm),
@@ -59,7 +59,7 @@ module mkAXI4_Lite_Fabric #(function Tuple2 #(Bool, Bit #(TLog #(num_slaves)))
 	     Log #(TAdd #(num_slaves,  1), log_ns_plus_1),
 	     Add #(_dummy, TLog #(num_slaves), log_ns_plus_1));
 
-   Reg #(Bit #(4)) cfg_verbosity  <- mkConfigReg (0);
+   Reg #(Bit#(4)) cfg_verbosity  <- mkConfigReg (0);
 
    Reg #(Bool) rg_reset <- mkReg (True);
 
@@ -76,13 +76,13 @@ module mkAXI4_Lite_Fabric #(function Tuple2 #(Bool, Bit #(TLog #(num_slaves)))
    // Legal masters are 0..(num_masters-1)
    // The value of 'num_masters' is used for decode errors (no such slave)
 
-   Vector #(num_masters, FIFOF #(Bit #(log_ns_plus_1))) v_f_wr_sjs      <- replicateM (mkSizedFIFOF (8));
-   Vector #(num_masters, FIFOF #(Bit #(wd_user)))       v_f_wr_err_user <- replicateM (mkSizedFIFOF (8));
-   Vector #(num_slaves,  FIFOF #(Bit #(log_nm_plus_1))) v_f_wr_mis      <- replicateM (mkSizedFIFOF (8));
+   Vector #(num_masters, FIFOF #(Bit#(log_ns_plus_1))) v_f_wr_sjs      <- replicateM (mkSizedFIFOF (8));
+   Vector #(num_masters, FIFOF #(Bit#(wd_user)))       v_f_wr_err_user <- replicateM (mkSizedFIFOF (8));
+   Vector #(num_slaves,  FIFOF #(Bit#(log_nm_plus_1))) v_f_wr_mis      <- replicateM (mkSizedFIFOF (8));
 
-   Vector #(num_masters, FIFOF #(Bit #(log_ns_plus_1))) v_f_rd_sjs      <- replicateM (mkSizedFIFOF (8));
-   Vector #(num_masters, FIFOF #(Bit #(wd_user)))       v_f_rd_err_user <- replicateM (mkSizedFIFOF (8));
-   Vector #(num_slaves,  FIFOF #(Bit #(log_nm_plus_1))) v_f_rd_mis      <- replicateM (mkSizedFIFOF (8));
+   Vector #(num_masters, FIFOF #(Bit#(log_ns_plus_1))) v_f_rd_sjs      <- replicateM (mkSizedFIFOF (8));
+   Vector #(num_masters, FIFOF #(Bit#(wd_user)))       v_f_rd_err_user <- replicateM (mkSizedFIFOF (8));
+   Vector #(num_slaves,  FIFOF #(Bit#(log_nm_plus_1))) v_f_rd_mis      <- replicateM (mkSizedFIFOF (8));
 
    // ----------------------------------------------------------------
    // BEHAVIOR
@@ -286,7 +286,7 @@ module mkAXI4_Lite_Fabric #(function Tuple2 #(Bool, Bit #(TLog #(num_slaves)))
 	 v_f_rd_sjs [mi].deq;
 	 v_f_rd_err_user [mi].deq;
 
-	 Bit #(wd_data) data = 0;
+	 Bit#(wd_data) data = 0;
 	 let r = AXI4_Lite_Rd_Data {rresp: AXI4_LITE_DECERR, ruser: v_f_rd_err_user [mi].first, rdata: data};
 
 	 xactors_from_masters [mi].i_rd_data.enq (r);
@@ -309,7 +309,7 @@ module mkAXI4_Lite_Fabric #(function Tuple2 #(Bool, Bit #(TLog #(num_slaves)))
       rg_reset <= True;
    endmethod
 
-   method Action set_verbosity (Bit #(4) verbosity);
+   method Action set_verbosity (Bit#(4) verbosity);
       cfg_verbosity <= verbosity;
    endmethod
 

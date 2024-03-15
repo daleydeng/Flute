@@ -55,7 +55,7 @@ interface LLC_AXI4_Adapter_IFC;
 
    // Misc. status; 0 = running, no error
    (* always_ready *)
-   method Bit #(8) mv_status;
+   method Bit#(8) mv_status;
 
 endinterface
 
@@ -233,7 +233,7 @@ module mkLLC_AXi4_Adapter #(MemFifoClient #(idT, childT) llc)
    endmethod
 
    // Misc. status; 0 = running, no error
-   method Bit #(8) mv_status;
+   method Bit#(8) mv_status;
       return (rg_AXI4_error ? 1 : 0);
    endmethod
 

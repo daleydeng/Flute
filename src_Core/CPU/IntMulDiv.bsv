@@ -20,7 +20,7 @@ interface IntDiv_IFC #(numeric type w);
    (* always_ready *)
    method Bool                          result_valid;
    (* always_ready *)
-   method Tuple2 #(Bit #(w), Bit #(w))  result_value;
+   method Tuple2 #(Bit#(w), Bit#(w))  result_value;
 endinterface
 
 // ================================================================
@@ -29,8 +29,8 @@ endinterface
 typedef enum { Div_RDY, Div_START, Div_LOOP1, Div_LOOP2, Div_DONE} DivState
    deriving (Eq, Bits, FShow);
 
-module mkIntDiv #(Reg #(Bit #(w)) rg_numer,    // a.k.a. dividend, and final remainder
-		  Reg #(Bit #(w)) rg_denom)    // a.k.a. divisor
+module mkIntDiv #(Reg #(Bit#(w)) rg_numer,    // a.k.a. dividend, and final remainder
+		  Reg #(Bit#(w)) rg_denom)    // a.k.a. divisor
                 (IntDiv_IFC #(w));
 
    Reg #(DivState)  rg_state     <- mkReg (Div_RDY);
@@ -40,9 +40,9 @@ module mkIntDiv #(Reg #(Bit #(w)) rg_numer,    // a.k.a. dividend, and final rem
    Reg #(Bool)      rg_quoIsNeg  <- mkRegU;
    Reg #(Bool)      rg_remIsNeg  <- mkRegU;
 
-   Reg #(Bit #(w))  rg_denom2    <- mkRegU;
-   Reg #(Bit #(w))  rg_n         <- mkRegU;
-   Reg #(Bit #(w))  rg_quo       <- mkRegU;
+   Reg #(Bit#(w))  rg_denom2    <- mkRegU;
+   Reg #(Bit#(w))  rg_n         <- mkRegU;
+   Reg #(Bit#(w))  rg_quo       <- mkRegU;
 
    // ----------------
    // RULES
@@ -53,8 +53,8 @@ module mkIntDiv #(Reg #(Bit #(w)) rg_numer,    // a.k.a. dividend, and final rem
       rg_state <= Div_DONE;
    endrule
 
-   Bit #(w) rep_most_neg = (1 << (valueOf (w) - 1));
-   Bit #(w) rep_minus_1  = '1;
+   Bit#(w) rep_most_neg = (1 << (valueOf (w) - 1));
+   Bit#(w) rep_minus_1  = '1;
 
    Bool overflow = (   rg_numer_is_signed && (rg_numer == rep_most_neg)
 		    && rg_denom_is_signed && (rg_denom == rep_minus_1));
@@ -148,7 +148,7 @@ module mkIntDiv #(Reg #(Bit #(w)) rg_numer,    // a.k.a. dividend, and final rem
       return (rg_state == Div_DONE);
    endmethod
 
-   method Tuple2 #(Bit #(w), Bit #(w)) result_value;
+   method Tuple2 #(Bit#(w), Bit#(w)) result_value;
       return tuple2 (rg_quo, rg_numer);
    endmethod
 endmodule
@@ -161,12 +161,12 @@ endmodule
 
 interface IntMul_IFC #(numeric type w);
    (* always_ready *)
-   method Action put_args (Bool x_is_signed, Bit #(w) x,
-			   Bool y_is_signed, Bit #(w) y);
+   method Action put_args (Bool x_is_signed, Bit#(w) x,
+			   Bool y_is_signed, Bit#(w) y);
    (* always_ready *)
    method Bool                result_valid;
    (* always_ready *)
-   method Bit #(TAdd #(w,w))  result_value;
+   method Bit#(TAdd #(w,w))  result_value;
 endinterface
 
 // ================================================================
@@ -194,9 +194,9 @@ module mkIntMul (IntMul_IFC #(w));
 
    Reg #(MulState) rg_state <- mkReg (MUL_IDLE);
 
-   Reg #(Bit #(TAdd #(w,w)))  rg_xy     <- mkRegU;
-   Reg #(Bit #(TAdd #(w,w)))  rg_x      <- mkRegU;
-   Reg #(Bit #(w))            rg_y      <- mkRegU;
+   Reg #(Bit#(TAdd #(w,w)))  rg_xy     <- mkRegU;
+   Reg #(Bit#(TAdd #(w,w)))  rg_x      <- mkRegU;
+   Reg #(Bit#(w))            rg_y      <- mkRegU;
    Reg #(Bool)                rg_signed <- mkRegU;
    Reg #(Bool)                rg_isNeg  <- mkRegU;
 
@@ -223,8 +223,8 @@ module mkIntMul (IntMul_IFC #(w));
    // ----------------
    // INTERFACE
 
-   method Action put_args (Bool x_is_signed, Bit #(w) x,
-			   Bool y_is_signed, Bit #(w) y);    // if (rg_state == MUL_IDLE)
+   method Action put_args (Bool x_is_signed, Bit#(w) x,
+			   Bool y_is_signed, Bit#(w) y);    // if (rg_state == MUL_IDLE)
       Int #(w) x_s = unpack (x);
       Int #(w) y_s = unpack (y);
       Bool isNeg   = False;

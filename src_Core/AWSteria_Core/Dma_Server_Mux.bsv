@@ -92,7 +92,7 @@ typedef 2  Num_Masters_2x1;
 
 typedef 1  Num_Slaves_2x1;
 
-typedef Bit #(TLog #(Num_Slaves_2x1))  Slave_Num_2x1;
+typedef Bit#(TLog #(Num_Slaves_2x1))  Slave_Num_2x1;
 
 Slave_Num_2x1  default_slave_num     = 0;
 

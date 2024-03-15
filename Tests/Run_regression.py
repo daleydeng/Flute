@@ -51,7 +51,7 @@ import multiprocessing
 
 exclude_list = []
 
-n_workers_max = 8
+n_workers_max = 4
 
 # ================================================================
 

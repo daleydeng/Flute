@@ -28,7 +28,7 @@ import SoC_Map      :: *;
 
 typedef 2  Num_Masters_2x3;
 
-typedef Bit #(TLog #(Num_Masters_2x3))  Master_Num_2x3;
+typedef Bit#(TLog #(Num_Masters_2x3))  Master_Num_2x3;
 
 Master_Num_2x3  cpu_dmem_master_num         = 0;
 Master_Num_2x3  debug_module_sba_master_num = 1;
@@ -38,7 +38,7 @@ Master_Num_2x3  debug_module_sba_master_num = 1;
 
 typedef 3  Num_Slaves_2x3;
 
-typedef Bit #(TLog #(Num_Slaves_2x3))  Slave_Num_2x3;
+typedef Bit#(TLog #(Num_Slaves_2x3))  Slave_Num_2x3;
 
 Slave_Num_2x3  default_slave_num     = 0;
 Slave_Num_2x3  near_mem_io_slave_num = 1;

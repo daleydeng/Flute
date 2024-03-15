@@ -47,7 +47,7 @@ interface AXI4_Mem_Model_IFC #(numeric type  wd_id,
 			       numeric type  wd_data,
 			       numeric type  wd_user);
 
-   method Action init (Bit #(wd_addr) addr_map_base, Bit #(wd_addr) addr_map_lim);
+   method Action init (Bit#(wd_addr) addr_map_base, Bit#(wd_addr) addr_map_lim);
 
    interface AXI4_Slave_IFC #(wd_id, wd_addr, wd_data, wd_user) slave;
 
@@ -58,7 +58,7 @@ endinterface
 
 Integer mem_size_word64 = 'h100_0000;    // 16M x 64b words = 128MiB
 
-function Bool fn_addr_ok (Bit #(64) base, Bit #(64) lim, Bit #(64) addr, AXI4_Size size);
+function Bool fn_addr_ok (Bit#(64) base, Bit#(64) lim, Bit#(64) addr, AXI4_Size size);
    let aligned  = fn_addr_is_aligned (addr, size);
    let in_range = ((base <= addr) && (addr < lim));
    return (aligned && in_range);
@@ -75,18 +75,18 @@ module mkAXI4_Mem_Model (AXI4_Mem_Model_IFC #(wd_id, wd_addr, wd_data, wd_user))
 
    Reg #(Bool) rg_initialized <- mkReg (False);
 
-   Reg #(Bit #(wd_addr)) rg_addr_map_base <- mkRegU;
-   Reg #(Bit #(wd_addr)) rg_addr_map_lim  <- mkRegU;
+   Reg #(Bit#(wd_addr)) rg_addr_map_base <- mkRegU;
+   Reg #(Bit#(wd_addr)) rg_addr_map_lim  <- mkRegU;
 
    AXI4_Slave_Xactor_IFC #(wd_id, wd_addr, wd_data, wd_user) xactor <- mkAXI4_Slave_Xactor;
 
-   RegFile #(Bit #(wd_addr), Bit #(wd_data)) rf <- mkRegFile (0, fromInteger (mem_size_word64));
+   RegFile #(Bit#(wd_addr), Bit#(wd_data)) rf <- mkRegFile (0, fromInteger (mem_size_word64));
 
    // ================================================================
    // Read requests
    // TODO: does a bad addr return 'burst-len' err responses or just 1?
 
-   Reg #(Bit #(8)) rg_rd_beat <- mkReg (0);
+   Reg #(Bit#(8)) rg_rd_beat <- mkReg (0);
 
    // Recv request on RD_ADDR bus
    // Send burst responses on RD_DATA bus
@@ -130,7 +130,7 @@ module mkAXI4_Mem_Model (AXI4_Mem_Model_IFC #(wd_id, wd_addr, wd_data, wd_user))
    // ================================================================
    // Write requests
 
-   Reg #(Bit #(8)) rg_wr_beat <- mkReg (0);
+   Reg #(Bit#(8)) rg_wr_beat <- mkReg (0);
 
    // Recv request on WR_ADDR bus and burst data on WR_DATA bus,
    // send final response on WR_RESP bus
@@ -175,7 +175,7 @@ module mkAXI4_Mem_Model (AXI4_Mem_Model_IFC #(wd_id, wd_addr, wd_data, wd_user))
    // ================================================================
    // INTERFACE
 
-   method Action init (Bit #(wd_addr) addr_map_base, Bit #(wd_addr) addr_map_lim);
+   method Action init (Bit#(wd_addr) addr_map_base, Bit#(wd_addr) addr_map_lim);
       if (addr_map_base [2:0] != 3'b0)
 	 $display ("%0d: %m.init: ERROR: unaligned addr_map_base 0x%0h", cur_cycle, addr_map_base);
       else if (addr_map_lim [2:0] != 3'b0)

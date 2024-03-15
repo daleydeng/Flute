@@ -30,7 +30,7 @@ import AXI4_Types :: *;
 // ----------------
 // Width of fabric 'id' buses
 typedef  16            Wd_Id;
-typedef  Bit #(Wd_Id)  Fabric_Id;
+typedef  Bit#(Wd_Id)  Fabric_Id;
 
 // ----------------
 // Width of fabric 'addr' buses
@@ -42,7 +42,7 @@ typedef 64   Wd_Addr;
 typedef 32   Wd_Addr;
 `endif
 
-typedef  Bit #(Wd_Addr)      Fabric_Addr;
+typedef  Bit#(Wd_Addr)      Fabric_Addr;
 typedef  TDiv #(Wd_Addr, 8)  Bytes_per_Fabric_Addr;
 
 Integer  bytes_per_fabric_addr = valueOf (Bytes_per_Fabric_Addr);
@@ -57,8 +57,8 @@ typedef 64   Wd_Data;
 typedef 32   Wd_Data;
 `endif
 
-typedef  Bit #(Wd_Data)             Fabric_Data;
-typedef  Bit #(TDiv #(Wd_Data, 8))  Fabric_Strb;
+typedef  Bit#(Wd_Data)             Fabric_Data;
+typedef  Bit#(TDiv #(Wd_Data, 8))  Fabric_Strb;
 
 typedef  TDiv #(Wd_Data, 8)         Bytes_per_Fabric_Data;
 Integer  bytes_per_fabric_data = valueOf (Bytes_per_Fabric_Data);
@@ -66,7 +66,7 @@ Integer  bytes_per_fabric_data = valueOf (Bytes_per_Fabric_Data);
 // ----------------
 // Width of fabric 'user' datapaths
 typedef  0               Wd_User;
-typedef  Bit #(Wd_User)  Fabric_User;
+typedef  Bit#(Wd_User)  Fabric_User;
 
 // ----------------
 // Number of zero LSBs in a fabric address aligned to the fabric data width

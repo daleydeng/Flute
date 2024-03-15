@@ -80,7 +80,7 @@ export  MMU_Cache_IFC (..),  mkMMU_Cache;
 // MMU_Cache interface
 
 interface MMU_Cache_IFC;
-   method Action set_verbosity (Bit #(4) verbosity);
+   method Action set_verbosity (Bit#(4) verbosity);
 
    // Reset request/response
    interface Server #(Token, Token) server_reset;
@@ -88,16 +88,16 @@ interface MMU_Cache_IFC;
    // CPU interface: request
    (* always_ready *)
    method Action  req (CacheOp op,
-		       Bit #(3) f3,
+		       Bit#(3) f3,
 `ifdef ISA_A
-		       Bit #(7) amo_funct7,
+		       Bit#(7) amo_funct7,
 `endif
 		       WordXL addr,
 		       CWord st_value,
 		       // The following  args for VM
-		       Priv_Mode  priv,
-		       Bit #(1)   sstatus_SUM,
-		       Bit #(1)   mstatus_MXR,
+		       PrivMode  priv,
+		       Bit#(1)   sstatus_SUM,
+		       Bit#(1)   mstatus_MXR,
 		       WordXL     satp);    // { VM_Mode, ASID, PPN_for_page_table }
 
    // CPU interface: response
@@ -124,8 +124,8 @@ interface MMU_Cache_IFC;
    // For ISA tests: watch memory writes to <tohost> addr
 
 `ifdef WATCH_TOHOST
-   method Action set_watch_tohost (Bool watch_tohost, Bit #(64) tohost_addr);
-   method Bit #(64) mv_tohost_value;
+   method Action set_watch_tohost (Bool watch_tohost, Bit#(64) tohost_addr);
+   method Bit#(64) mv_tohost_value;
 `endif
 
    // Inform core that DDR4 has been initialized and is ready to accept requests
@@ -133,7 +133,7 @@ interface MMU_Cache_IFC;
 
    // Misc. status; 0 = running, no error
    (* always_ready *)
-   method Bit #(8) mv_status;
+   method Bit#(8) mv_status;
 
 endinterface
 
@@ -187,7 +187,7 @@ Bool bram_cmd_write = True;
 typedef enum {REQUESTOR_RESET_IFC, REQUESTOR_FLUSH_IFC} Requestor
 deriving (Bits, Eq, FShow);
 
-Bit #(Wd_User) dummy_user = ?;    // For AXI4 'user' field (here unused)
+Bit#(Wd_User) dummy_user = ?;    // For AXI4 'user' field (here unused)
 
 `ifndef ISA_PRIV_S
 
@@ -210,8 +210,8 @@ deriving (Bits, FShow);
 // ================================================================
 // Convert RISC-V funct3 code into AXI4_Size code (number of bytes in a beat)
 
-function AXI4_Size fn_funct3_to_AXI4_Size (Bit #(3) funct3);
-   Bit #(2)   x = funct3 [1:0];
+function AXI4_Size fn_funct3_to_AXI4_Size (Bit#(3) funct3);
+   Bit#(2)   x = funct3 [1:0];
    AXI4_Size  result;
    if      (x == f3_SIZE_B)        result = axsize_1;
    else if (x == f3_SIZE_H)        result = axsize_2;
@@ -228,16 +228,16 @@ function Tuple4 #(Fabric_Addr,    // addr is 32b- or 64b-aligned
 		  Fabric_Strb,    // strobe
 		  AXI4_Size)      // 8 for 8-byte writes, else 4
 
-   fn_to_fabric_write_fields (Bit #(3)  f3,      // RISC-V size code: B/H/W/D
-			      Bit #(n)  addr,    // actual byte addr
-			      Bit #(64) word64)  // data is in lsbs
+   fn_to_fabric_write_fields (Bit#(3)  f3,      // RISC-V size code: B/H/W/D
+			      Bit#(n)  addr,    // actual byte addr
+			      Bit#(64) word64)  // data is in lsbs
    provisos (Add #(_, n, 64));
 
    // First compute addr, data and strobe for a 64b-wide fabric
-   Bit #(8)   strobe64    = 0;
-   Bit #(3)   shift_bytes = addr [2:0];
-   Bit #(6)   shift_bits  = { shift_bytes, 3'b0 };
-   Bit #(64)  addr64      = zeroExtend (addr);
+   Bit#(8)   strobe64    = 0;
+   Bit#(3)   shift_bytes = addr [2:0];
+   Bit#(6)   shift_bits  = { shift_bytes, 3'b0 };
+   Bit#(64)  addr64      = zeroExtend (addr);
    AXI4_Size  axsize      = axsize_128;    // Will be updated in 'case' below
 
    case (f3 [1:0])
@@ -281,8 +281,8 @@ endfunction: fn_to_fabric_write_fields
 
 function CWord_Set fn_update_cword_set (CWord_Set   old_cword_set,
 					Way_in_CSet way,
-					Bit #(n)    addr,
-					Bit #(3)    f3,
+					Bit#(n)    addr,
+					Bit#(3)    f3,
 					CWord       cword)
    provisos (Add#(_, 64, SizeOf #(CWord)));
    let old_cword     = old_cword_set [way];
@@ -297,7 +297,7 @@ function CWord_Set fn_update_cword_set (CWord_Set   old_cword_set,
 
    let new_cword_set = old_cword_set;
    let new_cword     = old_cword;
-   Bit #(3) addr_lsbs = addr [2:0];
+   Bit#(3) addr_lsbs = addr [2:0];
 
    // Replace relevant bytes in new_cword
    case (f3)
@@ -332,14 +332,14 @@ endfunction: fn_update_cword_set
 // Args: ld_val (64b from mem) and st_val (64b from CPU reg Rs2)
 // Result: (final_ld_val, final_st_val)
 
-function Tuple2 #(Bit #(64),
-		  Bit #(64)) fv_amo_op (Bit #(3)   funct3,    // encodes data size (.W or .D)
-					Bit #(7)   funct7,    // encodes the AMO op
+function Tuple2 #(Bit#(64),
+		  Bit#(64)) fv_amo_op (Bit#(3)   funct3,    // encodes data size (.W or .D)
+					Bit#(7)   funct7,    // encodes the AMO op
 					WordXL     addr,      // lsbs indicate which 32b W in 64b D (.W)
-					Bit #(64)  ld_val,    // 64b value loaded from mem
-					Bit #(64)  st_val);   // 64b value from CPU reg Rs2
-   Bit #(64) w1     = fn_extract_and_extend_bytes (funct3, addr, ld_val);
-   Bit #(64) w2     = st_val;
+					Bit#(64)  ld_val,    // 64b value loaded from mem
+					Bit#(64)  st_val);   // 64b value from CPU reg Rs2
+   Bit#(64) w1     = fn_extract_and_extend_bytes (funct3, addr, ld_val);
+   Bit#(64) w2     = st_val;
    Int #(64) i1     = unpack (w1);    // Signed, for signed ops
    Int #(64) i2     = unpack (w2);    // Signed, for signed ops
    if (funct3 == f3_AMO_W) begin
@@ -348,9 +348,9 @@ function Tuple2 #(Bit #(64),
       i1 = unpack (signExtend (w1 [31:0]));
       i2 = unpack (signExtend (w2 [31:0]));
    end
-   Bit #(5)  f5     = funct7 [6:2];
+   Bit#(5)  f5     = funct7 [6:2];
    // new_st_val is new value to be stored back to mem (w1 op w2)
-   Bit #(64) new_st_val = ?;
+   Bit#(64) new_st_val = ?;
    case (f5)
       f5_AMO_SWAP: new_st_val = w2;
       f5_AMO_ADD:  new_st_val = pack (i1 + i2);
@@ -421,7 +421,7 @@ module mkMMU_Cache  #(parameter Bool dmem_not_imem)  (MMU_Cache_IFC);
 
    // Verbosity: 0: quiet; 1 reset info; 2: + detail; 3: cache refill loop detail
    Integer verbosity = (dmem_not_imem ? 0 : 0);
-   Reg #(Bit #(4)) cfg_verbosity <- mkConfigReg (fromInteger (verbosity));
+   Reg #(Bit#(4)) cfg_verbosity <- mkConfigReg (fromInteger (verbosity));
 
    // Overall state of this module
    Reg #(Module_State)  rg_state      <- mkReg (MODULE_PRERESET);
@@ -462,28 +462,28 @@ module mkMMU_Cache  #(parameter Bool dmem_not_imem)  (MMU_Cache_IFC);
 
    // Registers holding incoming request args
    Reg #(CacheOp)    rg_op          <- mkRegU;    // CACHE_LD, CACHE_ST, CACHE_AMO
-   Reg #(Bit #(3))   rg_f3          <- mkRegU;    // rg_f3[1:0] specifies B/H/W/D access size
+   Reg #(Bit#(3))   rg_f3          <- mkRegU;    // rg_f3[1:0] specifies B/H/W/D access size
 `ifdef ISA_A
-   Reg #(Bit #(7))   rg_amo_funct7  <- mkRegU;    // specifies which kind of AMO op
+   Reg #(Bit#(7))   rg_amo_funct7  <- mkRegU;    // specifies which kind of AMO op
 `endif
    Reg #(WordXL)     rg_addr        <- mkRegU;    // VA or PA
-   Reg #(Bit #(64))  rg_st_amo_val  <- mkRegU;    // Store-value for ST, SC, AMO
+   Reg #(Bit#(64))  rg_st_amo_val  <- mkRegU;    // Store-value for ST, SC, AMO
 
    // The following are needed for VM
 `ifdef ISA_PRIV_S
-   Reg #(Priv_Mode)  rg_priv        <- mkRegU;    // Privilege level for this request
-   Reg #(Bit #(1))   rg_sstatus_SUM <- mkRegU;    // SUM bit in SSTATUS CSR
-   Reg #(Bit #(1))   rg_mstatus_MXR <- mkRegU;    // MXR bit in MSTATUS CSR
+   Reg #(PrivMode)  rg_priv        <- mkRegU;    // Privilege level for this request
+   Reg #(Bit#(1))   rg_sstatus_SUM <- mkRegU;    // SUM bit in SSTATUS CSR
+   Reg #(Bit#(1))   rg_mstatus_MXR <- mkRegU;    // MXR bit in MSTATUS CSR
 
    Reg #(WordXL)     rg_satp        <- mkRegU;    // Copy of value in SATP CSR { VM_Mode, ASID, PPN }
 `else
    // Dummy registers in non-VM mode
-   Priv_Mode x = m_Priv_Mode;
-   Reg #(Priv_Mode)  rg_priv        = fn_genNullRegIfc (x);
+   PrivMode x = m_Priv_Mode;
+   Reg #(PrivMode)  rg_priv        = fn_genNullRegIfc (x);
 
-   Bit #(1) y = ?;
-   Reg #(Bit #(1))   rg_sstatus_SUM = fn_genNullRegIfc (y);
-   Reg #(Bit #(1))   rg_mstatus_MXR = fn_genNullRegIfc (y);
+   Bit#(1) y = ?;
+   Reg #(Bit#(1))   rg_sstatus_SUM = fn_genNullRegIfc (y);
+   Reg #(Bit#(1))   rg_mstatus_MXR = fn_genNullRegIfc (y);
 
    WordXL z = ?;
    Reg #(WordXL)     rg_satp        = fn_genNullRegIfc (z);
@@ -507,7 +507,7 @@ module mkMMU_Cache  #(parameter Bool dmem_not_imem)  (MMU_Cache_IFC);
    CSet_in_Cache                 cset_in_cache       = fn_Addr_to_CSet_in_Cache  (rg_addr);
    CSet_CWord_in_Cache           cset_cword_in_cache = fn_Addr_to_CSet_CWord_in_Cache (rg_addr);
    CWord_in_CLine                cword_in_cline      = fn_Addr_to_CWord_in_CLine (rg_addr);
-   Bit #(Bits_per_Byte_in_CWord) byte_in_cword = fn_Addr_to_Byte_in_CWord  (rg_addr);
+   Bit#(Bits_per_Byte_in_CWord) byte_in_cword = fn_Addr_to_Byte_in_CWord  (rg_addr);
 
 `ifdef ISA_PRIV_S
    // Derivations from rg_satp
@@ -525,9 +525,9 @@ module mkMMU_Cache  #(parameter Bool dmem_not_imem)  (MMU_Cache_IFC);
    Reg #(Bool)      dw_exc               <- mkDWire (False);
    Reg #(Exc_Code)  rg_exc_code          <- mkRegU;
    Reg #(Exc_Code)  dw_exc_code          <- mkDWire (?);
-   Reg #(Bit #(64)) rg_ld_val            <- mkRegU;         // Load-value for LOAD/LR/AMO, success/fail for SC
-   Reg #(Bit #(64)) dw_output_ld_val     <- mkDWire (?);
-   Reg #(Bit #(64)) dw_output_st_amo_val <- mkDWire (?);    // stored value for ST, SC, AMO (for verification only)
+   Reg #(Bit#(64)) rg_ld_val            <- mkRegU;         // Load-value for LOAD/LR/AMO, success/fail for SC
+   Reg #(Bit#(64)) dw_output_ld_val     <- mkDWire (?);
+   Reg #(Bit#(64)) dw_output_st_amo_val <- mkDWire (?);    // stored value for ST, SC, AMO (for verification only)
 
    // This reg is used during PTWs
    Reg #(PA) rg_pte_pa <- mkRegU;
@@ -547,7 +547,7 @@ module mkMMU_Cache  #(parameter Bool dmem_not_imem)  (MMU_Cache_IFC);
    Reg #(Bool)                rg_error_during_refill <- mkRegU;
    // In 32b fabrics, these hold the lower word32 while we're fetching the upper word32 of a word64
    Reg #(Bool)      rg_lower_word32_full <- mkReg (False);
-   Reg #(Bit #(32)) rg_lower_word32      <- mkRegU;
+   Reg #(Bit#(32)) rg_lower_word32      <- mkRegU;
 
    // When a CSet is full and we need to replace a cache line due to a refill,
    // the victim is picked 'randomly' according to this register
@@ -558,8 +558,8 @@ module mkMMU_Cache  #(parameter Bool dmem_not_imem)  (MMU_Cache_IFC);
    // "tohost" addr on which to monitor writes, for standard ISA tests.
    // These are set by the 'set_watch_tohost' method but are otherwise read-only.
    Reg #(Bool)      rg_watch_tohost <- mkReg (False);
-   Reg #(Bit #(64)) rg_tohost_addr  <- mkReg ('h_8000_1000);
-   Reg #(Bit #(64)) rg_tohost_value <- mkReg (0);
+   Reg #(Bit#(64)) rg_tohost_addr  <- mkReg ('h_8000_1000);
+   Reg #(Bit#(64)) rg_tohost_value <- mkReg (0);
 `endif
 
    // ----------------------------------------------------------------
@@ -590,7 +590,7 @@ module mkMMU_Cache  #(parameter Bool dmem_not_imem)  (MMU_Cache_IFC);
 
    // Test cache hit or miss; if hit, return which 'way', and the word64 data
    // ---- This pure function is an ActionValue only for the $display inside
-   function ActionValue #(Tuple3 #(Bool, Way_in_CSet, Bit #(64))) fn_test_cache_hit_or_miss (CTag  pa_ctag);
+   function ActionValue #(Tuple3 #(Bool, Way_in_CSet, Bit#(64))) fn_test_cache_hit_or_miss (CTag  pa_ctag);
       actionvalue
 	 Bool        hit     = False;
 	 Way_in_CSet way_hit = 0;
@@ -636,7 +636,7 @@ module mkMMU_Cache  #(parameter Bool dmem_not_imem)  (MMU_Cache_IFC);
    // Functions to drive read-responses (outputs)
 
    // Memory-read responses
-   function Action fa_drive_mem_rsp (Bit #(3) f3, Addr addr, Bit #(64) ld_val, Bit #(64) st_amo_val);
+   function Action fa_drive_mem_rsp (Bit#(3) f3, Addr addr, Bit#(64) ld_val, Bit#(64) st_amo_val);
       action
 	 dw_valid             <= True;
 	 // Value loaded into rd (LOAD, LR, AMO, SC success/fail result)
@@ -650,7 +650,7 @@ module mkMMU_Cache  #(parameter Bool dmem_not_imem)  (MMU_Cache_IFC);
    endfunction
 
    // IO-read responses
-   function Action fa_drive_IO_read_rsp (Bit #(3) f3, Addr addr, Bit #(64) ld_val);
+   function Action fa_drive_IO_read_rsp (Bit#(3) f3, Addr addr, Bit#(64) ld_val);
       action
 	 dw_valid         <= True;
 	 // Value loaded into rd (LOAD, LR, AMO, SC success/fail result)
@@ -713,10 +713,10 @@ module mkMMU_Cache  #(parameter Bool dmem_not_imem)  (MMU_Cache_IFC);
       endaction
    endfunction
 
-   FIFOF #(Tuple3 #(Bit #(3), PA, Bit #(64))) f_fabric_write_reqs <- mkFIFOF;
+   FIFOF #(Tuple3 #(Bit#(3), PA, Bit#(64))) f_fabric_write_reqs <- mkFIFOF;
 
    // Send a write-request into the fabric
-   function Action fa_fabric_send_write_req (Bit #(3)  f3, PA  pa, Bit #(64)  st_val);
+   function Action fa_fabric_send_write_req (Bit#(3)  f3, PA  pa, Bit#(64)  st_val);
       action
 	 f_fabric_write_reqs.enq (tuple3 (f3, pa, st_val));
       endaction
@@ -1004,7 +1004,7 @@ module mkMMU_Cache  #(parameter Bool dmem_not_imem)  (MMU_Cache_IFC);
 		  end
 
 		  // SC result=0 on success, =1 on failure
-		  Bit #(1) lrsc_result = (do_write ? 1'b0 : 1'b1);
+		  Bit#(1) lrsc_result = (do_write ? 1'b0 : 1'b1);
 
 		  rg_ld_val     <= zeroExtend (lrsc_result);
 		  rg_lrsc_valid <= False;
@@ -1162,7 +1162,7 @@ module mkMMU_Cache  #(parameter Bool dmem_not_imem)  (MMU_Cache_IFC);
       // Memory read-response is a level 1 PTE
       let  mem_rsp <- pop_o (master_xactor.o_rd_data);
 
-      Bit #(64) x64 = zeroExtend (mem_rsp.rdata);
+      Bit#(64) x64 = zeroExtend (mem_rsp.rdata);
       WordXL pte;
 
       // PTE is 64b response (RV32 does not have Level 2 PTEs)
@@ -1249,7 +1249,7 @@ module mkMMU_Cache  #(parameter Bool dmem_not_imem)  (MMU_Cache_IFC);
       // Memory read-response is a level 1 PTE
       let  mem_rsp <- pop_o (master_xactor.o_rd_data);
 
-      Bit #(64) x64 = zeroExtend (mem_rsp.rdata);
+      Bit#(64) x64 = zeroExtend (mem_rsp.rdata);
       WordXL pte;
 `ifdef RV32
       // PTE is lower or upper 32b word of 64b mem response
@@ -1347,7 +1347,7 @@ module mkMMU_Cache  #(parameter Bool dmem_not_imem)  (MMU_Cache_IFC);
       // Memory read-response is a level 0 PTE
       let mem_rsp <- pop_o (master_xactor.o_rd_data);
 
-      Bit #(64) x64 = zeroExtend (mem_rsp.rdata);
+      Bit#(64) x64 = zeroExtend (mem_rsp.rdata);
       WordXL pte;
 `ifdef RV32
       // PTE is lower or upper 32b word of 64b mem response
@@ -1432,7 +1432,7 @@ module mkMMU_Cache  #(parameter Bool dmem_not_imem)  (MMU_Cache_IFC);
       // The following extend/truncate trickery is because
       // Bits_per_Way_in_CSet may be 0 (direct-mapped),
       // for which the '1' in '+1' is not a valid literal
-      Bit #(TAdd #(1, Bits_per_Way_in_CSet)) tmp = extend (rg_victim_way);
+      Bit#(TAdd #(1, Bits_per_Way_in_CSet)) tmp = extend (rg_victim_way);
       tmp = tmp + 1;
       Way_in_CSet new_victim_way = truncate (tmp);
       rg_victim_way <= new_victim_way;
@@ -1509,7 +1509,7 @@ module mkMMU_Cache  #(parameter Bool dmem_not_imem)  (MMU_Cache_IFC);
 
       // Refill 64b of cache line
       else begin
-	 Bit #(64) new_word64 = zeroExtend (mem_rsp.rdata);
+	 Bit#(64) new_word64 = zeroExtend (mem_rsp.rdata);
 	 if (valueOf (Wd_Data) == 32) begin
 	    // Assert: rg_lower_32_full == True
 	    new_word64 = { new_word64 [31:0], rg_lower_word32 };
@@ -1818,7 +1818,7 @@ module mkMMU_Cache  #(parameter Bool dmem_not_imem)  (MMU_Cache_IFC);
    // ================================================================
    // INTERFACE
 
-   method Action set_verbosity (Bit #(4) v);
+   method Action set_verbosity (Bit#(4) v);
       cfg_verbosity <= v;
    endmethod
 
@@ -1840,16 +1840,16 @@ module mkMMU_Cache  #(parameter Bool dmem_not_imem)  (MMU_Cache_IFC);
    // NOTE: this has no flow control: CPU should only invoke it when consuming prev output.
    // As soon as this method is called, the module starts working on this new request.
    method Action  req (CacheOp op,
-		       Bit #(3) f3,
+		       Bit#(3) f3,
 `ifdef ISA_A
-		       Bit #(7) amo_funct7,
+		       Bit#(7) amo_funct7,
 `endif
 		       Addr addr,
-		       Bit #(64) st_value,
+		       Bit#(64) st_value,
 		       // The following  args for VM
-		       Priv_Mode  priv,
-		       Bit #(1)   sstatus_SUM,
-		       Bit #(1)   mstatus_MXR,
+		       PrivMode  priv,
+		       Bit#(1)   sstatus_SUM,
+		       Bit#(1)   mstatus_MXR,
 		       WordXL     satp);    // { VM_Mode, ASID, PPN_for_page_table }
 
       if (cfg_verbosity > 1) begin
@@ -1898,11 +1898,11 @@ module mkMMU_Cache  #(parameter Bool dmem_not_imem)  (MMU_Cache_IFC);
       return rg_addr;
    endmethod
 
-   method Bit #(64)  cword;
+   method Bit#(64)  cword;
       return dw_output_ld_val;
    endmethod
 
-   method Bit #(64)  st_amo_val;
+   method Bit#(64)  st_amo_val;
       return dw_output_st_amo_val;
    endmethod
 
@@ -1951,13 +1951,13 @@ module mkMMU_Cache  #(parameter Bool dmem_not_imem)  (MMU_Cache_IFC);
    // For ISA tests: watch memory writes to <tohost> addr
 
 `ifdef WATCH_TOHOST
-   method Action set_watch_tohost (Bool watch_tohost, Bit #(64) tohost_addr);
+   method Action set_watch_tohost (Bool watch_tohost, Bit#(64) tohost_addr);
       rg_watch_tohost <= watch_tohost;
       rg_tohost_addr  <= tohost_addr;
       $display ("%0d: %m.set_watch_tohost: watch %0d, addr %0h",
 		cur_cycle, watch_tohost, tohost_addr);   endmethod
 
-   method Bit #(64) mv_tohost_value;
+   method Bit#(64) mv_tohost_value;
       return rg_tohost_value;
    endmethod
 `endif
@@ -1969,7 +1969,7 @@ module mkMMU_Cache  #(parameter Bool dmem_not_imem)  (MMU_Cache_IFC);
    endmethod
 
    // Misc. status; 0 = running, no error
-   method Bit #(8) mv_status;
+   method Bit#(8) mv_status;
       return (rg_wr_rsp_err ? 1 : 0);
    endmethod
 

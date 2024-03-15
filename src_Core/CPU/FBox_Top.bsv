@@ -40,25 +40,25 @@ interface FBox_Top_IFC;
    (* always_ready *)
    method Action req (
         Opcode                      opcode
-      , Bit #(7)                    f7
-      , Bit #(3)                    rm
+      , Bit#(7)                    f7
+      , Bit#(3)                    rm
       , RegIdx                     rs2
-      , Bit #(64)                   v1
-      , Bit #(64)                   v2
-      , Bit #(64)                   v3
+      , Bit#(64)                   v1
+      , Bit#(64)                   v2
+      , Bit#(64)                   v3
    );
 
    // FBox interface: response
    (* always_ready *)
    method Bool valid;
    (* always_ready *)
-   method Tuple2 #(Bit #(64), Bit #(5)) word;
+   method Tuple2 #(Bit#(64), Bit#(5)) word;
 endinterface
 
 // ================================================================
 
 (* synthesize *)
-module mkFBox_Top #(Bit #(4) verbosity) (FBox_Top_IFC);
+module mkFBox_Top #(Bit#(4) verbosity) (FBox_Top_IFC);
 
    FBox_Core_IFC           fbox_core            <- mkFBox_Core (verbosity);
 
@@ -70,12 +70,12 @@ module mkFBox_Top #(Bit #(4) verbosity) (FBox_Top_IFC);
    // FBox interface: request
    method Action req (
         Opcode    opcode
-      , Bit #(7)  funct7
-      , Bit #(3)  rounding_mode
-      , Bit #(5)  rs2_name
-      , Bit #(64) val1
-      , Bit #(64) val2
-      , Bit #(64) val3
+      , Bit#(7)  funct7
+      , Bit#(3)  rounding_mode
+      , Bit#(5)  rs2_name
+      , Bit#(64) val1
+      , Bit#(64) val2
+      , Bit#(64) val3
    );
       // Legal instruction
       fbox_core.req (

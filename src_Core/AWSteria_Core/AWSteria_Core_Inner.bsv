@@ -70,7 +70,7 @@ import DM_CPU_Req_Rsp    :: *;
 import PC_Trace          :: *;    // Lightweight PC trace info
 `endif
 
-import TV_Info           :: *;    // Tandem Verification info
+import tv_info           :: *;    // Tandem Verification info
 
 // ----------------
 // RISC-V CPU and related IPs
@@ -110,7 +110,7 @@ interface AWSteria_Core_Inner_IFC;
    // ----------------
    // External interrupt sources
 
-   method Action ext_interrupts (Bit #(N_Core_External_Interrupt_Sources) x);
+   method Action ext_interrupts (Bit#(N_Core_External_Interrupt_Sources) x);
 
    // ----------------
    // Non-maskable interrupt request
@@ -120,8 +120,8 @@ interface AWSteria_Core_Inner_IFC;
    // ----------------
    // Misc I/O streams
 
-   interface FIFOF_O #(Bit #(32)) fo_misc;
-   interface FIFOF_I #(Bit #(32)) fi_misc;
+   interface FIFOF_O #(Bit#(32)) fo_misc;
+   interface FIFOF_I #(Bit#(32)) fi_misc;
 
    // ----------------
    // Tandem Verification output
@@ -147,16 +147,16 @@ interface AWSteria_Core_Inner_IFC;
    // Interfaces for mkHost_Control_Status
 
    // PC Trace control
-   interface FIFOF_I #(Tuple2 #(Bool, Bit #(64))) fi_pc_trace_control;
+   interface FIFOF_I #(Tuple2 #(Bool, Bit#(64))) fi_pc_trace_control;
 
    // Set core's verbosity and logdelay
-   interface FIFOF_I #(Tuple2 #(Bit #(4), Bit #(64))) fi_verbosity_control;
+   interface FIFOF_I #(Tuple2 #(Bit#(4), Bit#(64))) fi_verbosity_control;
 
 `ifdef WATCH_TOHOST
    // Set watch-tohost on/off with tohost address
-   interface FIFOF_I #(Tuple2 #(Bool, Bit #(64))) fi_watch_tohost_control;
+   interface FIFOF_I #(Tuple2 #(Bool, Bit#(64))) fi_watch_tohost_control;
    // Get tohost value
-   interface FIFOF_O #(Bit #(64)) fo_tohost_value;
+   interface FIFOF_O #(Bit#(64)) fo_tohost_value;
 `endif
 endinterface
 
@@ -350,7 +350,7 @@ module mkAWSteria_Core_Inner (AWSteria_Core_Inner_IFC);
    // Connect external interrupts to PLIC
 
    // External interrupts
-   Reg #(Bit #(N_External_Interrupt_Sources)) rg_ext_intrs <- mkReg (0);
+   Reg #(Bit#(N_External_Interrupt_Sources)) rg_ext_intrs <- mkReg (0);
 
    // Drive PLIC's interrupt lines
    (* fire_when_enabled, no_implicit_conditions *)
@@ -382,15 +382,15 @@ module mkAWSteria_Core_Inner (AWSteria_Core_Inner_IFC);
    // fo_misc: if INCLUDE_PC_TRACE, send PC trace out through this, else unused
    // fi_misc: unused
 
-   FIFOF #(Bit #(32)) f_misc_from_host = dummy_FIFOF;    // unused
+   FIFOF #(Bit#(32)) f_misc_from_host = dummy_FIFOF;    // unused
 
 `ifdef INCLUDE_PC_TRACE
-   Reg #(Tuple2 #(Bool, Bit #(64))) rg_pc_trace_control <- mkReg (tuple2 (False, ?));
-   FIFOF #(Bit #(32))               f_misc_to_host      <- mkFIFOF;
+   Reg #(Tuple2 #(Bool, Bit#(64))) rg_pc_trace_control <- mkReg (tuple2 (False, ?));
+   FIFOF #(Bit#(32))               f_misc_to_host      <- mkFIFOF;
 
    Reg #(PC_Trace)   rg_pc_trace                 <- mkRegU;
-   Reg #(Bit #(64))  rg_pc_trace_interval_ctr    <- mkReg (0);
-   Reg #(Bit #(3))   rg_pc_trace_serialize_state <- mkReg (0);
+   Reg #(Bit#(64))  rg_pc_trace_interval_ctr    <- mkReg (0);
+   Reg #(Bit#(3))   rg_pc_trace_serialize_state <- mkReg (0);
 
    rule rl_pc_trace_0 (rg_pc_trace_serialize_state == 0);
       // Drain pc trace packet from CPU
@@ -438,18 +438,18 @@ module mkAWSteria_Core_Inner (AWSteria_Core_Inner_IFC);
       rg_pc_trace_serialize_state <= 0;
    endrule
 `else
-   FIFOF #(Bit #(32)) f_misc_to_host = dummy_FIFOF;    // unused
+   FIFOF #(Bit#(32)) f_misc_to_host = dummy_FIFOF;    // unused
 `endif
 
    // ================================================================
    // To_Host value
    // Enqueue each changed value
 
-   FIFOF #(Bit #(64)) f_tohost_value <- mkFIFOF;
-   Reg #(Bit #(64))   rg_prev_tohost_value <- mkReg (0);
+   FIFOF #(Bit#(64)) f_tohost_value <- mkFIFOF;
+   Reg #(Bit#(64))   rg_prev_tohost_value <- mkReg (0);
 
    rule rl_tohost_value;
-      Bit #(64) tohost_value = cpu.mv_tohost_value;
+      Bit#(64) tohost_value = cpu.mv_tohost_value;
       if (tohost_value != rg_prev_tohost_value) begin
 	 f_tohost_value.enq (tohost_value);
 	 rg_prev_tohost_value <= tohost_value;
@@ -474,7 +474,7 @@ module mkAWSteria_Core_Inner (AWSteria_Core_Inner_IFC);
    // ----------------
    // External interrupt sources
 
-   method Action ext_interrupts (Bit #(N_Core_External_Interrupt_Sources) x);
+   method Action ext_interrupts (Bit#(N_Core_External_Interrupt_Sources) x);
       rg_ext_intrs <= zeroExtend (x);
    endmethod
 
@@ -515,7 +515,7 @@ module mkAWSteria_Core_Inner (AWSteria_Core_Inner_IFC);
 `ifdef INCLUDE_PC_TRACE
    // PC Trace control
    interface FIFOF_I fi_pc_trace_control;
-      method Action enq (Tuple2 #(Bool, Bit #(64)) x);
+      method Action enq (Tuple2 #(Bool, Bit#(64)) x);
 	 rg_pc_trace_control <= x;
       endmethod
       method notFull = True;
@@ -531,7 +531,7 @@ module mkAWSteria_Core_Inner (AWSteria_Core_Inner_IFC);
    // Set core's verbosity and logdelay
 
    interface FIFOF_I fi_verbosity_control;
-      method Action enq (Tuple2 #(Bit #(4), Bit #(64)) xy);
+      method Action enq (Tuple2 #(Bit#(4), Bit#(64)) xy);
 	 match { .verbosity, .logdelay } = xy;
 	 cpu.set_verbosity (verbosity, logdelay);
       endmethod
@@ -543,7 +543,7 @@ module mkAWSteria_Core_Inner (AWSteria_Core_Inner_IFC);
 
 `ifdef WATCH_TOHOST
    interface FIFOF_I fi_watch_tohost_control;
-      method Action enq (Tuple2 #(Bool, Bit #(64)) xy);
+      method Action enq (Tuple2 #(Bool, Bit#(64)) xy);
 	 match { .watch_tohost, .tohost_addr } = xy;
 	 cpu.set_watch_tohost (watch_tohost, tohost_addr);
       endmethod

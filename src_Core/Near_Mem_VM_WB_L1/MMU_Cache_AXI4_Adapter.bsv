@@ -65,14 +65,14 @@ interface MMU_Cache_AXI4_Adapter_IFC;
    // interface for cache-line read/write client
 
    interface Put #(Line_Req)  p_mem_line_req;
-   interface Put #(Bit #(64)) p_mem_line_write_data;
+   interface Put #(Bit#(64)) p_mem_line_write_data;
    interface Get #(Read_Data) g_mem_line_read_data;
 
    // ----------------
    // interface for word/sub-word read/write client
 
    interface Put #(Single_Req) p_mem_single_req;
-   interface Put #(Bit #(64))  p_mem_single_write_data;
+   interface Put #(Bit#(64))  p_mem_single_write_data;
    interface Get #(Read_Data)  g_mem_single_read_data;
 
    // ----------------
@@ -92,7 +92,7 @@ interface MMU_Cache_AXI4_Adapter_IFC;
 
    // Misc. status; 0 = running, no error
    (* always_ready *)
-   method Bit #(8) mv_status;
+   method Bit#(8) mv_status;
 
 endinterface
 
@@ -108,23 +108,23 @@ Integer bytes_per_fabric_data = ((valueOf (Wd_Data) == 32) ? 4 : 8);
 // Convert size code into AXI4_Size code (number of bytes in a beat).
 // It just so happens that our coding coincides with AXI4's coding.
 
-function AXI4_Size  fv_size_code_to_AXI4_Size (Bit #(2) size_code);
+function AXI4_Size  fv_size_code_to_AXI4_Size (Bit#(2) size_code);
    return { 1'b0, size_code };
 endfunction
 
 // ----------------------------------------------------------------
 // Check if addr is cache-line-aligned
 
-Bit #(64) byte_in_line_mask = fromInteger (bytes_per_cline - 1);
+Bit#(64) byte_in_line_mask = fromInteger (bytes_per_cline - 1);
 
-function Bool fv_is_line_aligned (Bit #(64) addr);
+function Bool fv_is_line_aligned (Bit#(64) addr);
    return ((addr & byte_in_line_mask) == 0);
 endfunction
 
 // ----------------------------------------------------------------
 // Align an address to beginning of cache line containing the addr
 
-function Bit #(64) fv_align_to_line (Bit #(64) addr);
+function Bit#(64) fv_align_to_line (Bit#(64) addr);
    return (addr & (~ byte_in_line_mask));
 endfunction
 
@@ -133,7 +133,7 @@ endfunction
 // For FABRIC64 this does nothing.
 // For FABRIC32 it discards the upper 32 bits.
 
-function Fabric_Addr fv_Addr_to_Fabric_Addr (Bit #(64) addr);
+function Fabric_Addr fv_Addr_to_Fabric_Addr (Bit#(64) addr);
    return truncate (addr);
 endfunction
 
@@ -141,7 +141,7 @@ endfunction
 // MODULE IMPLEMENTATION
 
 (* synthesize *)
-module mkMMU_Cache_AXI4_Adapter #(parameter Bit #(3) verbosity)
+module mkMMU_Cache_AXI4_Adapter #(parameter Bit#(3) verbosity)
                                 (MMU_Cache_AXI4_Adapter_IFC);
 
    // Verbosity: 0=quiet, 1 = rule firings
@@ -149,22 +149,22 @@ module mkMMU_Cache_AXI4_Adapter #(parameter Bit #(3) verbosity)
 
    // FIFOs for line-client
    FIFOF #(Line_Req)   f_line_reqs       <- mkFIFOF;
-   FIFOF #(Bit #(64))  f_line_write_data <- mkFIFOF;
+   FIFOF #(Bit#(64))  f_line_write_data <- mkFIFOF;
    FIFOF #(Read_Data)  f_line_read_data  <- mkFIFOF;
 
    // FIFOs for single-word client
    FIFOF #(Single_Req) f_single_reqs       <- mkFIFOF;
-   FIFOF #(Bit #(64))  f_single_write_data <- mkFIFOF;
+   FIFOF #(Bit#(64))  f_single_write_data <- mkFIFOF;
    FIFOF #(Read_Data)  f_single_read_data  <- mkFIFOF;
 
    // Identifiers for requestor client
-   Bit #(1) client_id_line   = 0;
-   Bit #(1) client_id_single = 1;
+   Bit#(1) client_id_line   = 0;
+   Bit#(1) client_id_single = 1;
 
    // Limit the number of reads/writes outstanding to 15
    // TODO: change these to concurrent up/down counters?
-   Reg #(Bit #(4)) rg_rd_rsps_pending <- mkReg (0);
-   Reg #(Bit #(4)) rg_wr_rsps_pending <- mkReg (0);
+   Reg #(Bit#(4)) rg_rd_rsps_pending <- mkReg (0);
+   Reg #(Bit#(4)) rg_wr_rsps_pending <- mkReg (0);
 
    Reg #(Bool) rg_ddr4_ready <- mkReg (False);
 
@@ -178,13 +178,13 @@ module mkMMU_Cache_AXI4_Adapter #(parameter Bit #(3) verbosity)
    // BEHAVIOR: READ RESPONSES (for line and single clients)
    // The following registers identify the client, the beat, etc.
 
-   Reg #(Bit #(1)) rg_rd_client_id <- mkRegU;
+   Reg #(Bit#(1)) rg_rd_client_id <- mkRegU;
 
    // TODO: change mkFIFOF to mkSizedFIFOF (allowing multiple outstanding reads)
    // may reads can be outstanding
-   FIFOF #(Tuple3 #(Bit #(2),     // size_code
-		    Bit #(1),     // addr bit [2]
-		    Bit #(8)))    // Num beats read-data
+   FIFOF #(Tuple3 #(Bit#(2),     // size_code
+		    Bit#(1),     // addr bit [2]
+		    Bit#(8)))    // Num beats read-data
          f_rd_rsp_control <- mkFIFOF;
    match { .rd_req_size_code, .rd_req_addr_bit_2, .rd_req_beats } = f_rd_rsp_control.first;
 
@@ -192,12 +192,12 @@ module mkMMU_Cache_AXI4_Adapter #(parameter Bit #(3) verbosity)
    // Note: beat-count is for fabric, not for client-side data.
    // Former is 2 x latter for Fabric32 for 64b line data and 64b single data.
 
-   Reg #(Bit #(8)) rg_rd_beat <- mkRegU;
+   Reg #(Bit#(8)) rg_rd_beat <- mkRegU;
 
    // The following are needed for FABRIC32 during each burst response
    // to assemble lower and upper 32b into a 64b response to client
    Reg #(Bool)       rg_rd_data_lower32_ok <- mkRegU;
-   Reg #(Bit #(32))  rg_rd_data_lower32    <- mkRegU;
+   Reg #(Bit#(32))  rg_rd_data_lower32    <- mkRegU;
 
    rule rl_read_data (rg_rd_beat < rd_req_beats);
       rg_rd_beat <= rg_rd_beat + 1;
@@ -210,7 +210,7 @@ module mkMMU_Cache_AXI4_Adapter #(parameter Bit #(3) verbosity)
       let rd_data <- pop_o (master_xactor.o_rd_data);
 
       Bool      ok   = (rd_data.rresp == axi4_resp_okay);
-      Bit #(64) data = zeroExtend (rd_data.rdata);
+      Bit#(64) data = zeroExtend (rd_data.rdata);
 
       Bool do_enq    = True;
       Bool even_beat = (rg_rd_beat [0] == 1'b0);
@@ -319,7 +319,7 @@ module mkMMU_Cache_AXI4_Adapter #(parameter Bit #(3) verbosity)
 	 $display ("%0d: %m.rl_single_read_req:\n    AXI4_Rd_Addr{araddr %0h arlen 0 (burst length 1) ",
 		   cur_cycle, fabric_addr,  fshow_AXI4_Size (fabric_size), "}");
 
-      Bit #(8)    num_beats   = 1;
+      Bit#(8)    num_beats   = 1;
 
       // FABRIC32 adjustments
       if ((valueOf (Wd_Data) == 32) && (req.size_code == 2'b11)) begin
@@ -382,10 +382,10 @@ module mkMMU_Cache_AXI4_Adapter #(parameter Bit #(3) verbosity)
    // BEHAVIOR: Write data (for both line and single)
    // Assume that data is already lane-aligned for 64b data width.
 
-   FIFOF #(Tuple4 #(Bit #(1),     // client_id
-		    Bit #(2),     // size_code
-		    Bit #(3),     // addr lsbs
-		    Bit #(8)))    // Num beats in write-data
+   FIFOF #(Tuple4 #(Bit#(1),     // client_id
+		    Bit#(2),     // size_code
+		    Bit#(3),     // addr lsbs
+		    Bit#(8)))    // Num beats in write-data
          f_wr_data_control <- mkFIFOF;
    match {.wr_client_id,
 	  .wr_req_size_code,
@@ -395,7 +395,7 @@ module mkMMU_Cache_AXI4_Adapter #(parameter Bit #(3) verbosity)
    // Count beats in a single transaction
    // Note: beat-count is for fabric, not for client-side data.
    // Former is 2 x latter for Fabric32 for 64b line data and 64b single data.
-   Reg #(Bit #(8)) rg_wr_beat <- mkReg (0);
+   Reg #(Bit#(8)) rg_wr_beat <- mkReg (0);
 
    rule rl_write_data (rg_ddr4_ready && (rg_wr_beat < wr_req_beats));
       Bool last = (rg_wr_beat == (wr_req_beats - 1));
@@ -406,12 +406,12 @@ module mkMMU_Cache_AXI4_Adapter #(parameter Bit #(3) verbosity)
       else
 	 rg_wr_beat <= rg_wr_beat + 1;
 
-      Bit #(64) data = ((wr_client_id == client_id_line)
+      Bit#(64) data = ((wr_client_id == client_id_line)
 			? f_line_write_data.first
 			: f_single_write_data.first);
 
       // Compute strobe from size and address
-      Bit #(8)  strb = case (wr_req_size_code)
+      Bit#(8)  strb = case (wr_req_size_code)
 			  2'b00: 8'h_01;
 			  2'b01: 8'h_03;
 			  2'b10: 8'h_0F;
@@ -540,7 +540,7 @@ module mkMMU_Cache_AXI4_Adapter #(parameter Bit #(3) verbosity)
 
       Fabric_Addr fabric_addr = fv_Addr_to_Fabric_Addr (req.addr);
       AXI4_Size   fabric_size = fv_size_code_to_AXI4_Size (req.size_code);
-      Bit #(8)    num_beats   = 1;
+      Bit#(8)    num_beats   = 1;
 
       // FABRIC32 adjustments
       if ((valueOf (Wd_Data) == 32) && (req.size_code == 2'b11)) begin
@@ -616,7 +616,7 @@ module mkMMU_Cache_AXI4_Adapter #(parameter Bit #(3) verbosity)
    endmethod
 
    // Misc. status; 0 = running, no error
-   method Bit #(8) mv_status;
+   method Bit#(8) mv_status;
       return (rg_write_error ? 1 : 0);
    endmethod
 

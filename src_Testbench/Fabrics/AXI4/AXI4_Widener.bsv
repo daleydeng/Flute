@@ -75,7 +75,7 @@ module mkAXI4_Widener (AXI4_Widener_IFC #(wd_id_t, wd_addr_t, m_wd_data_t, s_wd_
    AXI4_Master_Xactor_IFC #(wd_id_t, wd_addr_t, s_wd_data_t, wd_user_t)
        xactor_to_slave <- mkAXI4_Master_Xactor;
 
-   FIFOF #(Bit #(wd_addr_t)) f_araddrs <- mkSizedFIFOF (8);    // size covers latency to mem read response
+   FIFOF #(Bit#(wd_addr_t)) f_araddrs <- mkSizedFIFOF (8);    // size covers latency to mem read response
 
    // ----------------------------------------------------------------
    // BEHAVIOR
@@ -83,15 +83,15 @@ module mkAXI4_Widener (AXI4_Widener_IFC #(wd_id_t, wd_addr_t, m_wd_data_t, s_wd_
    // ----------------
    // Widen data and strobe from master bus to slave bus
 
-   function Tuple2 #(Bit #(s_wd_data_t),
-		     Bit #(s_wd_bytes_t)) fv_align_to_wider (Bit #(wd_addr_t)     addr,
-							     Bit #(m_wd_data_t)   m_data,
-							     Bit #(m_wd_bytes_t)  m_strb);
-      Bit #(word_index_t) shift_m_words  = addr [log2_s_wd_bytes - 1: log2_m_wd_bytes];
-      Bit #(s_wd_data_t)  s_data         = zeroExtend (m_data);
+   function Tuple2 #(Bit#(s_wd_data_t),
+		     Bit#(s_wd_bytes_t)) fv_align_to_wider (Bit#(wd_addr_t)     addr,
+							     Bit#(m_wd_data_t)   m_data,
+							     Bit#(m_wd_bytes_t)  m_strb);
+      Bit#(word_index_t) shift_m_words  = addr [log2_s_wd_bytes - 1: log2_m_wd_bytes];
+      Bit#(s_wd_data_t)  s_data         = zeroExtend (m_data);
       s_data = s_data << (shift_m_words * fromInteger (valueOf (m_wd_data_t)));
 
-      Bit #(s_wd_bytes_t) s_strb = zeroExtend (m_strb);
+      Bit#(s_wd_bytes_t) s_strb = zeroExtend (m_strb);
       s_strb = s_strb << (shift_m_words * fromInteger (valueOf (m_wd_bytes_t)));
       return tuple2 (s_data, s_strb);
    endfunction
@@ -99,10 +99,10 @@ module mkAXI4_Widener (AXI4_Widener_IFC #(wd_id_t, wd_addr_t, m_wd_data_t, s_wd_
    // ----------------
    // Narrow data from slave bus to master bus
 
-   function Bit #(m_wd_data_t) fv_align_to_narrower (Bit #(wd_addr_t) addr, Bit #(s_wd_data_t) s_data);
-      Bit #(word_index_t) shift_m_words = addr [log2_s_wd_bytes - 1: log2_m_wd_bytes];
+   function Bit#(m_wd_data_t) fv_align_to_narrower (Bit#(wd_addr_t) addr, Bit#(s_wd_data_t) s_data);
+      Bit#(word_index_t) shift_m_words = addr [log2_s_wd_bytes - 1: log2_m_wd_bytes];
       s_data = s_data >> (shift_m_words * fromInteger (valueOf (m_wd_data_t)));
-      Bit #(m_wd_data_t) m_data  = truncate (s_data);
+      Bit#(m_wd_data_t) m_data  = truncate (s_data);
       return m_data;
    endfunction
 

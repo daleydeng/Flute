@@ -9,7 +9,7 @@
 
 // Function for 4-bytes values at addrs aligned to 'b000
 
-function Bit #(32) fn_read_ROM_0 (Bit #(n) addr);
+function Bit#(32) fn_read_ROM_0 (Bit#(n) addr);
    return
       case (addr)
          0: 32'h_f1402573;
@@ -203,7 +203,7 @@ endfunction: fn_read_ROM_0
 
 // Function for 4-bytes values at addrs aligned to 'b100
 
-function Bit #(32) fn_read_ROM_4 (Bit #(n) addr);
+function Bit#(32) fn_read_ROM_4 (Bit#(n) addr);
    return
       case (addr)
          4: 32'h_00000597;

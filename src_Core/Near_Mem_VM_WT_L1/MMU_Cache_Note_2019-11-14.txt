@@ -35,7 +35,7 @@ index 13585a0..4aeadd2 100644
 -   // condition to rl_probe_and_immed_rsp to stall it if the request
 -   // is a load and this register is non-zero.
 -
--   Reg #(Bit #(11)) crg_sb_to_load_delay [2] <- mkCReg (2, 0);
+-   Reg #(Bit#(11)) crg_sb_to_load_delay [2] <- mkCReg (2, 0);
 -
 -   (* no_implicit_conditions, fire_when_enabled *)
 -   rule rl_shift_sb_to_load_delay;
@@ -45,7 +45,7 @@ index 13585a0..4aeadd2 100644
 -   Bool load_stall = (   ((rg_op == CACHE_LD) || is_AMO_LR)
 -                     && (crg_sb_to_load_delay [1] != 0));
 -
--   function Action fa_arm_the_load_stall (Bit #(3) f3);
+-   function Action fa_arm_the_load_stall (Bit#(3) f3);
 -      action
 -        if ((f3 == f3_SB) || (f3 == f3_SH))
 -           crg_sb_to_load_delay [1] <= '1;

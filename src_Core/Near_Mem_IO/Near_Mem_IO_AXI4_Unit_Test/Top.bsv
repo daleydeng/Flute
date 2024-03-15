@@ -38,11 +38,11 @@ import Near_Mem_IO_AXI4 :: *;
 
 typedef 32 XLEN;
 
-function Bit #(Wd_Data) fn_cpu_to_fabric_width (Bit #(XLEN) x);
+function Bit#(Wd_Data) fn_cpu_to_fabric_width (Bit#(XLEN) x);
    return zeroExtend (x);
 endfunction
 
-function Bit #(XLEN) fn_fabric_to_cpu_width (Bit #(Wd_Data) x);
+function Bit#(XLEN) fn_fabric_to_cpu_width (Bit#(Wd_Data) x);
    return truncate (x);
 endfunction
 
@@ -50,11 +50,11 @@ endfunction
 
 typedef 64 XLEN;
 
-function Bit #(Wd_Data) fn_cpu_to_fabric_width (Bit #(XLEN) x);
+function Bit#(Wd_Data) fn_cpu_to_fabric_width (Bit#(XLEN) x);
    return truncate (x);
 endfunction
 
-function Bit #(XLEN) fn_fabric_to_cpu_width (Bit #(Wd_Data) x);
+function Bit#(XLEN) fn_fabric_to_cpu_width (Bit#(Wd_Data) x);
    return zeroExtend (x);
 endfunction
 
@@ -104,7 +104,7 @@ module mkTop (Empty);
       endaction
    endfunction
 
-   function ActionValue #(Bit #(XLEN)) fa_axi_read_rsp (Fabric_Addr addr);
+   function ActionValue #(Bit#(XLEN)) fa_axi_read_rsp (Fabric_Addr addr);
       actionvalue
 	 AXI4_Rd_Data #(Wd_Id, Wd_Data, Wd_User)
 	 rd <- pop_o (master_xactor.o_rd_data);
@@ -120,7 +120,7 @@ module mkTop (Empty);
       endactionvalue
    endfunction
 
-   function Action fa_axi_write_req (Fabric_Addr addr, Bit #(XLEN) data);
+   function Action fa_axi_write_req (Fabric_Addr addr, Bit#(XLEN) data);
       action
 	 AXI4_Wr_Addr #(Wd_Id, Wd_Addr, Wd_User)
 	 wa = AXI4_Wr_Addr {awid:    0,
@@ -166,8 +166,8 @@ module mkTop (Empty);
 
    // ----------------------------------------------------------------
 
-   Reg #(Bit #(XLEN)) rg_data <- mkRegU;
-   Reg #(Bit #(32)) rg_iter <- mkRegU;
+   Reg #(Bit#(XLEN)) rg_data <- mkRegU;
+   Reg #(Bit#(32)) rg_iter <- mkRegU;
 
    FSM fsm_stimulus <- mkFSM (
       seq

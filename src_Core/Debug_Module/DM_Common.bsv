@@ -24,11 +24,11 @@ import Semi_FIFOF :: *;
 // Debug Module Interface (DMI) addresses and data.
 // Note: data is always 32b, whether the connected CPU is RV32, RV64 or RV128.
 
-typedef Bit #(7)  DM_Addr;
+typedef Bit#(7)  DM_Addr;
 
 DM_Addr max_DM_Addr = 'h5F;
 
-typedef Bit #(32) DM_Word;
+typedef Bit#(32) DM_Word;
 
 // ================================================================
 // Debug Module address map
@@ -139,7 +139,7 @@ function DM_Word fn_mk_dmcontrol (Bool       haltreq,
 				  Bool       resumereq,
 				  Bool       hartreset,
 				  Bool       hasel,
-				  Bit #(10)  hartsel,
+				  Bit#(10)  hartsel,
 				  Bool       ndmreset,
 				  Bool       dmactive);
    return {pack (haltreq),
@@ -169,7 +169,7 @@ function Bool fn_dmcontrol_hasel (DM_Word dm_word);
    return unpack (dm_word [26]);
 endfunction
 
-function Bit #(10) fn_dmcontrol_hartsel (DM_Word dm_word);
+function Bit#(10) fn_dmcontrol_hartsel (DM_Word dm_word);
    return dm_word [25:16];
 endfunction
 
@@ -236,7 +236,7 @@ function Bool fn_dmstatus_devtreevalid (DM_Word x);
    return unpack (x [4]);
 endfunction
 
-function Bit #(4) fn_dmstatus_version (DM_Word x);
+function Bit#(4) fn_dmstatus_version (DM_Word x);
    return unpack (x [3:0]);
 endfunction
 
@@ -285,7 +285,7 @@ function DM_Word fn_mk_abstractcs (DM_abstractcs_cmderr cmderr);
    return { 0, pack (cmderr), 8'h0 };
 endfunction
 
-function Bit #(5) fn_abstractcs_progsize (DM_Word dm_word);
+function Bit#(5) fn_abstractcs_progsize (DM_Word dm_word);
    return unpack (dm_word [28:24]);
 endfunction
 
@@ -297,7 +297,7 @@ function DM_abstractcs_cmderr fn_abstractcs_cmderr (DM_Word dm_word);
    return unpack (dm_word [10:8]);
 endfunction
 
-function Bit #(5) fn_abstractcs_datacount (DM_Word dm_word);
+function Bit#(5) fn_abstractcs_datacount (DM_Word dm_word);
    return unpack (dm_word [4:0]);
 endfunction
 
@@ -333,9 +333,9 @@ function DM_Word fn_mk_command_access_reg (DM_command_access_size  size,
 					   Bool                    postexec,
 					   Bool                    transfer,
 					   Bool                    write,
-					   Bit #(16)               regno);
-   Bit #(8)  b8_cmdtype = zeroExtend (pack (DM_COMMAND_CMDTYPE_ACCESS_REG));
-   Bit #(3)  b3_size    = pack (size);
+					   Bit#(16)               regno);
+   Bit#(8)  b8_cmdtype = zeroExtend (pack (DM_COMMAND_CMDTYPE_ACCESS_REG));
+   Bit#(3)  b3_size    = pack (size);
    return {b8_cmdtype,
 	   1'b0,
 	   b3_size,
@@ -373,7 +373,7 @@ function Bool fn_command_access_reg_write (DM_Word dm_word);
    return unpack (dm_word [16]);
 endfunction
 
-function Bit #(16) fn_command_access_reg_regno (DM_Word dm_word);
+function Bit#(16) fn_command_access_reg_regno (DM_Word dm_word);
    return dm_word [15:0];
 endfunction
 
@@ -414,7 +414,7 @@ deriving (Bits, Eq, FShow);
 
 // Constructor
 
-function DM_Word fn_mk_sbcs_val (Bit #(3)     sbversion,
+function DM_Word fn_mk_sbcs_val (Bit#(3)     sbversion,
 				 Bool         sbbusyerror,
 				 Bool         sbbusy,
 				 Bool         sbreadonaddr,
@@ -422,12 +422,12 @@ function DM_Word fn_mk_sbcs_val (Bit #(3)     sbversion,
 				 Bool         sbautoincrement,
 				 Bool         sbreadondata,
 				 DM_sberror   sberror,
-				 Bit #(7)     sbasize,
-				 Bit #(1)     sbaccess128,
-				 Bit #(1)     sbaccess64,
-				 Bit #(1)     sbaccess32,
-				 Bit #(1)     sbaccess16,
-				 Bit #(1)     sbaccess8);
+				 Bit#(7)     sbasize,
+				 Bit#(1)     sbaccess128,
+				 Bit#(1)     sbaccess64,
+				 Bit#(1)     sbaccess32,
+				 Bit#(1)     sbaccess16,
+				 Bit#(1)     sbaccess8);
    return {sbversion,
 	   6'b0,
 	   pack (sbbusyerror),
@@ -447,7 +447,7 @@ endfunction
 
 // Selectors
 
-function Bit #(3)    fn_sbcs_sbversion       (DM_Word dm_word);  return unpack (dm_word [31:29]);  endfunction
+function Bit#(3)    fn_sbcs_sbversion       (DM_Word dm_word);  return unpack (dm_word [31:29]);  endfunction
 function Bool        fn_sbcs_sbbusyerror     (DM_Word dm_word);  return unpack (dm_word [22]);     endfunction
 function Bool        fn_sbcs_sbbusy          (DM_Word dm_word);  return unpack (dm_word [21]);     endfunction
 function Bool        fn_sbcs_sbreadonaddr    (DM_Word dm_word);  return unpack (dm_word [20]);     endfunction
@@ -455,7 +455,7 @@ function DM_sbaccess fn_sbcs_sbaccess        (DM_Word dm_word);  return unpack (
 function Bool        fn_sbcs_sbautoincrement (DM_Word dm_word);  return unpack (dm_word [16]);     endfunction
 function Bool        fn_sbcs_sbreadondata    (DM_Word dm_word);  return unpack (dm_word [15]);     endfunction
 function DM_sberror  fn_sbcs_sberror         (DM_Word dm_word);  return unpack (dm_word [14:12]);  endfunction
-function Bit #(7)    fn_sbcs_sbasize         (DM_Word dm_word);  return         dm_word [11:5];    endfunction
+function Bit#(7)    fn_sbcs_sbasize         (DM_Word dm_word);  return         dm_word [11:5];    endfunction
 function Bool        fn_sbcs_sbaccess128     (DM_Word dm_word);  return unpack (dm_word [4]);      endfunction
 function Bool        fn_sbcs_sbaccess64      (DM_Word dm_word);  return unpack (dm_word [3]);      endfunction
 function Bool        fn_sbcs_sbaccess32      (DM_Word dm_word);  return unpack (dm_word [2]);      endfunction
@@ -522,13 +522,13 @@ DMI dummy_DMI_ifc = interface DMI;
 
 typedef struct {
    Bool      is_read;    // True => read; False => Write
-   Bit #(7)  addr;       // Debug Module register address
-   Bit #(32) wdata;      // Debug Module reqister write-data (relevant only for Writes)
+   Bit#(7)  addr;       // Debug Module register address
+   Bit#(32) wdata;      // Debug Module reqister write-data (relevant only for Writes)
    } DMI_Req
 deriving (Bits, FShow);
 
 typedef struct {
-   Bit #(32) rdata;   // Debug Module register read-data (relevant only for Reads)
+   Bit#(32) rdata;   // Debug Module register read-data (relevant only for Reads)
    } DMI_Rsp
 deriving (Bits, FShow);
 

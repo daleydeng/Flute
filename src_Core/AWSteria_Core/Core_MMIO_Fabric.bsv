@@ -22,7 +22,7 @@ import SoC_Map      :: *;
 
 typedef 1  Core_MMIO_Fabric_Num_Initiators;
 
-typedef Bit #(TLog #(Core_MMIO_Fabric_Num_Initiators))  Core_MMIO_Fabric_Initiator_Num;
+typedef Bit#(TLog #(Core_MMIO_Fabric_Num_Initiators))  Core_MMIO_Fabric_Initiator_Num;
 
 Core_MMIO_Fabric_Initiator_Num  cpu_mmio_master_num = ?;
 
@@ -31,7 +31,7 @@ Core_MMIO_Fabric_Initiator_Num  cpu_mmio_master_num = ?;
 
 typedef 4  Core_MMIO_Fabric_Num_Targets;
 
-typedef Bit #(TLog #(Core_MMIO_Fabric_Num_Targets))  Core_MMIO_Fabric_Target_Num;
+typedef Bit#(TLog #(Core_MMIO_Fabric_Num_Targets))  Core_MMIO_Fabric_Target_Num;
 
 Core_MMIO_Fabric_Target_Num  default_target_num     = 0;
 Core_MMIO_Fabric_Target_Num  near_mem_io_target_num = 1;    // memory-mapped MTIME, MTIMECMP, MSIP etc.

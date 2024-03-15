@@ -72,7 +72,7 @@ deriving (Bits, Eq, FShow);
 
 interface Timer_IFC;
    // Reset
-   interface Server #(Bit #(0), Bit #(0))  server_reset;
+   interface Server #(Bit#(0), Bit#(0))  server_reset;
 
    // set_addr_map should be called after this module's reset
    method Action set_addr_map (Fabric_Addr addr_base, Fabric_Addr addr_lim);
@@ -94,14 +94,14 @@ endinterface
 module mkTimer (Timer_IFC);
 
    // Verbosity: 0: quiet; 1: reset; 2: timer interrupts, all reads and writes
-   Reg #(Bit #(4)) cfg_verbosity <- mkConfigReg (0);
+   Reg #(Bit#(4)) cfg_verbosity <- mkConfigReg (0);
 
    Reg #(Module_State) rg_state     <- mkReg (MODULE_STATE_START);
    Reg #(Fabric_Addr)  rg_addr_base <- mkRegU;
    Reg #(Fabric_Addr)  rg_addr_lim  <- mkRegU;
 
-   FIFOF #(Bit #(0)) f_reset_reqs <- mkFIFOF;
-   FIFOF #(Bit #(0)) f_reset_rsps <- mkFIFOF;
+   FIFOF #(Bit#(0)) f_reset_reqs <- mkFIFOF;
+   FIFOF #(Bit#(0)) f_reset_rsps <- mkFIFOF;
 
    // ----------------
    // Connector to fabric
@@ -111,8 +111,8 @@ module mkTimer (Timer_IFC);
    // ----------------
    // Timer registers
 
-   Reg #(Bit #(64)) crg_time [2]        <- mkCReg (2, 1);
-   Reg #(Bit #(64)) crg_timecmp [2]     <- mkCReg (2, 0);
+   Reg #(Bit#(64)) crg_time [2]        <- mkCReg (2, 1);
+   Reg #(Bit#(64)) crg_timecmp [2]     <- mkCReg (2, 0);
 
    Reg #(Bool) rg_mtip <- mkReg (True);
 
@@ -190,7 +190,7 @@ module mkTimer (Timer_IFC);
 
       let byte_addr = rda.araddr - rg_addr_base;
 
-      Bit #(Wd_Data) rdata  = 0;
+      Bit#(Wd_Data) rdata  = 0;
       AXI4_Lite_Resp rresp = AXI4_LITE_OKAY;
 
       case (byte_addr)
@@ -246,8 +246,8 @@ module mkTimer (Timer_IFC);
 		     end
 		  end
 	 'h_4000: begin
-		     Bit #(64) old_timecmp = crg_timecmp [1];
-		     Bit #(64) new_timecmp = fn_update_strobed_bytes (old_timecmp,
+		     Bit#(64) old_timecmp = crg_timecmp [1];
+		     Bit#(64) new_timecmp = fn_update_strobed_bytes (old_timecmp,
 								      zeroExtend (wrd.wdata),
 								      zeroExtend (wrd.wstrb));
 		     crg_timecmp [1] <= new_timecmp;
@@ -261,8 +261,8 @@ module mkTimer (Timer_IFC);
 		     end
 		  end
 	 'h_BFF8: begin
-		     Bit #(64) old_time = crg_time [1];
-		     Bit #(64) new_time = fn_update_strobed_bytes (old_time,
+		     Bit#(64) old_time = crg_time [1];
+		     Bit#(64) new_time = fn_update_strobed_bytes (old_time,
 								   zeroExtend (wrd.wdata),
 								   zeroExtend (wrd.wstrb));
 		     crg_time [1] <= new_time;
@@ -277,8 +277,8 @@ module mkTimer (Timer_IFC);
 	 // The following ALIGN4B writes are only needed for 32b fabrics
 	 'h_0004: noAction;
 	 'h_4004: begin
-		     Bit #(64) old_timecmp = crg_timecmp [1];
-		     Bit #(64) new_timecmp = fn_update_strobed_bytes (old_timecmp,
+		     Bit#(64) old_timecmp = crg_timecmp [1];
+		     Bit#(64) new_timecmp = fn_update_strobed_bytes (old_timecmp,
 								      { wrd.wdata [31:0], 32'h0 },
 								      { wrd.wstrb [3:0], 4'h0 });
 		     crg_timecmp [1] <= new_timecmp;
@@ -292,8 +292,8 @@ module mkTimer (Timer_IFC);
 		     end
 		  end
 	 'h_BFFC: begin
-		     Bit #(64) old_time = crg_time [1];
-		     Bit #(64) new_time = fn_update_strobed_bytes (old_time,
+		     Bit#(64) old_time = crg_time [1];
+		     Bit#(64) new_time = fn_update_strobed_bytes (old_time,
 								   { wrd.wdata [31:0], 32'h0 },
 								   { wrd.wstrb [3:0], 4'h0 });
 		     crg_time [1] <= new_time;

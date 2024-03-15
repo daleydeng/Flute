@@ -51,21 +51,21 @@ module mkUnit_Test_Deburster (Empty);
    mkConnection (master.axi_side,    deburster.from_master);
    mkConnection (deburster.to_slave, slave.axi_side);
 
-   Reg #(Bit #(32)) rg_test       <- mkReg (20);    // Chooses which test to run
+   Reg #(Bit#(32)) rg_test       <- mkReg (20);    // Chooses which test to run
 
-   FIFOF #(Bit #(8))  f_len         <- mkFIFOF;
-   Reg #(Bit #(8))    rg_beat       <- mkReg (0);
-   Reg #(Bit #(32))   rg_idle_count <- mkReg (0);
+   FIFOF #(Bit#(8))  f_len         <- mkFIFOF;
+   Reg #(Bit#(8))    rg_beat       <- mkReg (0);
+   Reg #(Bit#(32))   rg_idle_count <- mkReg (0);
 
    // ================================================================
    // Help function to create AXI4 channel payloads
 
    function AXI4_Wr_Addr #(Wd_Id, Wd_Addr, Wd_User)
-            fv_mk_wr_addr (Bit #(Wd_Id)    id,
-			   Bit #(Wd_Addr)  addr,
-			   Bit #(8)        len,
-			   Bit #(2)        burst,
-			   Bit #(Wd_User)  user);
+            fv_mk_wr_addr (Bit#(Wd_Id)    id,
+			   Bit#(Wd_Addr)  addr,
+			   Bit#(8)        len,
+			   Bit#(2)        burst,
+			   Bit#(Wd_User)  user);
       return AXI4_Wr_Addr {awid: id,
 			   awaddr: addr,
 			   awlen: len,
@@ -80,8 +80,8 @@ module mkUnit_Test_Deburster (Empty);
    endfunction
 
    function AXI4_Wr_Data #(Wd_Data, Wd_User)
-            fv_mk_wr_data (Bit #(Wd_Data)  data,
-			   Bit #(Wd_User)  user);
+            fv_mk_wr_data (Bit#(Wd_Data)  data,
+			   Bit#(Wd_User)  user);
       Bool last = (rg_beat == f_len.first - 1);
       return AXI4_Wr_Data {wdata: data,
 			   wstrb: 'hFF,
@@ -97,11 +97,11 @@ module mkUnit_Test_Deburster (Empty);
    endfunction
 
    function AXI4_Rd_Addr #(Wd_Id, Wd_Addr, Wd_User)
-            fv_mk_rd_addr (Bit #(Wd_Id)    id,
-			   Bit #(Wd_Addr)  addr,
-			   Bit #(8)        len,
-			   Bit #(2)        burst,
-			   Bit #(Wd_User)  user);
+            fv_mk_rd_addr (Bit#(Wd_Id)    id,
+			   Bit#(Wd_Addr)  addr,
+			   Bit#(8)        len,
+			   Bit#(2)        burst,
+			   Bit#(Wd_User)  user);
       return AXI4_Rd_Addr {arid: id,
 			   araddr: addr,
 			   arlen: len,
@@ -127,14 +127,14 @@ module mkUnit_Test_Deburster (Empty);
    // ================================================================
    // STIMULUS
 
-   Bit #(Wd_Id)   id1   = 1;
-   Bit #(Wd_User) user1 = 1;
+   Bit#(Wd_Id)   id1   = 1;
+   Bit#(Wd_User) user1 = 1;
 
    // ----------------
    // Write tests
 
    rule rl_wr_single (rg_test == 0);
-      Bit #(8) len = 1;
+      Bit#(8) len = 1;
       let wa = fv_mk_wr_addr (id1, 'h1000, (len - 1), axburst_fixed, user1);
       master.i_wr_addr.enq (wa);
 
@@ -147,7 +147,7 @@ module mkUnit_Test_Deburster (Empty);
    endrule
 
    rule rl_wr_burst_addr_0 (rg_test == 10);
-      Bit #(8) len = 2;
+      Bit#(8) len = 2;
       let wa = fv_mk_wr_addr (id1, 'h1000, (len - 1), axburst_incr, user1);
       master.i_wr_addr.enq (wa);
 
@@ -160,7 +160,7 @@ module mkUnit_Test_Deburster (Empty);
    endrule
 
    rule rl_wr_burst_addr_1 (rg_test == 11);
-      Bit #(8) len = 4;
+      Bit#(8) len = 4;
       let wa = fv_mk_wr_addr (id1, 'h2000, (len - 1), axburst_incr, user1);
       master.i_wr_addr.enq (wa);
 
@@ -205,7 +205,7 @@ module mkUnit_Test_Deburster (Empty);
    endrule
 
    rule rl_rd_burst_addr_0 (rg_test == 20);
-      Bit #(8) len = 2;
+      Bit#(8) len = 2;
       let ra = fv_mk_rd_addr (id1, 'h1000, (len - 1), axburst_incr, user1);
       master.i_rd_addr.enq (ra);
 
@@ -217,7 +217,7 @@ module mkUnit_Test_Deburster (Empty);
    endrule
 
    rule rl_rd_burst_addr_1 (rg_test == 21);
-      Bit #(8) len = 4;
+      Bit#(8) len = 4;
       let ra = fv_mk_rd_addr (id1, 'h2000, (len - 1), axburst_incr, user1);
       master.i_rd_addr.enq (ra);
 

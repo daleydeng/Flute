@@ -37,9 +37,6 @@ typedef  WordXL       Addr;
 // ISA_D => ISA_F (ISA_D implies ISA_F)
 // The combination ISA_D and !ISA_F is not permitted
 
-// ISA_F - 32 bit FPU
-// ISA_D - 64 bit FPU
-
 `ifdef ISA_F
 
 `ifdef ISA_D
@@ -50,12 +47,12 @@ Bool has_fpu_64 = True;
 typedef 32 FLEN;
 Bool has_fpu_32 = True;
 Bool has_fpu_64 = False;
-`endif
+`endif // ISA_D
 
-typedef  Bit #(FLEN)  WordFL;    // Floating point data
+typedef  Bit#(FLEN)  WordFL;    // Floating point data
 typedef  TDiv#(FLEN, BitsPerByte) BytesPerWordFL;
 
-`endif
+`endif // ISA_F
 
 // ================================================================
 // Tokens are used for signalling/synchronization, and have no payload
@@ -64,9 +61,10 @@ typedef Bit#(0) Token;
 // ================================================================
 // Instruction fields
 // This is used for encoding Tandem Verifier traces
-typedef enum {ISIZE16BIT, ISIZE32BIT} ISize deriving (Bits, Eq, FShow);
+typedef enum {ISIZE16, ISIZE32} ISize deriving (Bits, Eq, FShow);
 
-typedef  Bit#(32)  Instr;
+typedef 32 INST_LEN;
+typedef  Bit#(INST_LEN)  InstrBits;
 typedef  Bit#(7)   Opcode;
 typedef  Bit#(5)   RegIdx;       // 32 registers, 0..31
 typedef  Bit#(12)  CSRAddr;
@@ -74,42 +72,78 @@ typedef  Bit#(12)  CSRAddr;
 typedef  32         NumRegs;
 Integer  num_regs = valueOf(NumRegs);
 
-Instr illegal_instr = 32'h0000_0000;
+InstrBits illegal_instr = 32'h0000_0000;
 
-function  Opcode    instr_opcode   (Instr x); return x [6:0]; endfunction
-function  Bit#(2)   instr_funct2   (Instr x); return x [26:25]; endfunction
-function  Bit#(3)   instr_funct3   (Instr x); return x [14:12]; endfunction
-function  Bit#(5)   instr_funct5   (Instr x); return x [31:27]; endfunction
-function  Bit#(7)   instr_funct7   (Instr x); return x [31:25]; endfunction
-function  Bit#(10)  instr_funct10  (Instr x); return { x [31:25], x [14:12] }; endfunction
-function  Bit#(2)   instr_fmt      (Instr x); return x [26:25]; endfunction
+function  Opcode    instr_opcode   (InstrBits x); return x [6:0]; endfunction
+function  Bit#(2)   instr_funct2   (InstrBits x); return x [26:25]; endfunction
+function  Bit#(3)   instr_funct3   (InstrBits x); return x [14:12]; endfunction
+function  Bit#(5)   instr_funct5   (InstrBits x); return x [31:27]; endfunction
+function  Bit#(7)   instr_funct7   (InstrBits x); return x [31:25]; endfunction
+function  Bit#(10)  instr_funct10  (InstrBits x); return { x [31:25], x [14:12] }; endfunction
+function  Bit#(2)   instr_fmt      (InstrBits x); return x [26:25]; endfunction
 
-function  RegIdx    instr_rd       (Instr x); return x [11:7]; endfunction
-function  RegIdx    instr_rs1      (Instr x); return x [19:15]; endfunction
-function  RegIdx    instr_rs2      (Instr x); return x [24:20]; endfunction
-function  RegIdx    instr_rs3      (Instr x); return x [31:27]; endfunction
-function  CSRAddr    instr_csr      (Instr x); return x [31:20]; endfunction
-function  Bit #(12)  instr_I_imm12  (Instr x); return x [31:20]; endfunction
-function  Bit #(12)  instr_S_imm12  (Instr x); return { x [31:25], x [11:7] }; endfunction
-function  Bit #(20)  instr_U_imm20  (Instr x); return x [31:12]; endfunction
+function  RegIdx    instr_rd       (InstrBits x); return x [11:7]; endfunction
+function  RegIdx    instr_rs1      (InstrBits x); return x [19:15]; endfunction
+function  RegIdx    instr_rs2      (InstrBits x); return x [24:20]; endfunction
+function  RegIdx    instr_rs3      (InstrBits x); return x [31:27]; endfunction
+function  CSRAddr    instr_csr      (InstrBits x); return x [31:20]; endfunction
+function  Bit#(12)  instr_I_imm12  (InstrBits x); return x [31:20]; endfunction
+function  Bit#(12)  instr_S_imm12  (InstrBits x); return { x [31:25], x [11:7] }; endfunction
+function  Bit#(20)  instr_U_imm20  (InstrBits x); return x [31:12]; endfunction
 
-function  Bit #(13)  instr_B_imm13 (Instr x); 
+function  Bit#(13)  instr_B_imm13 (InstrBits x); 
    return { x [31], x [7], x [30:25], x [11:8], 1'b0 };
 endfunction
 
-function  Bit #(21)  instr_J_imm21 (Instr x);
+function  Bit#(21)  instr_J_imm21 (InstrBits x);
    return { x [31], x [19:12], x [20], x [30:21], 1'b0 };
 endfunction
 
 // For FENCE decode
-function  Bit #(4)   instr_pred (Instr x); return x [27:24]; endfunction
-function  Bit #(4)   instr_succ (Instr x); return x [23:20]; endfunction
+function  Bit#(4)   instr_pred (InstrBits x); return x [27:24]; endfunction
+function  Bit#(4)   instr_succ (InstrBits x); return x [23:20]; endfunction
 
 // For AMO decode
-function  Bit #(2)   instr_aqrl (Instr x); return x [26:25]; endfunction
+function  Bit#(2)   instr_aqrl (InstrBits x); return x [26:25]; endfunction
 
 // ----------------
 // Decoded instructions
+typedef enum {
+   InstrFmtIllegal,
+   InstrFmtR,
+   InstrFmtI
+} InstrFmt deriving (Bits, Eq, FShow);
+
+typedef struct {
+   InstrFmt fmt;
+   union tagged {
+      InstrBits Raw;
+      struct {
+         Bit#(7) funct7;
+         Bit#(5) rs2;
+         Bit#(5) rs1;
+         Bit#(3) funct3;
+         Bit#(5) rd;
+         Bit#(7) opcode;
+      }  R;
+      struct {
+         Bit#(12) imm12;
+         Bit#(5) rs1;
+         Bit#(3) funct3;
+         Bit#(5) rd;
+         Bit#(7) opcode;
+      } I;
+   } ast;
+} Instruction deriving (Bits, FShow);
+
+function Instruction decode_instruction(InstrBits bits);
+   return case (bits[6:0])
+      'b0110011: Instruction {fmt: InstrFmtR, ast: tagged R(unpack(bits))};
+      'b0010011: Instruction {fmt: InstrFmtI, ast: tagged I(unpack(bits))};
+      default: Instruction {fmt: InstrFmtIllegal, ast: tagged Raw(bits)};
+   endcase;
+endfunction
+
 
 typedef struct {
    Opcode    opcode;
@@ -120,25 +154,25 @@ typedef struct {
    RegIdx   rs3;
    CSRAddr   csr;
 
-   Bit #(3)  funct3;
-   Bit #(5)  funct5;
-   Bit #(7)  funct7;
-   Bit #(10) funct10;
+   Bit#(3)  funct3;
+   Bit#(5)  funct5;
+   Bit#(7)  funct7;
+   Bit#(10) funct10;
 
-   Bit #(12) imm12_I;
-   Bit #(12) imm12_S;
-   Bit #(13) imm13_B;
-   Bit #(20) imm20_U;
-   Bit #(21) imm13_J;
+   Bit#(12) imm12_I;
+   Bit#(12) imm12_S;
+   Bit#(13) imm13_B;
+   Bit#(20) imm20_U;
+   Bit#(21) imm13_J;
 
-   Bit #(4)  pred;
-   Bit #(4)  succ;
+   Bit#(4)  pred;
+   Bit#(4)  succ;
 
-   Bit #(2)  aqrl;
+   Bit#(2)  aqrl;
    } DecodedInstr
 deriving (FShow, Bits);
 
-function DecodedInstr decode_instr (Instr instr);
+function DecodedInstr decode_instr (InstrBits instr);
    return DecodedInstr {
       opcode:    instr_opcode   (instr),
       rd:        instr_rd       (instr),
@@ -165,69 +199,43 @@ function DecodedInstr decode_instr (Instr instr);
       };
 endfunction
 
-// Decodes if we need to read the GPR register file. This step becomes necessary
-// on integrating the FPU as certain instruction now do not require the GPR
-// anymore
-//                IsFP, GPRRd
-// function Tuple2# (Bool, Bool) fv_decode_gpr_read (DecodedInstr di);
-// `ifdef ISA_F
-//    // FP_LD and FP_ST are treated as non-FP operation as far as GPR reads
-//    // are concerned
-//    if (di.opcode != op_FP) begin
-//       return (tuple2 (False, True));   // Regular op with GPR read
-//    end
-// 
-//    // This is an FP operation. The following f5 values would work for F and
-//    // D subsets
-//    else begin
-//       if (   (di.funct5 == f5_FCVT_F_X)
-//           || (di.funct5 == f5_FMV_W_X))
-//          return (tuple2 (True, True)); // FP op with GPR read
-//       else
-//          return (tuple2 (True, False));// FP op with no GPR read
-//    end
-// `else
-//    return (tuple2 (False, True));      // Regular op with GPR read
-// `endif
-// endfunction
-
 // ================================================================
 // Instruction constructors
 // Used in 'C' decode to construct equivalent 32-bit instructions
 
-// R-type
-function Instr  mkInstr_R_type (Bit #(7) funct7, RegIdx rs2, RegIdx rs1, Bit #(3) funct3, RegIdx rd, Bit #(7) opcode);
-   let instr = { funct7, rs2, rs1, funct3, rd, opcode };
-   return instr;
-endfunction
+// // R-type
+// function InstrBits  mkInstr_R_type (Bit#(7) funct7, RegIdx rs2, RegIdx rs1, Bit#(3) funct3, RegIdx rd, Bit#(7) opcode);
+//    let instr = { funct7, rs2, rs1, funct3, rd, opcode };
+//    return instr;
+// endfunction
 
 // I-type
-function Instr  mkInstr_I_type (Bit #(12) imm12, RegIdx rs1, Bit #(3) funct3, RegIdx rd, Bit #(7) opcode);
+function InstrBits  mkInstr_I_type (Bit#(12) imm12, RegIdx rs1, Bit#(3) funct3, RegIdx rd, Bit#(7) opcode);
    let instr = { imm12, rs1, funct3, rd, opcode };
    return instr;
 endfunction
 
 // S-type
 
-function Instr  mkInstr_S_type (Bit #(12) imm12, RegIdx rs2, RegIdx rs1, Bit #(3) funct3, Bit #(7) opcode);
+function InstrBits  mkInstr_S_type (Bit#(12) imm12, RegIdx rs2, RegIdx rs1, Bit#(3) funct3, Bit#(7) opcode);
    let instr = { imm12 [11:5], rs2, rs1, funct3, imm12 [4:0], opcode };
    return instr;
 endfunction
 
 // B-type
-function Instr  mkInstr_B_type (Bit #(13) imm13, RegIdx rs2, RegIdx rs1, Bit #(3) funct3, Bit #(7) opcode);
+function InstrBits  mkInstr_B_type (Bit#(13) imm13, RegIdx rs2, RegIdx rs1, Bit#(3) funct3, Bit#(7) opcode);
    let instr = { imm13 [12], imm13 [10:5], rs2, rs1, funct3, imm13 [4:1], imm13 [11], opcode };
    return instr;
 endfunction
 
 // U-type
-function Instr  mkInstr_U_type (Bit #(20) imm20, RegIdx rd, Bit #(7) opcode);
+function InstrBits  mkInstr_U_type (Bit#(20) imm20, RegIdx rd, Bit#(7) opcode);
    let instr = { imm20, rd, opcode };
    return instr;
 endfunction
 
 // J-type
-function Instr  mkInstr_J_type (Bit #(21) imm21, RegIdx rd, Bit #(7) opcode);
+function InstrBits  mkInstr_J_type (Bit#(21) imm21, RegIdx rd, Bit#(7) opcode);
    let instr = { imm21 [20], imm21 [10:1], imm21 [11], imm21 [19:12], rd, opcode };
    return instr;
 endfunction
@@ -268,66 +276,43 @@ RegIdx reg_t3   = 28; RegIdx reg_t4  = 29; RegIdx reg_t5 = 30; RegIdx reg_t6 = 3
 // Is 'r' a standard register for PC save/restore on call/return?
 // This function is used in branch-predictors for managing the return-address stack.
 
-function Bool fn_reg_is_link (RegIdx  r);
+function Bool is_reg_link (RegIdx  r);
    return (r == reg_ra) || (r == reg_t0);
 endfunction
 
-// ================================================================
 // Kinds of memory access (excluding AMOs)
-
 typedef enum { Access_RWX_R, Access_RWX_W, Access_RWX_X } Access_RWX
 deriving (Eq, Bits, FShow);
 
-// ================================================================
-// Data sizes for LOAD/STORE
-
-typedef enum {BITS8,
-	      BITS16,
-	      BITS32,
-	      BITS64    // Even in RV32, to allow for Double (floating point)
-   } Mem_Data_Size
+typedef enum {BITS8, BITS16, BITS32, BITS64    // Even in RV32, to allow for Double (floating point)
+} MemDataSize
 deriving (Eq, Bits, FShow);
 
-// ================================================================
-// LOAD/STORE instructions
-
-typedef Bit #(2) MemReqSize;
+typedef Bit#(2) MemReqSize;
 
 MemReqSize f3_SIZE_B = 2'b00;
 MemReqSize f3_SIZE_H = 2'b01;
 MemReqSize f3_SIZE_W = 2'b10;
 MemReqSize f3_SIZE_D = 2'b11;
 
-// ----------------
-// Load instructions
-
 Opcode op_LOAD = 7'b00_000_11;
-
-Bit #(3) f3_LB  = 3'b000;
-Bit #(3) f3_LH  = 3'b001;
-Bit #(3) f3_LW  = 3'b010;
-Bit #(3) f3_LD  = 3'b011;
-Bit #(3) f3_LBU = 3'b100;
-Bit #(3) f3_LHU = 3'b101;
-Bit #(3) f3_LWU = 3'b110;
-
-// ----------------
-// Store instructions
+Bit#(3) f3_LB  = 3'b000;
+Bit#(3) f3_LH  = 3'b001;
+Bit#(3) f3_LW  = 3'b010;
+Bit#(3) f3_LD  = 3'b011;
+Bit#(3) f3_LBU = 3'b100;
+Bit#(3) f3_LHU = 3'b101;
+Bit#(3) f3_LWU = 3'b110;
 
 Opcode op_STORE = 7'b01_000_11;
-
-Bit #(3) f3_SB  = 3'b000;
-Bit #(3) f3_SH  = 3'b001;
-Bit #(3) f3_SW  = 3'b010;
-Bit #(3) f3_SD  = 3'b011;
-
-// ================================================================
-// Memory Model
+Bit#(3) f3_SB  = 3'b000;
+Bit#(3) f3_SH  = 3'b001;
+Bit#(3) f3_SW  = 3'b010;
+Bit#(3) f3_SD  = 3'b011;
 
 Opcode op_MISC_MEM = 7'b00_011_11;
-
-Bit #(3) f3_FENCE   = 3'b000;
-Bit #(3) f3_FENCE_I = 3'b001;
+Bit#(3) f3_FENCE   = 3'b000;
+Bit#(3) f3_FENCE_I = 3'b001;
 
 typedef struct {
    // Predecessors
@@ -340,12 +325,13 @@ typedef struct {
    Bool so;
    Bool sr;
    Bool sw;
-   } Fence_Ordering
+ } FenceOrdering
 deriving (FShow);
 
-instance Bits #(Fence_Ordering, 8);
-   function Bit #(8) pack (Fence_Ordering fo);
-      return {pack (fo.pi),
+instance Bits#(FenceOrdering, 8);
+   function Bit#(8) pack (FenceOrdering fo);
+      return {
+         pack (fo.pi),
 	      pack (fo.po),
 	      pack (fo.pr),
 	      pack (fo.pw),
@@ -354,22 +340,23 @@ instance Bits #(Fence_Ordering, 8);
 	      pack (fo.sr),
 	      pack (fo.sw) };
    endfunction
-   function Fence_Ordering unpack (Bit #(8) b8);
-      return Fence_Ordering {pi: unpack (b8 [7]),
-			     po: unpack (b8 [6]),
-			     pr: unpack (b8 [5]),
-			     pw: unpack (b8 [4]),
-			     si: unpack (b8 [3]),
-			     so: unpack (b8 [2]),
-			     sr: unpack (b8 [1]),
-			     sw: unpack (b8 [0]) };
+   function FenceOrdering unpack (Bit#(8) b8);
+      return FenceOrdering {
+         pi: unpack (b8 [7]),
+			po: unpack (b8 [6]),
+			pr: unpack (b8 [5]),
+		   pw: unpack (b8 [4]),
+	      si: unpack (b8 [3]),
+        	so: unpack (b8 [2]),
+			sr: unpack (b8 [1]),
+			sw: unpack (b8 [0]) };
    endfunction
 endinstance
 
-function Bit #(4) fv_instr_to_fence_fm (Bit #(32) instr) = instr [31:28];
+function Bit#(4) instr_to_fence_fm (Bit#(32) instr); return instr [31:28]; endfunction
 
-Bit #(4) fence_fm_none = 4'b0000;
-Bit #(4) fence_fm_TSO  = 4'b1000;
+Bit#(4) fence_fm_none = 4'b0000;
+Bit#(4) fence_fm_TSO  = 4'b1000;
 
 // ================================================================
 // Atomic Memory Operation Instructions
@@ -377,23 +364,21 @@ Bit #(4) fence_fm_TSO  = 4'b1000;
 Opcode op_AMO = 7'b01_011_11;
 
 // NOTE: bit [4] for aq, and [3] for rl, are here set to zero
+Bit#(3)    f3_AMO_W     = 3'b010;
+Bit#(3)    f3_AMO_D     = 3'b011;
+Bit#(5)    f5_AMO_LR     = 5'b00010;
+Bit#(5)    f5_AMO_SC     = 5'b00011;
+Bit#(5)    f5_AMO_ADD    = 5'b00000;
+Bit#(5)    f5_AMO_SWAP   = 5'b00001;
+Bit#(5)    f5_AMO_XOR    = 5'b00100;
+Bit#(5)    f5_AMO_AND    = 5'b01100;
+Bit#(5)    f5_AMO_OR     = 5'b01000;
+Bit#(5)    f5_AMO_MIN    = 5'b10000;
+Bit#(5)    f5_AMO_MAX    = 5'b10100;
+Bit#(5)    f5_AMO_MINU   = 5'b11000;
+Bit#(5)    f5_AMO_MAXU   = 5'b11100;
 
-Bit #(3)    f3_AMO_W     = 3'b010;
-Bit #(3)    f3_AMO_D     = 3'b011;
-
-Bit #(5)    f5_AMO_LR     = 5'b00010;
-Bit #(5)    f5_AMO_SC     = 5'b00011;
-Bit #(5)    f5_AMO_ADD    = 5'b00000;
-Bit #(5)    f5_AMO_SWAP   = 5'b00001;
-Bit #(5)    f5_AMO_XOR    = 5'b00100;
-Bit #(5)    f5_AMO_AND    = 5'b01100;
-Bit #(5)    f5_AMO_OR     = 5'b01000;
-Bit #(5)    f5_AMO_MIN    = 5'b10000;
-Bit #(5)    f5_AMO_MAX    = 5'b10100;
-Bit #(5)    f5_AMO_MINU   = 5'b11000;
-Bit #(5)    f5_AMO_MAXU   = 5'b11100;
-
-function Fmt fshow_f5_AMO_op (Bit #(5) op);
+function Fmt fshow_f5_AMO_op (Bit#(5) op);
    Fmt fmt = case (op)
 		f5_AMO_LR: $format ("LR");
 		f5_AMO_SC: $format ("SC");
@@ -410,134 +395,133 @@ function Fmt fshow_f5_AMO_op (Bit #(5) op);
    return fmt;
 endfunction
 
-Bit #(10) f10_LR_W       = 10'b00010_00_010;
-Bit #(10) f10_SC_W       = 10'b00011_00_010;
-Bit #(10) f10_AMOADD_W   = 10'b00000_00_010;
-Bit #(10) f10_AMOSWAP_W  = 10'b00001_00_010;
-Bit #(10) f10_AMOXOR_W   = 10'b00100_00_010;
-Bit #(10) f10_AMOAND_W   = 10'b01100_00_010;
-Bit #(10) f10_AMOOR_W    = 10'b01000_00_010;
-Bit #(10) f10_AMOMIN_W   = 10'b10000_00_010;
-Bit #(10) f10_AMOMAX_W   = 10'b10100_00_010;
-Bit #(10) f10_AMOMINU_W  = 10'b11000_00_010;
-Bit #(10) f10_AMOMAXU_W  = 10'b11100_00_010;
+Bit#(10) f10_LR_W       = 10'b00010_00_010;
+Bit#(10) f10_SC_W       = 10'b00011_00_010;
+Bit#(10) f10_AMOADD_W   = 10'b00000_00_010;
+Bit#(10) f10_AMOSWAP_W  = 10'b00001_00_010;
+Bit#(10) f10_AMOXOR_W   = 10'b00100_00_010;
+Bit#(10) f10_AMOAND_W   = 10'b01100_00_010;
+Bit#(10) f10_AMOOR_W    = 10'b01000_00_010;
+Bit#(10) f10_AMOMIN_W   = 10'b10000_00_010;
+Bit#(10) f10_AMOMAX_W   = 10'b10100_00_010;
+Bit#(10) f10_AMOMINU_W  = 10'b11000_00_010;
+Bit#(10) f10_AMOMAXU_W  = 10'b11100_00_010;
 
-Bit #(10) f10_LR_D       = 10'b00010_00_011;
-Bit #(10) f10_SC_D       = 10'b00011_00_011;
-Bit #(10) f10_AMOADD_D   = 10'b00000_00_011;
-Bit #(10) f10_AMOSWAP_D  = 10'b00001_00_011;
-Bit #(10) f10_AMOXOR_D   = 10'b00100_00_011;
-Bit #(10) f10_AMOAND_D   = 10'b01100_00_011;
-Bit #(10) f10_AMOOR_D    = 10'b01000_00_011;
-Bit #(10) f10_AMOMIN_D   = 10'b10000_00_011;
-Bit #(10) f10_AMOMAX_D   = 10'b10100_00_011;
-Bit #(10) f10_AMOMINU_D  = 10'b11000_00_011;
-Bit #(10) f10_AMOMAXU_D  = 10'b11100_00_011;
+Bit#(10) f10_LR_D       = 10'b00010_00_011;
+Bit#(10) f10_SC_D       = 10'b00011_00_011;
+Bit#(10) f10_AMOADD_D   = 10'b00000_00_011;
+Bit#(10) f10_AMOSWAP_D  = 10'b00001_00_011;
+Bit#(10) f10_AMOXOR_D   = 10'b00100_00_011;
+Bit#(10) f10_AMOAND_D   = 10'b01100_00_011;
+Bit#(10) f10_AMOOR_D    = 10'b01000_00_011;
+Bit#(10) f10_AMOMIN_D   = 10'b10000_00_011;
+Bit#(10) f10_AMOMAX_D   = 10'b10100_00_011;
+Bit#(10) f10_AMOMINU_D  = 10'b11000_00_011;
+Bit#(10) f10_AMOMAXU_D  = 10'b11100_00_011;
 
 // ================================================================
 // Integer Register-Immediate Instructions
 
 Opcode op_OP_IMM = 7'b00_100_11;
 
-Bit #(3) f3_ADDI  = 3'b000;
-Bit #(3) f3_SLLI  = 3'b001;
-Bit #(3) f3_SLTI  = 3'b010;
-Bit #(3) f3_SLTIU = 3'b011;
-Bit #(3) f3_XORI  = 3'b100;
-Bit #(3) f3_SRxI  = 3'b101; Bit #(3) f3_SRLI  = 3'b101; Bit #(3) f3_SRAI  = 3'b101;
-Bit #(3) f3_ORI   = 3'b110;
-Bit #(3) f3_ANDI  = 3'b111;
+Bit#(3) f3_ADDI  = 3'b000;
+Bit#(3) f3_SLLI  = 3'b001;
+Bit#(3) f3_SLTI  = 3'b010;
+Bit#(3) f3_SLTIU = 3'b011;
+Bit#(3) f3_XORI  = 3'b100;
+Bit#(3) f3_SRxI  = 3'b101; Bit#(3) f3_SRLI  = 3'b101; Bit#(3) f3_SRAI  = 3'b101;
+Bit#(3) f3_ORI   = 3'b110;
+Bit#(3) f3_ANDI  = 3'b111;
 
 // ================================================================
 // Integer Register-Immediate 32b Instructions for RV64
 
 Opcode op_OP_IMM_32 = 7'b00_110_11;
 
-Bit #(3) f3_ADDIW = 3'b000;
-Bit #(3) f3_SLLIW = 3'b001;
-Bit #(3) f3_SRxIW = 3'b101; Bit #(3) f3_SRLIW = 3'b101; Bit #(3) f3_SRAIW = 3'b101;
+Bit#(3) f3_ADDIW = 3'b000;
+Bit#(3) f3_SLLIW = 3'b001;
+Bit#(3) f3_SRxIW = 3'b101; Bit#(3) f3_SRLIW = 3'b101; Bit#(3) f3_SRAIW = 3'b101;
 
 // OP_IMM.SLLI/SRLI/SRAI for RV32
-Bit #(7)  msbs7_SLLI = 7'b_000_0000;
-Bit #(7)  msbs7_SRLI = 7'b_000_0000;
-Bit #(7)  msbs7_SRAI = 7'b_010_0000;
+Bit#(7)  msbs7_SLLI = 7'b_000_0000;
+Bit#(7)  msbs7_SRLI = 7'b_000_0000;
+Bit#(7)  msbs7_SRAI = 7'b_010_0000;
 
 // OP_IMM.SLLI/SRLI/SRAI for RV64
-Bit #(6)  msbs6_SLLI = 6'b_00_0000;
-Bit #(6)  msbs6_SRLI = 6'b_00_0000;
-Bit #(6)  msbs6_SRAI = 6'b_01_0000;
+Bit#(6)  msbs6_SLLI = 6'b_00_0000;
+Bit#(6)  msbs6_SRLI = 6'b_00_0000;
+Bit#(6)  msbs6_SRAI = 6'b_01_0000;
 
 // ================================================================
 // Integer Register-Register Instructions
 
-Opcode op_OP = 7'b01_100_11;
+Opcode op_OP = 7'b0110011;
 
-Bit #(10) f10_ADD    = 10'b000_0000_000;
-Bit #(10) f10_SUB    = 10'b010_0000_000;
-Bit #(10) f10_SLL    = 10'b000_0000_001;
-Bit #(10) f10_SLT    = 10'b000_0000_010;
-Bit #(10) f10_SLTU   = 10'b000_0000_011;
-Bit #(10) f10_XOR    = 10'b000_0000_100;
-Bit #(10) f10_SRL    = 10'b000_0000_101;
-Bit #(10) f10_SRA    = 10'b010_0000_101;
-Bit #(10) f10_OR     = 10'b000_0000_110;
-Bit #(10) f10_AND    = 10'b000_0000_111;
+Bit#(7) f7_ADD  = 7'b_000_0000;
+Bit#(7) f7_SUB  = 7'b_010_0000;   
+Bit#(7) f7_XOR  = 7'b_000_0000;    
+Bit#(7) f7_OR   = 7'b_000_0000;    
+Bit#(7) f7_AND  = 7'b_000_0000;
+Bit#(7) f7_SLT = 7'b_000_0000; 
+Bit#(7) f7_SLTU = 7'b_000_0000;
 
-Bit #(7) funct7_ADD  = 7'b_000_0000;    Bit #(3) funct3_ADD = 3'b_000;
-Bit #(7) funct7_SUB  = 7'b_010_0000;    Bit #(3) funct3_SUB = 3'b_000;
-Bit #(7) funct7_XOR  = 7'b_000_0000;    Bit #(3) funct3_XOR = 3'b_100;
-Bit #(7) funct7_OR   = 7'b_000_0000;    Bit #(3) funct3_OR  = 3'b_110;
-Bit #(7) funct7_AND  = 7'b_000_0000;    Bit #(3) funct3_AND = 3'b_111;
+Bit#(3) f3_ADD = 3'b_000;
+Bit#(3) f3_SUB = 3'b_000;
+Bit#(3) f3_XOR = 3'b_100;
+Bit#(3) f3_OR  = 3'b_110;
+Bit#(3) f3_AND = 3'b_111;
+Bit#(3) f3_SLT = 3'b_010;
+Bit#(3) f3_SLTU =3'b_011;
 
 // ----------------
 // MUL/DIV/REM family
 
-Bit #(7) f7_MUL_DIV_REM = 7'b000_0001;
+Bit#(7) f7_MUL_DIV_REM = 7'b000_0001;
 
-function Bool f7_is_OP_MUL_DIV_REM (Bit #(7) f7);
+function Bool f7_is_OP_MUL_DIV_REM (Bit#(7) f7);
    return (f7 == f7_MUL_DIV_REM);
 endfunction
 
-Bit #(3) f3_MUL    = 3'b000;
-Bit #(3) f3_MULH   = 3'b001;
-Bit #(3) f3_MULHSU = 3'b010;
-Bit #(3) f3_MULHU  = 3'b011;
-Bit #(3) f3_DIV    = 3'b100;
-Bit #(3) f3_DIVU   = 3'b101;
-Bit #(3) f3_REM    = 3'b110;
-Bit #(3) f3_REMU   = 3'b111;
+Bit#(3) f3_MUL    = 3'b000;
+Bit#(3) f3_MULH   = 3'b001;
+Bit#(3) f3_MULHSU = 3'b010;
+Bit#(3) f3_MULHU  = 3'b011;
+Bit#(3) f3_DIV    = 3'b100;
+Bit#(3) f3_DIVU   = 3'b101;
+Bit#(3) f3_REM    = 3'b110;
+Bit#(3) f3_REMU   = 3'b111;
 
-Bit #(10) f10_MUL    = 10'b000_0001_000;
-Bit #(10) f10_MULH   = 10'b000_0001_001;
-Bit #(10) f10_MULHSU = 10'b000_0001_010;
-Bit #(10) f10_MULHU  = 10'b000_0001_011;
-Bit #(10) f10_DIV    = 10'b000_0001_100;
-Bit #(10) f10_DIVU   = 10'b000_0001_101;
-Bit #(10) f10_REM    = 10'b000_0001_110;
-Bit #(10) f10_REMU   = 10'b000_0001_111;
+Bit#(10) f10_MUL    = 10'b000_0001_000;
+Bit#(10) f10_MULH   = 10'b000_0001_001;
+Bit#(10) f10_MULHSU = 10'b000_0001_010;
+Bit#(10) f10_MULHU  = 10'b000_0001_011;
+Bit#(10) f10_DIV    = 10'b000_0001_100;
+Bit#(10) f10_DIVU   = 10'b000_0001_101;
+Bit#(10) f10_REM    = 10'b000_0001_110;
+Bit#(10) f10_REMU   = 10'b000_0001_111;
 
 // ================================================================
 // Integer Register-Register 32b Instructions for RV64
 
 Opcode op_OP_32 = 7'b01_110_11;
 
-Bit #(10) f10_ADDW   = 10'b000_0000_000;
-Bit #(10) f10_SUBW   = 10'b010_0000_000;
-Bit #(10) f10_SLLW   = 10'b000_0000_001;
-Bit #(10) f10_SRLW   = 10'b000_0000_101;
-Bit #(10) f10_SRAW   = 10'b010_0000_101;
+Bit#(10) f10_ADDW   = 10'b000_0000_000;
+Bit#(10) f10_SUBW   = 10'b010_0000_000;
+Bit#(10) f10_SLLW   = 10'b000_0000_001;
+Bit#(10) f10_SRLW   = 10'b000_0000_101;
+Bit#(10) f10_SRAW   = 10'b010_0000_101;
 
-Bit #(7) funct7_ADDW = 7'b_000_0000;    Bit #(3) funct3_ADDW  = 3'b_000;
-Bit #(7) funct7_SUBW = 7'b_010_0000;    Bit #(3) funct3_SUBW  = 3'b_000;
+Bit#(7) funct7_ADDW = 7'b_000_0000;    Bit#(3) funct3_ADDW  = 3'b_000;
+Bit#(7) funct7_SUBW = 7'b_010_0000;    Bit#(3) funct3_SUBW  = 3'b_000;
 
-Bit #(10) f10_MULW   = 10'b000_0001_000;
-Bit #(10) f10_DIVW   = 10'b000_0001_100;
-Bit #(10) f10_DIVUW  = 10'b000_0001_101;
-Bit #(10) f10_REMW   = 10'b000_0001_110;
-Bit #(10) f10_REMUW  = 10'b000_0001_111;
+Bit#(10) f10_MULW   = 10'b000_0001_000;
+Bit#(10) f10_DIVW   = 10'b000_0001_100;
+Bit#(10) f10_DIVUW  = 10'b000_0001_101;
+Bit#(10) f10_REMW   = 10'b000_0001_110;
+Bit#(10) f10_REMUW  = 10'b000_0001_111;
 
-function Bool is_OP_32_MUL_DIV_REM (Bit #(10) f10);
-   return (   (f10 == f10_MULW)
+function Bool is_OP_32_MUL_DIV_REM (Bit#(10) f10);
+   return ((f10 == f10_MULW)
 	   || (f10 == f10_DIVW)
 	   || (f10 == f10_DIVUW)
 	   || (f10 == f10_REMW)
@@ -555,17 +539,17 @@ Opcode op_AUIPC = 7'b00_101_11;
 
 Opcode  op_BRANCH = 7'b11_000_11;
 
-Bit #(3) f3_BEQ   = 3'b000;
-Bit #(3) f3_BNE   = 3'b001;
-Bit #(3) f3_BLT   = 3'b100;
-Bit #(3) f3_BGE   = 3'b101;
-Bit #(3) f3_BLTU  = 3'b110;
-Bit #(3) f3_BGEU  = 3'b111;
+Bit#(3) f3_BEQ   = 3'b000;
+Bit#(3) f3_BNE   = 3'b001;
+Bit#(3) f3_BLT   = 3'b100;
+Bit#(3) f3_BGE   = 3'b101;
+Bit#(3) f3_BLTU  = 3'b110;
+Bit#(3) f3_BGEU  = 3'b111;
 
 Opcode op_JAL  = 7'b11_011_11;
 
 Opcode op_JALR = 7'b11_001_11;
-Bit #(3) funct3_JALR = 3'b000;
+Bit#(3) funct3_JALR = 3'b000;
 
 `ifdef ISA_F
 // ================================================================
@@ -592,11 +576,11 @@ typedef enum {FPAdd,
 Opcode   op_LOAD_FP  = 7'b_00_001_11;
 Opcode   op_STORE_FP = 7'b_01_001_11;
 
-Bit #(3) f3_FSW = 3'b010;
-Bit #(3) f3_FLW = 3'b010;
+Bit#(3) f3_FSW = 3'b010;
+Bit#(3) f3_FLW = 3'b010;
 
-Bit #(3) f3_FSD = 3'b011;
-Bit #(3) f3_FLD = 3'b011;
+Bit#(3) f3_FSD = 3'b011;
+Bit#(3) f3_FLD = 3'b011;
 
 // ----------------------------------------------------------------
 // Fused FP Multiply Add/Sub instructions (FM/FNM)
@@ -606,9 +590,9 @@ Opcode   op_FMSUB  = 7'b10_00_111;
 Opcode   op_FNMSUB = 7'b10_01_011;
 Opcode   op_FNMADD = 7'b10_01_111;
 
-Bit #(2) f2_S = 2'b00;
-Bit #(2) f2_D = 2'b01;
-Bit #(2) f2_Q = 2'b11;
+Bit#(2) f2_S = 2'b00;
+Bit#(2) f2_D = 2'b01;
+Bit#(2) f2_Q = 2'b11;
 
 // ----------------------------------------------------------------
 // All other FP intructions
@@ -618,85 +602,85 @@ Opcode  op_FP = 7'b10_10_011;
 // ----------------
 // RV32F
 
-Bit #(7) f7_FADD_S      = 7'h0 ;
-Bit #(7) f7_FSUB_S      = 7'h4 ;
-Bit #(7) f7_FMUL_S      = 7'h8 ;
-Bit #(7) f7_FDIV_S      = 7'hC ;
-Bit #(7) f7_FSQRT_S     = 7'h2C; Bit #(5) rs2_FSQRT_S   = 5'b00000;
+Bit#(7) f7_FADD_S      = 7'h0 ;
+Bit#(7) f7_FSUB_S      = 7'h4 ;
+Bit#(7) f7_FMUL_S      = 7'h8 ;
+Bit#(7) f7_FDIV_S      = 7'hC ;
+Bit#(7) f7_FSQRT_S     = 7'h2C; Bit#(5) rs2_FSQRT_S   = 5'b00000;
 
-Bit #(7) f7_FSGNJ_S     = 7'h10;                                    Bit #(3) funct3_FSGNJ_S  = 3'b000;
-Bit #(7) f7_FSGNJN_S    = 7'h10;                                    Bit #(3) funct3_FSGNJN_S = 3'b001;
-Bit #(7) f7_FSGNJX_S    = 7'h10;                                    Bit #(3) funct3_FSGNJX_S = 3'b010;
+Bit#(7) f7_FSGNJ_S     = 7'h10;                                    Bit#(3) funct3_FSGNJ_S  = 3'b000;
+Bit#(7) f7_FSGNJN_S    = 7'h10;                                    Bit#(3) funct3_FSGNJN_S = 3'b001;
+Bit#(7) f7_FSGNJX_S    = 7'h10;                                    Bit#(3) funct3_FSGNJX_S = 3'b010;
 
-Bit #(7) f7_FMIN_S      = 7'h14;                                    Bit #(3) funct3_FMIN_S   = 3'b000;
-Bit #(7) f7_FMAX_S      = 7'h14;                                    Bit #(3) funct3_FMAX_S   = 3'b001;
+Bit#(7) f7_FMIN_S      = 7'h14;                                    Bit#(3) funct3_FMIN_S   = 3'b000;
+Bit#(7) f7_FMAX_S      = 7'h14;                                    Bit#(3) funct3_FMAX_S   = 3'b001;
 
-Bit #(7) f7_FCVT_W_S    = 7'h60; Bit #(5) rs2_FCVT_W_S  = 5'b00000;
-Bit #(7) f7_FCVT_WU_S   = 7'h60; Bit #(5) rs2_FCVT_WU_S = 5'b00001;
-Bit #(7) f7_FMV_X_W     = 7'h70; Bit #(5) rs2_FMV_X_W   = 5'b00000; Bit #(3) funct3_FMV_X_W  = 3'b000;
+Bit#(7) f7_FCVT_W_S    = 7'h60; Bit#(5) rs2_FCVT_W_S  = 5'b00000;
+Bit#(7) f7_FCVT_WU_S   = 7'h60; Bit#(5) rs2_FCVT_WU_S = 5'b00001;
+Bit#(7) f7_FMV_X_W     = 7'h70; Bit#(5) rs2_FMV_X_W   = 5'b00000; Bit#(3) funct3_FMV_X_W  = 3'b000;
 
-Bit #(7) f7_FCMP_S      = 7'h50;
-Bit #(7) f7_FEQ_S       = 7'h50;                                    Bit #(3) funct3_FEQ_S    = 3'b010;
-Bit #(7) f7_FLT_S       = 7'h50;                                    Bit #(3) funct3_FLT_S    = 3'b001;
-Bit #(7) f7_FLE_S       = 7'h50;                                    Bit #(3) funct3_FLE_S    = 3'b000;
+Bit#(7) f7_FCMP_S      = 7'h50;
+Bit#(7) f7_FEQ_S       = 7'h50;                                    Bit#(3) funct3_FEQ_S    = 3'b010;
+Bit#(7) f7_FLT_S       = 7'h50;                                    Bit#(3) funct3_FLT_S    = 3'b001;
+Bit#(7) f7_FLE_S       = 7'h50;                                    Bit#(3) funct3_FLE_S    = 3'b000;
 
-Bit #(7) f7_FCLASS_S    = 7'h70; Bit #(5) rs2_FCLASS_S  = 5'b00000; Bit #(3) funct3_FCLASS_S = 3'b001;
-Bit #(7) f7_FCVT_S_W    = 7'h68; Bit #(5) rs2_FCVT_S_W  = 5'b00000;
-Bit #(7) f7_FCVT_S_WU   = 7'h68; Bit #(5) rs2_FCVT_S_WU = 5'b00001;
-Bit #(7) f7_FMV_W_X     = 7'h78; Bit #(5) rs2_FMV_W_X   = 5'b00000; Bit #(3) funct3_FMV_W_X  = 3'b000;
+Bit#(7) f7_FCLASS_S    = 7'h70; Bit#(5) rs2_FCLASS_S  = 5'b00000; Bit#(3) funct3_FCLASS_S = 3'b001;
+Bit#(7) f7_FCVT_S_W    = 7'h68; Bit#(5) rs2_FCVT_S_W  = 5'b00000;
+Bit#(7) f7_FCVT_S_WU   = 7'h68; Bit#(5) rs2_FCVT_S_WU = 5'b00001;
+Bit#(7) f7_FMV_W_X     = 7'h78; Bit#(5) rs2_FMV_W_X   = 5'b00000; Bit#(3) funct3_FMV_W_X  = 3'b000;
 
 // ----------------
 // RV64F
 
-Bit #(7) f7_FCVT_L_S    = 7'h60; Bit #(5) rs2_FCVT_L_S  = 5'b00010;
-Bit #(7) f7_FCVT_LU_S   = 7'h60; Bit #(5) rs2_FCVT_LU_S = 5'b00011;
-Bit #(7) f7_FCVT_S_L    = 7'h68; Bit #(5) rs2_FCVT_S_L  = 5'b00010;
-Bit #(7) f7_FCVT_S_LU   = 7'h68; Bit #(5) rs2_FCVT_S_LU = 5'b00011;
+Bit#(7) f7_FCVT_L_S    = 7'h60; Bit#(5) rs2_FCVT_L_S  = 5'b00010;
+Bit#(7) f7_FCVT_LU_S   = 7'h60; Bit#(5) rs2_FCVT_LU_S = 5'b00011;
+Bit#(7) f7_FCVT_S_L    = 7'h68; Bit#(5) rs2_FCVT_S_L  = 5'b00010;
+Bit#(7) f7_FCVT_S_LU   = 7'h68; Bit#(5) rs2_FCVT_S_LU = 5'b00011;
 
 // ----------------
 // RV32D
 
-Bit #(7) f7_FADD_D      = 7'h1 ;
-Bit #(7) f7_FSUB_D      = 7'h5 ;
-Bit #(7) f7_FMUL_D      = 7'h9 ;
-Bit #(7) f7_FDIV_D      = 7'hD ;
-Bit #(7) f7_FSQRT_D     = 7'h2D; Bit #(5) rs2_FSQRT_D  = 5'b00000;
+Bit#(7) f7_FADD_D      = 7'h1 ;
+Bit#(7) f7_FSUB_D      = 7'h5 ;
+Bit#(7) f7_FMUL_D      = 7'h9 ;
+Bit#(7) f7_FDIV_D      = 7'hD ;
+Bit#(7) f7_FSQRT_D     = 7'h2D; Bit#(5) rs2_FSQRT_D  = 5'b00000;
 
-Bit #(7) f7_FSGNJ_D     = 7'h11;                                    Bit #(3) funct3_FSGNJ_D  = 3'b000;
-Bit #(7) f7_FSGNJN_D    = 7'h11;                                    Bit #(3) funct3_FSGNJN_D = 3'b001;
-Bit #(7) f7_FSGNJX_D    = 7'h11;                                    Bit #(3) funct3_FSGNJX_D = 3'b010;
+Bit#(7) f7_FSGNJ_D     = 7'h11;                                    Bit#(3) funct3_FSGNJ_D  = 3'b000;
+Bit#(7) f7_FSGNJN_D    = 7'h11;                                    Bit#(3) funct3_FSGNJN_D = 3'b001;
+Bit#(7) f7_FSGNJX_D    = 7'h11;                                    Bit#(3) funct3_FSGNJX_D = 3'b010;
 
-Bit #(7) f7_FMIN_D      = 7'h15;                                    Bit #(3) funct3_FMIN_D   = 3'b000;
-Bit #(7) f7_FMAX_D      = 7'h15;                                    Bit #(3) funct3_FMAX_D   = 3'b001;
+Bit#(7) f7_FMIN_D      = 7'h15;                                    Bit#(3) funct3_FMIN_D   = 3'b000;
+Bit#(7) f7_FMAX_D      = 7'h15;                                    Bit#(3) funct3_FMAX_D   = 3'b001;
 
-Bit #(7) f7_FCVT_S_D    = 7'h20; Bit #(5) rs2_FCVT_S_D = 5'b00001;
-Bit #(7) f7_FCVT_D_S    = 7'h21; Bit #(5) rs2_FCVT_D_S = 5'b00000;
+Bit#(7) f7_FCVT_S_D    = 7'h20; Bit#(5) rs2_FCVT_S_D = 5'b00001;
+Bit#(7) f7_FCVT_D_S    = 7'h21; Bit#(5) rs2_FCVT_D_S = 5'b00000;
 
-Bit #(7) f7_FCMP_D      = 7'h51;
-Bit #(7) f7_FEQ_D       = 7'h51;                                    Bit #(3) funct3_FEQ_D    = 3'b010;
-Bit #(7) f7_FLT_D       = 7'h51;                                    Bit #(3) funct3_FLT_D    = 3'b001;
-Bit #(7) f7_FLE_D       = 7'h51;                                    Bit #(3) funct3_FLE_D    = 3'b000;
+Bit#(7) f7_FCMP_D      = 7'h51;
+Bit#(7) f7_FEQ_D       = 7'h51;                                    Bit#(3) funct3_FEQ_D    = 3'b010;
+Bit#(7) f7_FLT_D       = 7'h51;                                    Bit#(3) funct3_FLT_D    = 3'b001;
+Bit#(7) f7_FLE_D       = 7'h51;                                    Bit#(3) funct3_FLE_D    = 3'b000;
 
-Bit #(7) f7_FCLASS_D    = 7'h71; Bit #(5) rs2_FCLASS_D  = 5'b00000; Bit #(3) funct3_FCLASS_D = 3'b001;
-Bit #(7) f7_FCVT_W_D    = 7'h61; Bit #(5) rs2_FCVT_W_D  = 5'b00000;
-Bit #(7) f7_FCVT_WU_D   = 7'h61; Bit #(5) rs2_FCVT_WU_D = 5'b00001;
-Bit #(7) f7_FCVT_D_W    = 7'h69; Bit #(5) rs2_FCVT_D_W  = 5'b00000;
-Bit #(7) f7_FCVT_D_WU   = 7'h69; Bit #(5) rs2_FCVT_D_WU = 5'b00001;
+Bit#(7) f7_FCLASS_D    = 7'h71; Bit#(5) rs2_FCLASS_D  = 5'b00000; Bit#(3) funct3_FCLASS_D = 3'b001;
+Bit#(7) f7_FCVT_W_D    = 7'h61; Bit#(5) rs2_FCVT_W_D  = 5'b00000;
+Bit#(7) f7_FCVT_WU_D   = 7'h61; Bit#(5) rs2_FCVT_WU_D = 5'b00001;
+Bit#(7) f7_FCVT_D_W    = 7'h69; Bit#(5) rs2_FCVT_D_W  = 5'b00000;
+Bit#(7) f7_FCVT_D_WU   = 7'h69; Bit#(5) rs2_FCVT_D_WU = 5'b00001;
 
 // ----------------
 // RV64D
 
-Bit #(7) f7_FCVT_L_D    = 7'h61; Bit #(5) rs2_FCVT_L_D  = 5'b00010;
-Bit #(7) f7_FCVT_LU_D   = 7'h61; Bit #(5) rs2_FCVT_LU_D = 5'b00011;
-Bit #(7) f7_FMV_X_D     = 7'h71; Bit #(5) rs2_FMV_X_D   = 5'b00000; Bit #(3) funct3_FMV_X_D = 3'b000;
-Bit #(7) f7_FCVT_D_L    = 7'h69; Bit #(5) rs2_FCVT_D_L  = 5'b00010;
-Bit #(7) f7_FCVT_D_LU   = 7'h69; Bit #(5) rs2_FCVT_D_LU = 5'b00011;
-Bit #(7) f7_FMV_D_X     = 7'h79; Bit #(5) rs2_FMV_D_X   = 5'b00000; Bit #(3) funct3_FMV_D_X = 3'b000;
+Bit#(7) f7_FCVT_L_D    = 7'h61; Bit#(5) rs2_FCVT_L_D  = 5'b00010;
+Bit#(7) f7_FCVT_LU_D   = 7'h61; Bit#(5) rs2_FCVT_LU_D = 5'b00011;
+Bit#(7) f7_FMV_X_D     = 7'h71; Bit#(5) rs2_FMV_X_D   = 5'b00000; Bit#(3) funct3_FMV_X_D = 3'b000;
+Bit#(7) f7_FCVT_D_L    = 7'h69; Bit#(5) rs2_FCVT_D_L  = 5'b00010;
+Bit#(7) f7_FCVT_D_LU   = 7'h69; Bit#(5) rs2_FCVT_D_LU = 5'b00011;
+Bit#(7) f7_FMV_D_X     = 7'h79; Bit#(5) rs2_FMV_D_X   = 5'b00000; Bit#(3) funct3_FMV_D_X = 3'b000;
 
 // ----------------------------------------------------------------
-// fv_is_rd_in_GPR: Checks if the request generates a result which
+// is_fop_rd_in_gpr: Checks if the request generates a result which
 // should be written into the GPR
-function Bool fv_is_rd_in_GPR (Bit #(7) funct7, RegIdx rs2);
+function Bool is_fop_rd_in_gpr (Bit#(7) funct7, RegIdx rs2);
 
 `ifdef ISA_D
     let is_FCVT_W_D  =    (funct7 == f7_FCVT_W_D)
@@ -757,7 +741,7 @@ function Bool fv_is_rd_in_GPR (Bit #(7) funct7, RegIdx rs2);
 endfunction
 
 // Check if a rounding mode value in the FCSR.FRM is valid
-function Bool fv_fcsr_frm_valid (Bit #(3) frm);
+function Bool is_fcsr_frm_valid (Bit#(3) frm);
    return (   (frm != 3'b101) 
            && (frm != 3'b110)
            && (frm != 3'b111)
@@ -765,7 +749,7 @@ function Bool fv_fcsr_frm_valid (Bit #(3) frm);
 endfunction 
 
 // Check if a rounding mode value in the instr is valid
-function Bool fv_inst_frm_valid (Bit #(3) frm);
+function Bool is_inst_frm_valid (Bit#(3) frm);
    return (   (frm != 3'b101) 
            && (frm != 3'b110)
           );
@@ -774,17 +758,17 @@ endfunction
 // fv_rounding_mode_check
 // Returns the correct rounding mode considering the values in the
 // FCSR and the instruction and checks legality
-function Tuple2# (Bit #(3), Bool) fv_rmode_check (
-   Bit #(3) inst_frm, Bit #(3) fcsr_frm);
+function Tuple2# (Bit#(3), Bool) fop_rmode_check (
+   Bit#(3) inst_frm, Bit#(3) fcsr_frm);
    let rm = (inst_frm == 3'h7) ? fcsr_frm : inst_frm;
-   let rm_is_legal  = (inst_frm == 3'h7) ? fv_fcsr_frm_valid (fcsr_frm)
-                                         : fv_inst_frm_valid (inst_frm);
+   let rm_is_legal  = (inst_frm == 3'h7) ? is_fcsr_frm_valid (fcsr_frm)
+                                         : is_inst_frm_valid (inst_frm);
    return (tuple2 (rm, rm_is_legal));
 endfunction
 
 // TODO: Check misa.f and misa.d
-function Bool fv_is_fp_instr_legal (Bit #(7) funct7,
-				    Bit #(3) rm,
+function Bool is_fp_instr_legal (Bit#(7) funct7,
+				    Bit#(3) rm,
 				    RegIdx  rs2,
 				    Opcode   opcode);
    // These compile-time constants (which will be optimized out) avoid ugly ifdefs later
@@ -908,7 +892,7 @@ endfunction
 
 // Returns True if the first operand (val1) should be taken from the GPR
 // instead of the FPR for a FP opcode
-function Bool fv_fp_val1_from_gpr (Opcode opcode, Bit#(7) f7, RegIdx rs2);
+function Bool is_fp_val1_from_gpr (Opcode opcode, Bit#(7) f7, RegIdx rs2);
    return (
          (opcode == op_FP)
       && (   False
@@ -938,32 +922,32 @@ endfunction
 Opcode op_SYSTEM = 7'b11_100_11;
 
 // sub-opcodes: (in funct3 field)
-Bit #(3)   f3_PRIV           = 3'b000;
-Bit #(3)   f3_CSRRW          = 3'b001;
-Bit #(3)   f3_CSRRS          = 3'b010;
-Bit #(3)   f3_CSRRC          = 3'b011;
-Bit #(3)   f3_SYSTEM_ILLEGAL = 3'b100;
-Bit #(3)   f3_CSRRWI         = 3'b101;
-Bit #(3)   f3_CSRRSI         = 3'b110;
-Bit #(3)   f3_CSRRCI         = 3'b111;
+Bit#(3)   f3_PRIV           = 3'b000;
+Bit#(3)   f3_CSRRW          = 3'b001;
+Bit#(3)   f3_CSRRS          = 3'b010;
+Bit#(3)   f3_CSRRC          = 3'b011;
+Bit#(3)   f3_SYSTEM_ILLEGAL = 3'b100;
+Bit#(3)   f3_CSRRWI         = 3'b101;
+Bit#(3)   f3_CSRRSI         = 3'b110;
+Bit#(3)   f3_CSRRCI         = 3'b111;
 
 // sub-sub-opcodes for f3_PRIV
 
-Bit #(12) f12_ECALL     = 12'b_0000_0000_0000;
-Bit #(12) f12_EBREAK    = 12'b_0000_0000_0001;
+Bit#(12) f12_ECALL     = 12'b_0000_0000_0000;
+Bit#(12) f12_EBREAK    = 12'b_0000_0000_0001;
 
-Bit #(12) f12_URET      = 12'b_0000_0000_0010;
-Bit #(12) f12_SRET      = 12'b_0001_0000_0010;
-Bit #(12) f12_HRET      = 12'b_0010_0000_0010;
-Bit #(12) f12_MRET      = 12'b_0011_0000_0010;
-Bit #(12) f12_WFI       = 12'b_0001_0000_0101;
+Bit#(12) f12_URET      = 12'b_0000_0000_0010;
+Bit#(12) f12_SRET      = 12'b_0001_0000_0010;
+Bit#(12) f12_HRET      = 12'b_0010_0000_0010;
+Bit#(12) f12_MRET      = 12'b_0011_0000_0010;
+Bit#(12) f12_WFI       = 12'b_0001_0000_0101;
 
 // v1.10 sub-sub-opcode for SFENCE_VMA
-Bit #(7)  f7_SFENCE_VMA = 7'b_0001_001;
+Bit#(7)  f7_SFENCE_VMA = 7'b_0001_001;
 
-Instr break_instr = { f12_EBREAK, 5'b00000, 3'b000, 5'b00000, op_SYSTEM };
+InstrBits break_instr = { f12_EBREAK, 5'b00000, 3'b000, 5'b00000, op_SYSTEM };
 
-function Bool fn_instr_is_csrrx (Instr  instr);
+function Bool is_instr_csrrx (InstrBits  instr);
    let decoded_instr = decode_instr (instr);
    let opcode        = decoded_instr.opcode;
    let funct3        = decoded_instr.funct3;
@@ -971,15 +955,15 @@ function Bool fn_instr_is_csrrx (Instr  instr);
    return ((opcode == op_SYSTEM) && f3_is_CSRR_any (funct3));
 endfunction
 
-function Bool f3_is_CSRR_any (Bit #(3) f3);
+function Bool f3_is_CSRR_any (Bit#(3) f3);
    return (f3_is_CSRR_W (f3) || f3_is_CSRR_S_or_C (f3));
 endfunction
 
-function Bool f3_is_CSRR_W (Bit #(3) f3);
+function Bool f3_is_CSRR_W (Bit#(3) f3);
    return ((f3 == f3_CSRRW) || (f3 == f3_CSRRWI));
 endfunction
 
-function Bool f3_is_CSRR_S_or_C (Bit #(3) f3);
+function Bool f3_is_CSRR_S_or_C (Bit#(3) f3);
    return ((f3 == f3_CSRRS) || (f3 == f3_CSRRSI) ||
 	   (f3 == f3_CSRRC) || (f3 == f3_CSRRCI));
 endfunction
@@ -987,16 +971,16 @@ endfunction
 // ================================================================
 // Privilege Modes
 
-typedef 4 Num_Priv_Modes;
+typedef 4 NumPrivModes;
 
-typedef Bit #(2) Priv_Mode;
+typedef Bit#(2) PrivMode;
 
-Priv_Mode         u_Priv_Mode = 2'b00;
-Priv_Mode         s_Priv_Mode = 2'b01;
-Priv_Mode  reserved_Priv_Mode = 2'b10;
-Priv_Mode         m_Priv_Mode = 2'b11;
+PrivMode         u_Priv_Mode = 2'b00;
+PrivMode         s_Priv_Mode = 2'b01;
+PrivMode  reserved_Priv_Mode = 2'b10;
+PrivMode         m_Priv_Mode = 2'b11;
 
-function Fmt fshow_Priv_Mode (Priv_Mode pm);
+function Fmt fshow_Priv_Mode (PrivMode pm);
    return case (pm)
 	     u_Priv_Mode: $format ("U");
 	     s_Priv_Mode: $format ("S");
@@ -1012,7 +996,7 @@ function Bool fn_csr_addr_can_write (CSRAddr csr_addr);
    return (csr_addr [11:10] != 2'b11);
 endfunction
 
-function Bool fn_csr_addr_priv_ok (CSRAddr csr_addr, Priv_Mode priv_mode);
+function Bool fn_csr_addr_priv_ok (CSRAddr csr_addr, PrivMode priv_mode);
    return (priv_mode >= csr_addr [9:8]);
 endfunction
 
@@ -1106,11 +1090,19 @@ typedef struct {
    Addr        pc;
    WordXL      mstatus;
    WordXL      mcause;
-   Priv_Mode   priv;
+   PrivMode   priv;
 } Trap_Info deriving (Bits, Eq, FShow);
 
 `include "isa_decls_cext.inc.bsv"
 `include "isa_decls_priv_supervisor.inc.bsv"
 `include "isa_decls_priv_machine.inc.bsv"
+
+`ifdef INCLUDE_PC_TRACE
+typedef struct {
+   Bit#(64)  cycle;
+   Bit#(64)  instret;
+   Bit#(64)  pc;
+} PC_Trace deriving (Bits, FShow);
+`endif
 
 endpackage

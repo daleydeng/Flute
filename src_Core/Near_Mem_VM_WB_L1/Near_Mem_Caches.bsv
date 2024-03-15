@@ -70,7 +70,7 @@ deriving (Bits, Eq, FShow);
 (* synthesize *)
 module mkNear_Mem (Near_Mem_IFC);
 
-   Reg #(Bit #(4)) cfg_verbosity <- mkConfigReg (0);
+   Reg #(Bit#(4)) cfg_verbosity <- mkConfigReg (0);
    Reg #(State)    rg_state      <- mkReg (STATE_READY);
 
    // ----------------
@@ -152,12 +152,12 @@ module mkNear_Mem (Near_Mem_IFC);
    // CPU side
    interface IMem_IFC imem;
       // CPU side: IMem request
-      method Action  req (Bit #(3) f3,
+      method Action  req (Bit#(3) f3,
 			  WordXL addr,
 			  // The following  args for VM
-			  Priv_Mode  priv,
-			  Bit #(1)   sstatus_SUM,
-			  Bit #(1)   mstatus_MXR,
+			  PrivMode  priv,
+			  Bit#(1)   sstatus_SUM,
+			  Bit#(1)   mstatus_MXR,
 			  WordXL     satp);    // { VM_Mode, ASID, PPN_for_page_table }
 	 i_mmu_cache.req (addr, priv, sstatus_SUM, mstatus_MXR, satp);
       endmethod
@@ -166,7 +166,7 @@ module mkNear_Mem (Near_Mem_IFC);
       method Bool     valid          = i_mmu_cache.valid;
       method Bool     is_i32_not_i16 = True;
       method WordXL   pc             = i_mmu_cache.addr;
-      method Instr    instr          = truncate (i_mmu_cache.word64);
+      method InstrBits    instr          = truncate (i_mmu_cache.word64);
       method Bool     exc            = i_mmu_cache.exc;
       method Exc_Code exc_code       = i_mmu_cache.exc_code;
       method WordXL   tval           = i_mmu_cache.addr;
@@ -182,16 +182,16 @@ module mkNear_Mem (Near_Mem_IFC);
    interface DMem_IFC dmem;
       // CPU side: DMem request
       method Action  req (CacheOp op,
-			  Bit #(3) f3,
+			  Bit#(3) f3,
 `ifdef ISA_A
-			  Bit #(7) amo_funct7,
+			  Bit#(7) amo_funct7,
 `endif
 			  WordXL addr,
-			  Bit #(64) store_value,
+			  Bit#(64) store_value,
 			  // The following  args for VM
-			  Priv_Mode  priv,
-			  Bit #(1)   sstatus_SUM,
-			  Bit #(1)   mstatus_MXR,
+			  PrivMode  priv,
+			  Bit#(1)   sstatus_SUM,
+			  Bit#(1)   mstatus_MXR,
 			  WordXL     satp);    // { VM_Mode, ASID, PPN_for_page_table }
 	 d_mmu_cache.req (op, f3,
 `ifdef ISA_A
@@ -202,8 +202,8 @@ module mkNear_Mem (Near_Mem_IFC);
 
       // CPU side: DMem response
       method Bool       valid      = d_mmu_cache.valid;
-      method Bit #(64)  word64     = d_mmu_cache.word64;
-      method Bit #(64)  st_amo_val = d_mmu_cache.st_amo_val;
+      method Bit#(64)  word64     = d_mmu_cache.word64;
+      method Bit#(64)  st_amo_val = d_mmu_cache.st_amo_val;
       method Bool       exc        = d_mmu_cache.exc;
       method Exc_Code   exc_code   = d_mmu_cache.exc_code;
    endinterface
@@ -235,7 +235,7 @@ module mkNear_Mem (Near_Mem_IFC);
 
    interface Server server_fence;
       interface Put request;
-	 method Action put (Fence_Ordering t);
+	 method Action put (FenceOrdering t);
 	    d_mmu_cache.flush_server.request.put (flush_to_invalid);
 	 endmethod
       endinterface
@@ -279,11 +279,11 @@ module mkNear_Mem (Near_Mem_IFC);
    // For ISA tests: watch memory writes to <tohost> addr
 
 `ifdef WATCH_TOHOST
-   method Action set_watch_tohost (Bool watch_tohost, Bit #(64) tohost_addr);
+   method Action set_watch_tohost (Bool watch_tohost, Bit#(64) tohost_addr);
       d_mmu_cache.set_watch_tohost (watch_tohost, tohost_addr);
    endmethod
 
-   method Bit #(64) mv_tohost_value = d_mmu_cache.mv_tohost_value;
+   method Bit#(64) mv_tohost_value = d_mmu_cache.mv_tohost_value;
 `endif
 
    // Signal that DDR4 has been initialized and is ready to accept requests
@@ -293,7 +293,7 @@ module mkNear_Mem (Near_Mem_IFC);
    endmethod
 
    // Misc. status; 0 = running, no error
-   method Bit #(8) mv_status;
+   method Bit#(8) mv_status;
       return d_mmu_cache.mv_status;
    endmethod
 

@@ -44,8 +44,7 @@ import AXI4_Lite_Types :: *;
 
 import isa_decls :: *;
 
-import PC_Trace      :: *;
-import TV_Trace_Data :: *;
+import tv_trace_data :: *;
 
 import GPR_RegFile :: *;
 `ifdef ISA_F
@@ -144,11 +143,11 @@ module mkCPU (CPU_IFC);
    let minstret = csr_regfile.read_csr_minstret;
 
    // MSTATUS.MXR and SSTATUS.SUM for Virtual Memory access control
-   Bit #(1) mstatus_MXR = mstatus [19];
+   Bit#(1) mstatus_MXR = mstatus [19];
 `ifdef ISA_PRIV_S
-   Bit #(1) sstatus_SUM = (csr_regfile.read_sstatus) [18];
+   Bit#(1) sstatus_SUM = (csr_regfile.read_sstatus) [18];
 `else
-   Bit #(1) sstatus_SUM = 0;
+   Bit#(1) sstatus_SUM = 0;
 `endif
 
    // ----------------
@@ -166,26 +165,26 @@ module mkCPU (CPU_IFC);
    // For debugging
 
    // Verbosity: 0=quiet; 1=instruction trace; 2=more detail
-   Reg #(Bit #(4))  cfg_verbosity <- mkConfigReg (0);
+   Reg #(Bit#(4))  cfg_verbosity <- mkConfigReg (0);
 
    // Verbosity is 0 as long as # of instrs retired is <= cfg_logdelay
-   Reg #(Bit #(64))  cfg_logdelay <- mkConfigReg (0);
+   Reg #(Bit#(64))  cfg_logdelay <- mkConfigReg (0);
 
    // Current verbosity, taking into account log delay
-   Bit #(4)  cur_verbosity = ((minstret < cfg_logdelay) ? 0 : cfg_verbosity);
+   Bit#(4)  cur_verbosity = ((minstret < cfg_logdelay) ? 0 : cfg_verbosity);
 
    // ----------------
    // Major CPU states
    Reg #(CPU_State)  rg_state    <- mkReg (CPU_RESET1);
-   Reg #(Priv_Mode)  rg_cur_priv <- mkReg (m_Priv_Mode);
+   Reg #(PrivMode)  rg_cur_priv <- mkReg (m_Priv_Mode);
    Reg #(Epoch)      rg_epoch    <- mkRegU;
 
    // These regs save info on a trap in Stage1 or Stage2
    Reg #(Trap_Info)  rg_trap_info       <- mkRegU;
    Reg #(Bool)       rg_trap_interrupt  <- mkRegU;
-   Reg #(Instr)      rg_trap_instr      <- mkRegU;
+   Reg #(InstrBits)      rg_trap_instr      <- mkRegU;
 `ifdef INCLUDE_TANDEM_VERIF
-   Reg #(Trace_Data) rg_trap_trace_data <- mkRegU;
+   Reg #(TraceData) rg_trap_trace_data <- mkRegU;
 `endif
 
    // rg_next_pc is used for redirections (branches, non-pipe
@@ -198,8 +197,8 @@ module mkCPU (CPU_IFC);
 
    // Save sstatus_SUM and mstatus_MXR to initiate fetches on an external
    // interrupt
-   Reg #(Bit #(1)) rg_sstatus_SUM <- mkRegU;
-   Reg #(Bit #(1)) rg_mstatus_MXR <- mkRegU;
+   Reg #(Bit#(1)) rg_sstatus_SUM <- mkRegU;
+   Reg #(Bit#(1)) rg_mstatus_MXR <- mkRegU;
 
    // ----------------
    // Pipeline stages
@@ -255,7 +254,7 @@ module mkCPU (CPU_IFC);
    Reg #(Bool) rg_stop_req <- mkReg (False);
 
    // Count instrs after step-request from debugger (via dcsr.step)
-   Reg #(Bit #(1))  rg_step_count <- mkReg (0);
+   Reg #(Bit#(1))  rg_step_count <- mkReg (0);
 
    // Debugger GPR read/write request/response
    FIFOF #(DM_CPU_Req #(5,  XLEN)) f_gpr_reqs <- mkFIFOF;
@@ -284,7 +283,7 @@ module mkCPU (CPU_IFC);
    // Tandem Verification
 
 `ifdef INCLUDE_TANDEM_VERIF
-   FIFOF #(Trace_Data) f_trace_data  <- mkFIFOF;
+   FIFOF #(TraceData) f_trace_data  <- mkFIFOF;
 
    // State for deciding if a MIP update needs to be sent into the trace file
    Reg #(WordXL) rg_prev_mip <- mkReg (0);
@@ -304,10 +303,10 @@ module mkCPU (CPU_IFC);
    // ================================================================
    // Debugging: print instruction trace info
 
-   Reg #(Bit #(64)) rg_instret_reported <- mkReg ('1);
+   Reg #(Bit#(64)) rg_instret_reported <- mkReg ('1);
    Reg #(WordXL)    rg_pc_reported      <- mkReg ('1);
 
-   function Action fa_emit_instr_trace (Bit #(64) instret, WordXL pc, Instr instr, Priv_Mode priv);
+   function Action fa_emit_instr_trace (Bit#(64) instret, WordXL pc, InstrBits instr, PrivMode priv);
       action
 	 // Display info if verbosity
 	 // or: every 0x10_0000 instrs
@@ -335,13 +334,13 @@ module mkCPU (CPU_IFC);
    // ================================================================
    // CPI measurement in each 'run' (from Debug Mode pause to Debug Mode pause)
 
-   Reg #(Bit #(64))  rg_start_CPI_cycles <- mkRegU;
-   Reg #(Bit #(64))  rg_start_CPI_instrs <- mkRegU;
+   Reg #(Bit#(64))  rg_start_CPI_cycles <- mkRegU;
+   Reg #(Bit#(64))  rg_start_CPI_instrs <- mkRegU;
 
    function Action fa_report_CPI;
       action
-	 Bit #(64) delta_CPI_cycles = mcycle - rg_start_CPI_cycles;
-	 Bit #(64) delta_CPI_instrs = minstret - rg_start_CPI_instrs;
+	 Bit#(64) delta_CPI_cycles = mcycle - rg_start_CPI_cycles;
+	 Bit#(64) delta_CPI_instrs = minstret - rg_start_CPI_instrs;
 
 	 // Make delta_CPI_instrs at least 1, to avoid divide-by-zero
 	 if (delta_CPI_instrs == 0)
@@ -863,7 +862,7 @@ module mkCPU (CPU_IFC);
       // Tandem Verification and Debug related actions
 `ifdef INCLUDE_TANDEM_VERIF
       // Trace data
-      Trace_Data trace_data;
+      TraceData trace_data;
       if (is_interrupt)
 	 trace_data = mkTrace_INTR (next_pc, new_priv, new_mstatus, mcause, epc, 0);
       else begin
@@ -916,7 +915,7 @@ module mkCPU (CPU_IFC);
       rg_next_pc <= stage1.out.next_pc;
 
 `ifdef ISA_F
-      // With FP, the val is always Bit #(64)
+      // With FP, the val is always Bit#(64)
       // TODO: is this ifdef necessary? Can't we always use 'truncate'?
       rg_csr_val1 <= truncate (stage1.out.data_to_stage2.val1);
 `else
@@ -1030,7 +1029,7 @@ module mkCPU (CPU_IFC);
       rg_next_pc <= stage1.out.next_pc;
 
 `ifdef ISA_F
-      // With FP, the val is always Bit #(64)
+      // With FP, the val is always Bit#(64)
       // TODO: is this ifdef necessary? Can't we always use 'truncate'?
       rg_csr_val1 <= truncate (stage1.out.data_to_stage2.val1);
 `else
@@ -1162,7 +1161,7 @@ module mkCPU (CPU_IFC);
       if (cur_verbosity > 1) $display ("%0d: %m.rl_stage1_xRET", mcycle);
 
       // Return-from-exception actions on CSRs
-      Priv_Mode from_priv = ((stage1.out.control == CONTROL_MRET) ?
+      PrivMode from_priv = ((stage1.out.control == CONTROL_MRET) ?
 			     m_Priv_Mode : ((stage1.out.control == CONTROL_SRET) ?
 					    s_Priv_Mode : u_Priv_Mode));
       match { .next_pc, .new_priv, .new_mstatus } <- csr_regfile.csr_ret_actions (from_priv);
@@ -1340,7 +1339,7 @@ module mkCPU (CPU_IFC);
    // ================================================================
    // Stage1: nonpipe special: WFI
 
-   Reg #(Bit #(32)) rg_wfi_counter <- mkReg ('h_FFFF_FFFF);
+   Reg #(Bit#(32)) rg_wfi_counter <- mkReg ('h_FFFF_FFFF);
 
    rule rl_stage1_WFI (   (rg_state== CPU_RUNNING)
 		       && (! halting)
@@ -1631,7 +1630,7 @@ module mkCPU (CPU_IFC);
 
    rule rl_debug_read_gpr ((rg_state == CPU_DEBUG_MODE) && (! f_gpr_reqs.first.write));
       let req <- pop (f_gpr_reqs);
-      Bit #(5) regname = req.address;
+      Bit#(5) regname = req.address;
       let data = gpr_regfile.read_rs1_port2 (regname);
       let rsp = DM_CPU_Rsp {ok: True, data: data};
       f_gpr_rsps.enq (rsp);
@@ -1645,7 +1644,7 @@ module mkCPU (CPU_IFC);
 
    rule rl_debug_write_gpr ((rg_state == CPU_DEBUG_MODE) && f_gpr_reqs.first.write);
       let req <- pop (f_gpr_reqs);
-      Bit #(5) regname = req.address;
+      Bit#(5) regname = req.address;
       let data = req.data;
       gpr_regfile.write_rd (regname, data);
 
@@ -1677,7 +1676,7 @@ module mkCPU (CPU_IFC);
 `ifdef ISA_F
    rule rl_debug_read_fpr ((rg_state == CPU_DEBUG_MODE) && (! f_fpr_reqs.first.write));
       let req <- pop (f_fpr_reqs);
-      Bit #(5) regname = req.address;
+      Bit#(5) regname = req.address;
       let data = fpr_regfile.read_rs1_port2 (regname);
       let rsp = DM_CPU_Rsp {ok: True, data: data};
       f_fpr_rsps.enq (rsp);
@@ -1691,7 +1690,7 @@ module mkCPU (CPU_IFC);
 
    rule rl_debug_write_fpr ((rg_state == CPU_DEBUG_MODE) && f_fpr_reqs.first.write);
       let req <- pop (f_fpr_reqs);
-      Bit #(5) regname = req.address;
+      Bit#(5) regname = req.address;
       let data = req.data;
       fpr_regfile.write_rd (regname, data);
 
@@ -1723,7 +1722,7 @@ module mkCPU (CPU_IFC);
 
    rule rl_debug_read_csr ((rg_state == CPU_DEBUG_MODE) && (! f_csr_reqs.first.write));
       let req <- pop (f_csr_reqs);
-      Bit #(12) csr_addr = req.address;
+      Bit#(12) csr_addr = req.address;
       let m_data = csr_regfile.read_csr_port2 (csr_addr);
       let data = fromMaybe (?, m_data);
       let rsp = DM_CPU_Rsp {ok: True, data: data};
@@ -1738,7 +1737,7 @@ module mkCPU (CPU_IFC);
 
    rule rl_debug_write_csr ((rg_state == CPU_DEBUG_MODE) && f_csr_reqs.first.write);
       let req <- pop (f_csr_reqs);
-      Bit #(12) csr_addr = req.address;
+      Bit#(12) csr_addr = req.address;
       let data = req.data;
       let csr_write_result <- csr_regfile.mav_csr_write (csr_addr, data);
 
@@ -1804,7 +1803,7 @@ module mkCPU (CPU_IFC);
    // ----------------
    // Set CSR TIME (shadow-copy of MTIME)
 
-   method Action ma_set_csr_time (Bit #(64) t) = csr_regfile.ma_set_csr_time (t);
+   method Action ma_set_csr_time (Bit#(64) t) = csr_regfile.ma_set_csr_time (t);
 
    // ----------------
    // Software and timer interrupts (from Near_Mem_IO/CLINT)
@@ -1842,7 +1841,7 @@ module mkCPU (CPU_IFC);
    interface Server  hart0_server_run_halt = toGPServer (f_run_halt_reqs, f_run_halt_rsps);
 
    interface Put  hart0_put_other_req;
-      method Action  put (Bit #(4) req);
+      method Action  put (Bit#(4) req);
 	 cfg_verbosity <= req;
       endmethod
    endinterface
@@ -1865,7 +1864,7 @@ module mkCPU (CPU_IFC);
    // ----------------
    // Debugging: set core's verbosity
 
-   method Action  set_verbosity (Bit #(4)  verbosity, Bit #(64)  logdelay);
+   method Action  set_verbosity (Bit#(4)  verbosity, Bit#(64)  logdelay);
       cfg_verbosity <= verbosity;
       cfg_logdelay  <= logdelay;
       if (verbosity != cfg_verbosity) begin
@@ -1878,11 +1877,11 @@ module mkCPU (CPU_IFC);
    // For ISA tests: watch memory writes to <tohost> addr
 
 `ifdef WATCH_TOHOST
-   method Action set_watch_tohost (Bool watch_tohost, Bit #(64) tohost_addr);
+   method Action set_watch_tohost (Bool watch_tohost, Bit#(64) tohost_addr);
       near_mem.set_watch_tohost (watch_tohost, tohost_addr);
    endmethod
 
-   method Bit #(64) mv_tohost_value = near_mem.mv_tohost_value;
+   method Bit#(64) mv_tohost_value = near_mem.mv_tohost_value;
 `endif
 
    // Inform core that DDR4 has been initialized and is ready to accept requests
@@ -1891,7 +1890,7 @@ module mkCPU (CPU_IFC);
    endmethod
 
    // Misc. status; 0 = running, no error
-   method Bit #(8) mv_status;
+   method Bit#(8) mv_status;
       return near_mem.mv_status;
    endmethod
 

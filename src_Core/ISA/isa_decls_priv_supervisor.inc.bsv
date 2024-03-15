@@ -37,31 +37,31 @@ CSRAddr   csr_addr_satp       = 12'h180;    // Supervisor address translation an
 // ================================================================
 // SSTATUS
 
-function Bit #(1) fn_sstatus_sd    (WordXL sstatus_val); return sstatus_val [xlen-1]; endfunction
+function Bit#(1) fn_sstatus_sd    (WordXL sstatus_val); return sstatus_val [xlen-1]; endfunction
 
 `ifdef RV64
-function Bit #(2) fn_sstatus_UXL   (WordXL sstatus_val); return sstatus_val [33:32]; endfunction
+function Bit#(2) fn_sstatus_UXL   (WordXL sstatus_val); return sstatus_val [33:32]; endfunction
 `endif
 
-function Bit #(1) fn_sstatus_SUM   (WordXL sstatus_val); return sstatus_val [19]; endfunction
-function Bit #(1) fn_sstatus_MXR   (WordXL sstatus_val); return sstatus_val [18]; endfunction
+function Bit#(1) fn_sstatus_SUM   (WordXL sstatus_val); return sstatus_val [19]; endfunction
+function Bit#(1) fn_sstatus_MXR   (WordXL sstatus_val); return sstatus_val [18]; endfunction
 
-function Bit #(2) fn_sstatus_xs    (WordXL sstatus_val); return sstatus_val [16:15]; endfunction
-function Bit #(2) fn_sstatus_fs    (WordXL sstatus_val); return sstatus_val [14:13]; endfunction
+function Bit#(2) fn_sstatus_xs    (WordXL sstatus_val); return sstatus_val [16:15]; endfunction
+function Bit#(2) fn_sstatus_fs    (WordXL sstatus_val); return sstatus_val [14:13]; endfunction
 
-function Bit #(1) fn_sstatus_spp   (WordXL sstatus_val); return sstatus_val [8]; endfunction
+function Bit#(1) fn_sstatus_spp   (WordXL sstatus_val); return sstatus_val [8]; endfunction
 
-function Bit #(1) fn_sstatus_spie  (WordXL sstatus_val); return sstatus_val [5]; endfunction
-function Bit #(1) fn_sstatus_upie  (WordXL sstatus_val); return sstatus_val [4]; endfunction
+function Bit#(1) fn_sstatus_spie  (WordXL sstatus_val); return sstatus_val [5]; endfunction
+function Bit#(1) fn_sstatus_upie  (WordXL sstatus_val); return sstatus_val [4]; endfunction
 
-function Bit #(1) fn_sstatus_sie   (WordXL sstatus_val); return sstatus_val [1]; endfunction
-function Bit #(1) fn_sstatus_uie   (WordXL sstatus_val); return sstatus_val [0]; endfunction
+function Bit#(1) fn_sstatus_sie   (WordXL sstatus_val); return sstatus_val [1]; endfunction
+function Bit#(1) fn_sstatus_uie   (WordXL sstatus_val); return sstatus_val [0]; endfunction
 
 // ----------------
 // SCAUSE (reason for exception)
 
-function Bit #(1)              scause_interrupt      (WordXL scause_val); return scause_val [xlen-1];   endfunction
-function Bit #(TSub #(XLEN,1)) scause_exception_code (WordXL scause_val); return scause_val [xlen-2:0]; endfunction
+function Bit#(1)              scause_interrupt      (WordXL scause_val); return scause_val [xlen-1];   endfunction
+function Bit#(TSub #(XLEN,1)) scause_exception_code (WordXL scause_val); return scause_val [xlen-2:0]; endfunction
 
 // ================================================================
 
@@ -72,32 +72,32 @@ function Bit #(TSub #(XLEN,1)) scause_exception_code (WordXL scause_val); return
 // ----------------
 `ifdef RV32
 
-typedef Bit #(1) VM_Mode;
-typedef Bit #(9) ASID;
+typedef Bit#(1) VM_Mode;
+typedef Bit#(9) ASID;
 
 function WordXL   fn_mk_satp_val (VM_Mode mode, ASID asid, PA pa) = { mode, asid, pa [33:12] };
-function VM_Mode  fn_satp_to_VM_Mode  (Bit #(32) satp_val); return satp_val    [31]; endfunction
-function ASID     fn_satp_to_ASID     (Bit #(32) satp_val); return satp_val [30:22]; endfunction
-function PPN      fn_satp_to_PPN      (Bit #(32) satp_val); return satp_val [21: 0]; endfunction
+function VM_Mode  fn_satp_to_VM_Mode  (Bit#(32) satp_val); return satp_val    [31]; endfunction
+function ASID     fn_satp_to_ASID     (Bit#(32) satp_val); return satp_val [30:22]; endfunction
+function PPN      fn_satp_to_PPN      (Bit#(32) satp_val); return satp_val [21: 0]; endfunction
 
-Bit #(1)  satp_mode_RV32_bare = 1'h_0;
-Bit #(1)  satp_mode_RV32_sv32 = 1'h_1;
+Bit#(1)  satp_mode_RV32_bare = 1'h_0;
+Bit#(1)  satp_mode_RV32_sv32 = 1'h_1;
 
 `elsif RV64
 
-typedef Bit #(4)  VM_Mode;
-typedef Bit #(16) ASID;
+typedef Bit#(4)  VM_Mode;
+typedef Bit#(16) ASID;
 
 function WordXL   fn_mk_satp_val (VM_Mode mode, ASID asid, PA pa) = { mode, asid, pa [55:12] };
-function VM_Mode  fn_satp_to_VM_Mode  (Bit #(64) satp_val); return satp_val [63:60]; endfunction
-function ASID     fn_satp_to_ASID     (Bit #(64) satp_val); return satp_val [59:44]; endfunction
-function PPN      fn_satp_to_PPN      (Bit #(64) satp_val); return satp_val [43: 0]; endfunction
+function VM_Mode  fn_satp_to_VM_Mode  (Bit#(64) satp_val); return satp_val [63:60]; endfunction
+function ASID     fn_satp_to_ASID     (Bit#(64) satp_val); return satp_val [59:44]; endfunction
+function PPN      fn_satp_to_PPN      (Bit#(64) satp_val); return satp_val [43: 0]; endfunction
 
-Bit #(4)  satp_mode_RV64_bare = 4'd__0;
-Bit #(4)  satp_mode_RV64_sv39 = 4'd__8;
-Bit #(4)  satp_mode_RV64_sv48 = 4'd__9;
-Bit #(4)  satp_mode_RV64_sv57 = 4'd_10;
-Bit #(4)  satp_mode_RV64_sv64 = 4'd_11;
+Bit#(4)  satp_mode_RV64_bare = 4'd__0;
+Bit#(4)  satp_mode_RV64_sv39 = 4'd__8;
+Bit#(4)  satp_mode_RV64_sv48 = 4'd__9;
+Bit#(4)  satp_mode_RV64_sv57 = 4'd_10;
+Bit#(4)  satp_mode_RV64_sv64 = 4'd_11;
 
 `endif
 
@@ -130,10 +130,10 @@ typedef  12  Offset_sz;
 typedef  1024  PTNode_sz;    // # of PTEs in a PTNode
 
 // VAs, VPN selectors
-function VA    fn_mkVA (VPN_J vpn1, VPN_J vpn0, Bit #(Offset_sz) offset) = { vpn1, vpn0, offset };
-function VPN   fn_Addr_to_VPN   (Bit #(n) addr) = addr [31:12];
-function VPN_J fn_Addr_to_VPN_1 (Bit #(n) addr) = addr [31:22];
-function VPN_J fn_Addr_to_VPN_0 (Bit #(n) addr) = addr [21:12];
+function VA    fn_mkVA (VPN_J vpn1, VPN_J vpn0, Bit#(Offset_sz) offset) = { vpn1, vpn0, offset };
+function VPN   fn_Addr_to_VPN   (Bit#(n) addr) = addr [31:12];
+function VPN_J fn_Addr_to_VPN_1 (Bit#(n) addr) = addr [31:22];
+function VPN_J fn_Addr_to_VPN_0 (Bit#(n) addr) = addr [21:12];
 
 // ----------------
 // RV64.Sv39
@@ -166,11 +166,11 @@ typedef   12  Offset_sz;
 typedef  512  PTNode_sz;    // # of PTEs in a PTNode
 
 // VAs, VPN selectors
-function VA    fn_mkVA (VPN_J vpn2, VPN_J vpn1, VPN_J vpn0, Bit #(Offset_sz) offset) = { vpn2, vpn1, vpn0, offset };
-function VPN   fn_Addr_to_VPN   (Bit #(n) addr) = addr [38:12];
-function VPN_J fn_Addr_to_VPN_2 (Bit #(n) addr) = addr [38:30];
-function VPN_J fn_Addr_to_VPN_1 (Bit #(n) addr) = addr [29:21];
-function VPN_J fn_Addr_to_VPN_0 (Bit #(n) addr) = addr [20:12];
+function VA    fn_mkVA (VPN_J vpn2, VPN_J vpn1, VPN_J vpn0, Bit#(Offset_sz) offset) = { vpn2, vpn1, vpn0, offset };
+function VPN   fn_Addr_to_VPN   (Bit#(n) addr) = addr [38:12];
+function VPN_J fn_Addr_to_VPN_2 (Bit#(n) addr) = addr [38:30];
+function VPN_J fn_Addr_to_VPN_1 (Bit#(n) addr) = addr [29:21];
+function VPN_J fn_Addr_to_VPN_0 (Bit#(n) addr) = addr [20:12];
 
 // ifdef RV32 .. elsif RV64 / ifdef SV39
 `else
@@ -187,7 +187,7 @@ function VPN_J fn_Addr_to_VPN_0 (Bit #(n) addr) = addr [20:12];
 // Derived types and values
 
 // Physical addrs
-Integer  pa_sz = valueOf (PA_sz);  typedef Bit #(PA_sz)     PA;
+Integer  pa_sz = valueOf (PA_sz);  typedef Bit#(PA_sz)     PA;
 
 function PA fn_WordXL_to_PA (WordXL  eaddr);
 `ifdef RV32
@@ -198,7 +198,7 @@ function PA fn_WordXL_to_PA (WordXL  eaddr);
 endfunction
 
 // Virtual addrs -- derived types and values
-Integer  va_sz = valueOf (VA_sz);  typedef Bit #(VA_sz)      VA;
+Integer  va_sz = valueOf (VA_sz);  typedef Bit#(VA_sz)      VA;
 
 function VA fn_WordXL_to_VA (WordXL  eaddr);
 `ifdef RV32
@@ -209,28 +209,28 @@ function VA fn_WordXL_to_VA (WordXL  eaddr);
 endfunction
 
 // Page offsets
-function  Offset  fn_Addr_to_Offset (Bit #(n) addr);
+function  Offset  fn_Addr_to_Offset (Bit#(n) addr);
    return addr [offset_sz - 1: 0];
 endfunction
 
 // VPNs
-Integer  vpn_sz    = valueOf (VPN_sz);       typedef Bit #(VPN_sz)     VPN;
-Integer  vpn_j_sz  = valueOf (VPN_J_sz);     typedef Bit #(VPN_J_sz)   VPN_J;
-Integer  offset_sz = valueOf (Offset_sz);    typedef Bit #(Offset_sz)  Offset;
+Integer  vpn_sz    = valueOf (VPN_sz);       typedef Bit#(VPN_sz)     VPN;
+Integer  vpn_j_sz  = valueOf (VPN_J_sz);     typedef Bit#(VPN_J_sz)   VPN_J;
+Integer  offset_sz = valueOf (Offset_sz);    typedef Bit#(Offset_sz)  Offset;
 
 // PPNs
-Integer  ppn_sz   = valueOf (PPN_sz);    typedef Bit #(PPN_sz)    PPN;
+Integer  ppn_sz   = valueOf (PPN_sz);    typedef Bit#(PPN_sz)    PPN;
 `ifdef RV64
-Integer  ppn_2_sz = valueOf (PPN_2_sz);  typedef Bit #(PPN_2_sz)  PPN_2;
+Integer  ppn_2_sz = valueOf (PPN_2_sz);  typedef Bit#(PPN_2_sz)  PPN_2;
 `endif
-Integer  ppn_1_sz = valueOf (PPN_1_sz);  typedef Bit #(PPN_1_sz)  PPN_1;
-Integer  ppn_0_sz = valueOf (PPN_0_sz);  typedef Bit #(PPN_0_sz)  PPN_0;
+Integer  ppn_1_sz = valueOf (PPN_1_sz);  typedef Bit#(PPN_1_sz)  PPN_1;
+Integer  ppn_0_sz = valueOf (PPN_0_sz);  typedef Bit#(PPN_0_sz)  PPN_0;
 
 `ifdef RV32
-typedef Bit #(PPN_1_sz)  PPN_MEGA;
+typedef Bit#(PPN_1_sz)  PPN_MEGA;
 `elsif RV64
-typedef Bit #(TAdd #(PPN_2_sz, PPN_1_sz))  PPN_MEGA;
-typedef Bit #(PPN_2_sz)                    PPN_GIGA;
+typedef Bit#(TAdd #(PPN_2_sz, PPN_1_sz))  PPN_MEGA;
+typedef Bit#(PPN_2_sz)                    PPN_GIGA;
 `endif
 
 function  PPN  fn_PA_to_PPN (PA pa);
@@ -250,7 +250,7 @@ endfunction
 
 Integer  ptnode_sz = valueOf (PTNode_sz);    // # of PTEs in a PTNode
 typedef  TLog #(PTNode_sz)       PTNode_Index_sz;
-typedef  Bit #(PTNode_Index_sz)  PTNode_Index;
+typedef  Bit#(PTNode_Index_sz)  PTNode_Index;
 Integer  ptnode_index_sz = valueOf (PTNode_Index_sz);
 
 // ----------------
@@ -277,35 +277,35 @@ Integer  pte_PPN_1_offset  = 19;
 Integer  pte_PPN_2_offset  = 28;
 `endif
 
-function Bit #(1) fn_PTE_to_V (PTE pte);
+function Bit#(1) fn_PTE_to_V (PTE pte);
    return pte [pte_V_offset];
 endfunction
 
-function Bit #(1) fn_PTE_to_R (PTE pte);
+function Bit#(1) fn_PTE_to_R (PTE pte);
    return pte [pte_R_offset];
 endfunction
 
-function Bit #(1) fn_PTE_to_W (PTE pte);
+function Bit#(1) fn_PTE_to_W (PTE pte);
    return pte [pte_W_offset];
 endfunction
 
-function Bit #(1) fn_PTE_to_X (PTE pte);
+function Bit#(1) fn_PTE_to_X (PTE pte);
    return pte [pte_X_offset];
 endfunction
 
-function Bit #(1) fn_PTE_to_U (PTE pte);
+function Bit#(1) fn_PTE_to_U (PTE pte);
    return pte [pte_U_offset];
 endfunction
 
-function Bit #(1) fn_PTE_to_G (PTE pte);
+function Bit#(1) fn_PTE_to_G (PTE pte);
    return pte [pte_G_offset];
 endfunction
 
-function Bit #(1) fn_PTE_to_A (PTE pte);
+function Bit#(1) fn_PTE_to_A (PTE pte);
    return pte [pte_A_offset];
 endfunction
 
-function Bit #(1) fn_PTE_to_D (PTE pte);
+function Bit#(1) fn_PTE_to_D (PTE pte);
    return pte [pte_D_offset];
 endfunction
 
@@ -351,9 +351,9 @@ endfunction
 
 function Bool is_pte_denial (Bool       dmem_not_imem,        // load-store or fetch?
 			     Bool       read_not_write,
-			     Priv_Mode  priv,
-			     Bit #(1)   sstatus_SUM,
-			     Bit #(1)   mstatus_MXR,
+			     PrivMode  priv,
+			     Bit#(1)   sstatus_SUM,
+			     Bit#(1)   mstatus_MXR,
 			     PTE        pte);
 
    let pte_u = fn_PTE_to_U (pte);
@@ -402,7 +402,7 @@ endfunction
 typedef XLEN PA_sz;
 
 // Physical addrs
-Integer  pa_sz = valueOf (PA_sz);  typedef Bit #(PA_sz)     PA;
+Integer  pa_sz = valueOf (PA_sz);  typedef Bit#(PA_sz)     PA;
 
 function PA fn_WordXL_to_PA (WordXL  eaddr);
    return eaddr;

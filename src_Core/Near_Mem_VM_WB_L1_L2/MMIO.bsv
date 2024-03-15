@@ -41,7 +41,7 @@ interface MMIO_IFC;
    method Action req (MMU_Cache_Req mmu_cache_req);
    method Action start (PA pa);
 
-   method Tuple3 #(Bool, Bit #(64), Bit #(64)) result;
+   method Tuple3 #(Bool, Bit#(64), Bit#(64)) result;
 
    // ----------------
    // MMIO interface facing memory
@@ -60,7 +60,7 @@ deriving (Bits, Eq, FShow);
 // MODULE IMPLEMENTATION
 
 (* synthesize *)
-module mkMMIO #(parameter Bit #(3)  verbosity)
+module mkMMIO #(parameter Bit#(3)  verbosity)
               (MMIO_IFC);
    
    Reg #(FSM_State) rg_fsm_state <- mkReg (FSM_IDLE);
@@ -71,8 +71,8 @@ module mkMMIO #(parameter Bit #(3)  verbosity)
 
    // Results
    Reg #(Bool)          rg_err          <- mkReg (False);
-   Reg #(Bit #(64))     rg_ld_val       <- mkReg (0);
-   Reg #(Bit #(64))     rg_final_st_val <- mkReg (0);
+   Reg #(Bit#(64))     rg_ld_val       <- mkReg (0);
+   Reg #(Bit#(64))     rg_final_st_val <- mkReg (0);
 
    // ----------------
    // Memory interface
@@ -83,7 +83,7 @@ module mkMMIO #(parameter Bit #(3)  verbosity)
    // ----------------------------------------------------------------
    // Help-function for single-writes to mem
 
-   function Action fa_mem_single_write (Bit #(64) st_value);
+   function Action fa_mem_single_write (Bit#(64) st_value);
       action
 	 let req = Single_Req {is_read:   False,
 			       addr:      zeroExtend (rg_pa),
@@ -134,7 +134,7 @@ module mkMMIO #(parameter Bit #(3)  verbosity)
 
       // Successful read
       else begin
-	 Bit #(64) ld_val_bits = rsp.data;
+	 Bit#(64) ld_val_bits = rsp.data;
 
 	 // Loads and LR
 	 if ((rg_req.op == CACHE_LD) || fv_is_AMO_LR (rg_req)) begin

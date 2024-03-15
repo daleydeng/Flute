@@ -38,14 +38,14 @@ import PLIC_16_2_7  :: *;
 
 Integer n_external_interrupt_sources = valueOf (N_External_Interrupt_Sources);
 typedef TAdd #(1, N_External_Interrupt_Sources) N_Interrupt_Sources;
-typedef Bit #(TLog #(N_Interrupt_Sources))  Source_Id;
+typedef Bit#(TLog #(N_Interrupt_Sources))  Source_Id;
 
 Integer plic_n_targets               = valueOf (PLIC_N_Targets);
 Integer target_0 = 0;
 Integer target_1 = 1;
 
 Integer plic_max_priority            = valueOf (PLIC_Max_Priority);
-typedef Bit #(TLog #(TAdd #(1, PLIC_Max_Priority)))  Priority;
+typedef Bit#(TLog #(TAdd #(1, PLIC_Max_Priority)))  Priority;
 
 // ================================================================
 // The Core module
@@ -164,7 +164,7 @@ module mkTest_PLIC (Empty);
 	     endseq;
    endfunction
 
-   function Stmt fstmt_set_target_ies (Integer target, Bit #(32) ies);
+   function Stmt fstmt_set_target_ies (Integer target, Bit#(32) ies);
       return seq
 		fa_write_req ('h2000 + (target * 'h80), zeroExtend (ies));
 		fa_write_rsp;

@@ -54,7 +54,7 @@ import AXI4_Lite_Types :: *;
 `endif
 
 `ifdef INCLUDE_TANDEM_VERIF
-import TV_Info :: *;
+import tv_info :: *;
 import AXI4_Stream ::*;
 `endif
 
@@ -80,7 +80,7 @@ interface P2_Core_IFC;
 
    // External interrupt sources
    (* always_ready, always_enabled, prefix="" *)
-   method  Action interrupt_reqs ((* port="cpu_external_interrupt_req" *) Bit #(N_External_Interrupt_Sources)  reqs);
+   method  Action interrupt_reqs ((* port="cpu_external_interrupt_req" *) Bit#(N_External_Interrupt_Sources)  reqs);
 
 `ifdef INCLUDE_DMEM_SLAVE
    // ----------------------------------------------------------------
@@ -250,7 +250,7 @@ module mkP2_Core (P2_Core_IFC);
    interface AXI4_Master_IFC master1 = core.core_mem_master;
 
    // External interrupts
-   method  Action interrupt_reqs (Bit #(N_External_Interrupt_Sources) reqs);
+   method  Action interrupt_reqs (Bit#(N_External_Interrupt_Sources) reqs);
       for (Integer j = 0; j < valueOf (N_External_Interrupt_Sources); j = j + 1) begin
 	 Bool req_j = unpack (reqs [j]);
 	 core.core_external_interrupt_sources [j].m_interrupt_req (req_j);

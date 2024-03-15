@@ -111,41 +111,41 @@ Integer                  addr_lo_ctag =       12;    // addr_hi_cset_in_cache + 
 // Addresses and address-fields
 
 // Local synonyms (for use in this package)
-typedef Bit #(Bits_per_CWord)               CWord;
-typedef Bit #(Bits_per_CLine)               CLine;
-typedef Bit #(Bits_per_CTag)                CTag;
-typedef Bit #(Bits_per_Byte_in_CLine)       Byte_in_CLine;
-typedef Bit #(Bits_per_CWord_in_CLine)      CWord_in_CLine;
-typedef Bit #(Bits_per_Way_in_CSet)         Way_in_CSet;
-typedef Bit #(Bits_per_CSet_in_Cache)       CSet_in_Cache;
-typedef Bit #(Bits_per_CSet_CWord_in_Cache) CSet_CWord_in_Cache;
+typedef Bit#(Bits_per_CWord)               CWord;
+typedef Bit#(Bits_per_CLine)               CLine;
+typedef Bit#(Bits_per_CTag)                CTag;
+typedef Bit#(Bits_per_Byte_in_CLine)       Byte_in_CLine;
+typedef Bit#(Bits_per_CWord_in_CLine)      CWord_in_CLine;
+typedef Bit#(Bits_per_Way_in_CSet)         Way_in_CSet;
+typedef Bit#(Bits_per_CSet_in_Cache)       CSet_in_Cache;
+typedef Bit#(Bits_per_CSet_CWord_in_Cache) CSet_CWord_in_Cache;
 
 // ================================================================
 // Address-decode functions
 
-function  Bit #(3)  fn_Addr_to_Byte_in_CWord (Bit #(n)  addr);
+function  Bit#(3)  fn_Addr_to_Byte_in_CWord (Bit#(n)  addr);
    return  addr [2:0];
 endfunction
 
-function  CWord_in_CLine  fn_Addr_to_CWord_in_CLine (Bit #(n)  addr);
+function  CWord_in_CLine  fn_Addr_to_CWord_in_CLine (Bit#(n)  addr);
    return  addr [addr_hi_cword_in_cline : addr_lo_cword_in_cline ];
 endfunction
 
-function  CSet_in_Cache  fn_Addr_to_CSet_in_Cache (Bit #(n)  addr);
+function  CSet_in_Cache  fn_Addr_to_CSet_in_Cache (Bit#(n)  addr);
    return  addr [addr_hi_cset_in_cache : addr_lo_cset_in_cache ];
 endfunction
 
-function  CSet_CWord_in_Cache  fn_Addr_to_CSet_CWord_in_Cache (Bit #(n)  addr);
+function  CSet_CWord_in_Cache  fn_Addr_to_CSet_CWord_in_Cache (Bit#(n)  addr);
    return  addr [addr_hi_cset_cword_in_cache : addr_lo_cset_cword_in_cache ];
 endfunction
 
-function  CTag  fn_PA_to_CTag (Bit #(n)  pa);
+function  CTag  fn_PA_to_CTag (Bit#(n)  pa);
    return  pa [(valueOf (n) - 1) : addr_lo_ctag ];
 endfunction
 
 // Align to start of CLine
-function  Bit #(n)  fn_align_Addr_to_CLine (Bit #(n)  addr);
-   Bit #(n) mask = (1 << addr_lo_cset_in_cache) - 1;
+function  Bit#(n)  fn_align_Addr_to_CLine (Bit#(n)  addr);
+   Bit#(n) mask = (1 << addr_lo_cset_in_cache) - 1;
    return  addr & (~ mask);
 endfunction
 

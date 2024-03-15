@@ -67,7 +67,7 @@ typedef Bit#(LgL1WayNum) L1Way;
 // Id for LLC's coherent cache port
 // This is simply the AXI4 awid/arid
 
-typedef Bit #(Wd_Id_Dma) LLCDmaReqId;
+typedef Bit#(Wd_Id_Dma) LLCDmaReqId;
 
 // ================================================================
 

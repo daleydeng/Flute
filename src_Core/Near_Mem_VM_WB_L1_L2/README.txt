@@ -107,23 +107,23 @@ Interface of LLCache
 
 typedef L1Num LLChildNum;                           // 2
 typedef TMul#(CoreNum, 2) L1Num;                    // 2
-typedef Bit#(TLog#(LLChildNum)) LLChild;            // Bit #(1)
+typedef Bit#(TLog#(LLChildNum)) LLChild;            // Bit#(1)
 
 typedef `LOG_L1_WAYS LgL1WayNum;                    // 3
-typedef Bit#(LgL1WayNum) L1Way;                     // Bit #(3)
-typedef L1Way LLCRqId;                              // Bit #(3)
+typedef Bit#(LgL1WayNum) L1Way;                     // Bit#(3)
+typedef L1Way LLCRqId;                              // Bit#(3)
 
-typedef Bit#(TLog#(L2TlbReqNum)) L2TlbReqIdx;       // Bit #(1)
-typedef L2TlbReqIdx TlbMemReqId;                    // Bit #(1)
+typedef Bit#(TLog#(L2TlbReqNum)) L2TlbReqIdx;       // Bit#(1)
+typedef L2TlbReqIdx TlbMemReqId;                    // Bit#(1)
 
 typedef 8 CLineNumData;                             // 8
-typedef Bit#(LogCLineNumData) CLineDataSel;         // Bit #(3)
-typedef CacheUtils::CLineDataSel LineDataOffset;    // Bit #(3)
+typedef Bit#(LogCLineNumData) CLineDataSel;         // Bit#(3)
+typedef CacheUtils::CLineDataSel LineDataOffset;    // Bit#(3)
 
 typedef struct {
-    CoreId core;               // Bit #(0)
-    TlbMemReqId id;            // Bit #(1)
-    LineDataOffset dataSel;    // Bit #(3)
+    CoreId core;               // Bit#(0)
+    TlbMemReqId id;            // Bit#(1)
+    LineDataOffset dataSel;    // Bit#(3)
 } TlbDmaReqId
 deriving(Bits, Eq, FShow);
 
@@ -131,7 +131,7 @@ typedef void MemLoaderMemReqId;                     // void
 
 typedef union tagged {
     MemLoaderMemReqId MemLoader;                    // void
-    TlbDmaReqId Tlb;                                // Bit #(5)
+    TlbDmaReqId Tlb;                                // Bit#(5)
 } LLCDmaReqId deriving(Bits, Eq, FShow);
 
 typedef struct { // LdMemRq id with more info encoded to handle DMA req in LLC
@@ -140,7 +140,7 @@ typedef struct { // LdMemRq id with more info encoded to handle DMA req in LLC
     mshrIdxT mshrIdx; // mshr id
 } LdMemRqId#(type mshrIdxT) deriving(Bits, Eq, FShow);
 
-typedef Bit#(TLog#(LLCRqNum)) LLCRqMshrIdx;         // Bit #(4)
+typedef Bit#(TLog#(LLCRqNum)) LLCRqMshrIdx;         // Bit#(4)
 
 interface LLCache;
     interface ParentCacheToChild#(LLCRqId, LLChild) to_child;
@@ -156,7 +156,7 @@ endinterface
 // procs/lib/ProcTypes.bsv
 
 typedef `NUM_CORES CoreNum;                         // 1
-typedef Bit#(TLog#(CoreNum)) CoreId;                // Bit #(0)
+typedef Bit#(TLog#(CoreNum)) CoreId;                // Bit#(0)
 
 // ----------------------------------------------------------------
 // coherence/src/CCTypes.bsv
@@ -192,7 +192,7 @@ typedef struct {
 } CRqMsg#(type idT, type childT) deriving(Bits, Eq, FShow);
 
 typedef CacheUtils::CLineNumData LineSzData;    // 8
-typedef Vector#(LineSzData, Data) Line;         // Bit #(512)
+typedef Vector#(LineSzData, Data) Line;         // Bit#(512)
 
 typedef struct {
     Addr addr;
@@ -235,7 +235,7 @@ interface DmaServer#(type dmaRqIdT);
 `endif
 endinterface
 
-typedef CacheUtils::CLineByteEn LineByteEn;        // Bit #(64)
+typedef CacheUtils::CLineByteEn LineByteEn;        // Bit#(64)
 
 typedef struct {
     Addr addr;
@@ -283,13 +283,13 @@ typedef struct {
 // procs/lib/Types.bsv
 
 typedef 64 AddrSz;                // 64
-typedef Bit#(AddrSz) Addr;        // Bit #(64)
+typedef Bit#(AddrSz) Addr;        // Bit#(64)
 
 // ----------------------------------------------------------------
 // procs/lib/CacheUtils.bsv
 
 typedef 64 DataSz;                // 64
-typedef Bit#(DataSz) Data;        // Bit #(64)
+typedef Bit#(DataSz) Data;        // Bit#(64)
 
 typedef TDiv#(DataSz, 8) NumBytes;
 typedef 8 CLineNumData;

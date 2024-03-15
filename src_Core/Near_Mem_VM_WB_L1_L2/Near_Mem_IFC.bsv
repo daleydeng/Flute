@@ -104,7 +104,7 @@ interface Near_Mem_IFC;
 
    interface Server #(Token, Token) server_fence_i;
 
-   interface Server #(Fence_Ordering, Token) server_fence;
+   interface Server #(FenceOrdering, Token) server_fence;
 
 `ifdef ISA_PRIV_S
    interface Server #(Token, Token) sfence_vma_server;
@@ -122,8 +122,8 @@ interface Near_Mem_IFC;
    // For ISA tests: watch memory writes to <tohost> addr
 
 `ifdef WATCH_TOHOST
-   method Action set_watch_tohost (Bool watch_tohost, Bit #(64) tohost_addr);
-   method Bit #(64) mv_tohost_value;
+   method Action set_watch_tohost (Bool watch_tohost, Bit#(64) tohost_addr);
+   method Bit#(64) mv_tohost_value;
 `endif
 
    // Inform core that DDR4 has been initialized and is ready to accept requests
@@ -131,15 +131,15 @@ interface Near_Mem_IFC;
 
    // Misc. status; 0 = running, no error
    (* always_ready *)
-   method Bit #(8) mv_status;
+   method Bit#(8) mv_status;
 
 endinterface
    
 // ================================================================
 // Cache flush specs
 
-Bit #(1) flush_to_invalid = 0;
-Bit #(1) flush_to_clean   = 1;
+Bit#(1) flush_to_invalid = 0;
+Bit#(1) flush_to_clean   = 1;
 
 // ================================================================
 // IMem interface
@@ -147,19 +147,19 @@ Bit #(1) flush_to_clean   = 1;
 interface IMem_IFC;
    // CPU side: IMem request
    (* always_ready *)
-   method Action  req (Bit #(3) f3,
+   method Action  req (Bit#(3) f3,
 		       WordXL addr,
 		       // The following  args for VM
-		       Priv_Mode  priv,
-		       Bit #(1)   sstatus_SUM,
-		       Bit #(1)   mstatus_MXR,
+		       PrivMode  priv,
+		       Bit#(1)   sstatus_SUM,
+		       Bit#(1)   mstatus_MXR,
 		       WordXL     satp);    // { VM_Mode, ASID, PPN_for_page_table }
 
    // CPU side: IMem response
    (* always_ready *)  method Bool     valid;
    (* always_ready *)  method Bool     is_i32_not_i16;
    (* always_ready *)  method WordXL   pc;
-   (* always_ready *)  method Instr    instr;
+   (* always_ready *)  method InstrBits    instr;
    (* always_ready *)  method Bool     exc;
    (* always_ready *)  method Exc_Code exc_code;
    (* always_ready *)  method WordXL   tval;        // can be different from PC
@@ -172,22 +172,22 @@ interface DMem_IFC;
    // CPU side: DMem request
    (* always_ready *)
    method Action  req (CacheOp op,
-		       Bit #(3) f3,
+		       Bit#(3) f3,
 `ifdef ISA_A
-		       Bit #(7) amo_funct7,
+		       Bit#(7) amo_funct7,
 `endif
 		       WordXL addr,
-		       Bit #(64) store_value,
+		       Bit#(64) store_value,
 		       // The following  args for VM
-		       Priv_Mode  priv,
-		       Bit #(1)   sstatus_SUM,
-		       Bit #(1)   mstatus_MXR,
+		       PrivMode  priv,
+		       Bit#(1)   sstatus_SUM,
+		       Bit#(1)   mstatus_MXR,
 		       WordXL     satp);    // { VM_Mode, ASID, PPN_for_page_table }
 
    // CPU side: DMem response
    (* always_ready *)  method Bool       valid;
-   (* always_ready *)  method Bit #(64)  word64;      // Load-value
-   (* always_ready *)  method Bit #(64)  st_amo_val;  // Final store-value for ST, SC, AMO
+   (* always_ready *)  method Bit#(64)  word64;      // Load-value
+   (* always_ready *)  method Bit#(64)  st_amo_val;  // Final store-value for ST, SC, AMO
    (* always_ready *)  method Bool       exc;
    (* always_ready *)  method Exc_Code   exc_code;
 endinterface
@@ -202,9 +202,9 @@ endinterface
 // result:
 //  - word with correct byte(s) shifted into LSBs and properly extended
 
-function Bit #(64) fn_extract_and_extend_bytes (Bit #(3) f3, WordXL byte_addr, Bit #(64) word64);
-   Bit #(64) result    = 0;
-   Bit #(3)  addr_lsbs = byte_addr [2:0];
+function Bit#(64) fn_extract_and_extend_bytes (Bit#(3) f3, WordXL byte_addr, Bit#(64) word64);
+   Bit#(64) result    = 0;
+   Bit#(3)  addr_lsbs = byte_addr [2:0];
 
    case (f3)
       f3_LB: case (addr_lsbs)
@@ -268,8 +268,8 @@ endfunction
 // result:
 //  - word with correct byte(s), properly extended.
 
-function Bit #(64) fn_extend_bytes (Bit #(3) f3, Bit #(64) word64);
-   Bit #(64) result = 0;
+function Bit#(64) fn_extend_bytes (Bit#(3) f3, Bit#(64) word64);
+   Bit#(64) result = 0;
    case (f3)
       f3_LB:  result = signExtend (word64 [ 7: 0]);
       f3_LBU: result = zeroExtend (word64 [ 7: 0]);

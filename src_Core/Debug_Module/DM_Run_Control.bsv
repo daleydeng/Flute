@@ -41,7 +41,7 @@ interface DM_Run_Control_IFC;
    // Facing a hart: reset and run-control
    interface Client #(Bool, Bool) hart0_reset_client;
    interface Client #(Bool, Bool) hart0_client_run_halt;
-   interface Get #(Bit #(4))      hart0_get_other_req;
+   interface Get #(Bit#(4))      hart0_get_other_req;
 
    // ----------------
    // Facing Platform: Non-Debug-Module Reset (reset all except DM)
@@ -79,12 +79,12 @@ module mkDM_Run_Control (DM_Run_Control_IFC);
 
    // Non-standard requests to hart and responses
    // Currently only verbosity
-   FIFOF #(Bit #(4)) f_hart0_other_reqs <- mkFIFOF;
+   FIFOF #(Bit#(4)) f_hart0_other_reqs <- mkFIFOF;
 
    // ----------------------------------------------------------------
 
-   Bit #(32) haltregion0 = { 31'h0, pack (! rg_hart0_running) };
-   Bit #(32) haltsum     = { 31'h0, pack (! rg_hart0_running) };
+   Bit#(32) haltregion0 = { 31'h0, pack (! rg_hart0_running) };
+   Bit#(32) haltsum     = { 31'h0, pack (! rg_hart0_running) };
 
    // ----------------------------------------------------------------
    // rg_dmstatus

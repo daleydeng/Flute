@@ -112,25 +112,25 @@ module mkAXI4L_Xactor_M_3
    return interface AXI4_Lite_Master_IFC;
 	     // Wr Addr channel
 	     method Bool            m_awvalid  = f_wr_addr.notEmpty;
-	     method Bit #(wd_addr)  m_awaddr   = f_wr_addr.first.awaddr;
-	     method Bit #(3)        m_awprot   = f_wr_addr.first.awprot;
-	     method Bit #(wd_user)  m_awuser   = f_wr_addr.first.awuser;
+	     method Bit#(wd_addr)  m_awaddr   = f_wr_addr.first.awaddr;
+	     method Bit#(3)        m_awprot   = f_wr_addr.first.awprot;
+	     method Bit#(wd_user)  m_awuser   = f_wr_addr.first.awuser;
 	     method Action m_awready (Bool awready);
 		if (f_wr_addr.notEmpty && awready) f_wr_addr.deq;
 	     endmethod
 
 	     // Wr Data channel
 	     method Bool                       m_wvalid = f_wr_data.notEmpty;
-	     method Bit #(wd_data)             m_wdata  = f_wr_data.first.wdata;
-	     method Bit #(TDiv #(wd_data, 8))  m_wstrb  = f_wr_data.first.wstrb;
+	     method Bit#(wd_data)             m_wdata  = f_wr_data.first.wdata;
+	     method Bit#(TDiv #(wd_data, 8))  m_wstrb  = f_wr_data.first.wstrb;
 	     method Action m_wready (Bool wready);
 		if (f_wr_data.notEmpty && wready) f_wr_data.deq;
 	     endmethod
 
 	     // Wr Response channel
 	     method Action m_bvalid (Bool           bvalid,
-				     Bit #(2)       bresp,
-				     Bit #(wd_user) buser);
+				     Bit#(2)       bresp,
+				     Bit#(wd_user) buser);
 		if (bvalid && f_wr_resp.notFull)
 		   f_wr_resp.enq (AXI4_Lite_Wr_Resp {bresp: unpack (bresp),
 						     buser: buser});
@@ -142,18 +142,18 @@ module mkAXI4L_Xactor_M_3
 
 	     // Rd Addr channel
 	     method Bool            m_arvalid  = f_rd_addr.notEmpty;
-	     method Bit #(wd_addr)  m_araddr   = f_rd_addr.first.araddr;
-	     method Bit #(3)        m_arprot   = f_rd_addr.first.arprot;
-	     method Bit #(wd_user)  m_aruser   = f_rd_addr.first.aruser;
+	     method Bit#(wd_addr)  m_araddr   = f_rd_addr.first.araddr;
+	     method Bit#(3)        m_arprot   = f_rd_addr.first.arprot;
+	     method Bit#(wd_user)  m_aruser   = f_rd_addr.first.aruser;
 	     method Action m_arready (Bool arready);
 		if (f_rd_addr.notEmpty && arready) f_rd_addr.deq;
 	     endmethod
 
 	     // Rd Data channel
 	     method Action m_rvalid (Bool           rvalid,    // in
-				     Bit #(2)       rresp,     // in
-				     Bit #(wd_data) rdata,     // in
-				     Bit #(wd_user) ruser);    // in
+				     Bit#(2)       rresp,     // in
+				     Bit#(wd_data) rdata,     // in
+				     Bit#(wd_user) ruser);    // in
 		if (rvalid && f_rd_data.notFull)
 		   f_rd_data.enq (AXI4_Lite_Rd_Data {rdata: rdata,
 						     rresp: unpack (rresp),
@@ -205,9 +205,9 @@ module mkAXI4L_Xactor_S_3
    return interface AXI4_Lite_Slave_IFC;
 			   // Wr Addr channel
 			   method Action m_awvalid (Bool            awvalid,
-						    Bit #(wd_addr)  awaddr,
-						    Bit #(3)        awprot,
-						    Bit #(wd_user)  awuser);
+						    Bit#(wd_addr)  awaddr,
+						    Bit#(3)        awprot,
+						    Bit#(wd_user)  awuser);
 			      if (awvalid && f_wr_addr.notFull)
 				 f_wr_addr.enq (AXI4_Lite_Wr_Addr {awaddr:   awaddr,
 								   awprot:   awprot,
@@ -220,8 +220,8 @@ module mkAXI4L_Xactor_S_3
 
 			   // Wr Data channel
 			   method Action m_wvalid (Bool                       wvalid,
-						   Bit #(wd_data)             wdata,
-						   Bit #(TDiv #(wd_data, 8))  wstrb);
+						   Bit#(wd_data)             wdata,
+						   Bit#(TDiv #(wd_data, 8))  wstrb);
 			      if (wvalid && f_wr_data.notFull)
 				 f_wr_data.enq (AXI4_Lite_Wr_Data {wdata: wdata,
 								   wstrb: wstrb});
@@ -233,8 +233,8 @@ module mkAXI4L_Xactor_S_3
 
 			   // Wr Response channel
 			   method Bool           m_bvalid = f_wr_resp.notEmpty;
-			   method Bit #(2)       m_bresp  = pack (f_wr_resp.first.bresp);
-			   method Bit #(wd_user) m_buser  = f_wr_resp.first.buser;
+			   method Bit#(2)       m_bresp  = pack (f_wr_resp.first.bresp);
+			   method Bit#(wd_user) m_buser  = f_wr_resp.first.buser;
 			   method Action m_bready (Bool bready);
 			      if (bready && f_wr_resp.notEmpty)
 				 f_wr_resp.deq;
@@ -242,9 +242,9 @@ module mkAXI4L_Xactor_S_3
 
 			   // Rd Addr channel
 			   method Action m_arvalid (Bool            arvalid,
-						    Bit #(wd_addr)  araddr,
-						    Bit #(3)        arprot,
-						    Bit #(wd_user)  aruser);
+						    Bit#(wd_addr)  araddr,
+						    Bit#(3)        arprot,
+						    Bit#(wd_user)  aruser);
 			      if (arvalid && f_rd_addr.notFull)
 				 f_rd_addr.enq (AXI4_Lite_Rd_Addr {araddr:   araddr,
 								   arprot:   arprot,
@@ -257,9 +257,9 @@ module mkAXI4L_Xactor_S_3
 
 			   // Rd Data channel
 			   method Bool           m_rvalid = f_rd_data.notEmpty;
-			   method Bit #(wd_data) m_rdata  = f_rd_data.first.rdata;
-			   method Bit #(2)       m_rresp  = pack (f_rd_data.first.rresp);
-			   method Bit #(wd_user) m_ruser  = f_rd_data.first.ruser;
+			   method Bit#(wd_data) m_rdata  = f_rd_data.first.rdata;
+			   method Bit#(2)       m_rresp  = pack (f_rd_data.first.rresp);
+			   method Bit#(wd_user) m_ruser  = f_rd_data.first.ruser;
 			   method Action m_rready (Bool rready);
 			      if (rready && f_rd_data.notEmpty)
 				 f_rd_data.deq;

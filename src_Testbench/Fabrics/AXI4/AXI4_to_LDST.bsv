@@ -23,7 +23,7 @@ package AXI4_to_LDST;
 //   wdB_...                width in bytes
 //   wd_..._t               width as a type (numeric kind)
 //   wd_..._I               width as an Integer value
-//   wd_..._B               width as a Bit #(n) value
+//   wd_..._B               width as a Bit#(n) value
 
 //   wd_axi_data            width of AXI4 data bus
 //   wd_ldst_data           width of load-store data bus
@@ -70,21 +70,21 @@ interface AXI4_to_LDST_IFC #(numeric type wd_id_t,
              axi4_S;
 
    // Stores
-   interface FIFOF_O #(Tuple3 #(Bit #(2),                  // width B/H/W/D
-				Bit #(wd_addr_t),          // addr
-				Bit #(wd_ldst_data_t)))    // wdata
+   interface FIFOF_O #(Tuple3 #(Bit#(2),                  // width B/H/W/D
+				Bit#(wd_addr_t),          // addr
+				Bit#(wd_ldst_data_t)))    // wdata
              st_reqs;
 
    interface FIFOF_I #(Bool)    // True <=> err
              st_rsps;
 
    // Loads
-   interface FIFOF_O #(Tuple2 #(Bit #(2),             // width B/H/W/D
-				Bit #(wd_addr_t)))    // addr
+   interface FIFOF_O #(Tuple2 #(Bit#(2),             // width B/H/W/D
+				Bit#(wd_addr_t)))    // addr
              ld_reqs;
 
    interface FIFOF_I #(Tuple2 #(Bool,                      // True <=> err
-				Bit #(wd_ldst_data_t)))    // rdata
+				Bit#(wd_ldst_data_t)))    // rdata
              ld_rsps;
 endinterface
 

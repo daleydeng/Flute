@@ -48,7 +48,7 @@ interface Branch_Predictor_IFC;
    // fall-through PC if no prediction.
 
    (* always_ready *)
-   method WordXL  predict_rsp (Bool is_i32_not_i16, Instr instr);
+   method WordXL  predict_rsp (Bool is_i32_not_i16, InstrBits instr);
 
    // ----------------
    // Train BTB and RAS.
@@ -57,7 +57,7 @@ interface Branch_Predictor_IFC;
 
    method Action bp_train (WordXL   pc,
 			   Bool     is_i32_not_i16,
-			   Instr    instr,
+			   InstrBits    instr,
 			   CF_Info  cf_info);
 endinterface
 
@@ -89,7 +89,7 @@ module mkBranch_Predictor (Branch_Predictor_IFC);
    // and are used to choose RAS actions if any, and size of
    // fall-through PC if no prediction.
 
-   method WordXL  predict_rsp (Bool is_i32_not_i16, Instr instr);
+   method WordXL  predict_rsp (Bool is_i32_not_i16, InstrBits instr);
       let pred_pc = rg_pc + (is_i32_not_i16 ? 4 : 2);
       return pred_pc;
    endmethod
@@ -101,7 +101,7 @@ module mkBranch_Predictor (Branch_Predictor_IFC);
 
    method Action bp_train (WordXL   pc,
 			   Bool     is_i32_not_i16,
-			   Instr    instr,
+			   InstrBits    instr,
 			   CF_Info  cf_info);
       noAction;
    endmethod

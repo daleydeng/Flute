@@ -26,7 +26,7 @@ package AXI4_to_LDST_utils;
 //   wdB_...                width in bytes
 //   wd_..._t               width as a type (numeric kind)
 //   wd_..._I               width as an Integer value
-//   wd_..._B               width as a Bit #(n) value
+//   wd_..._B               width as a Bit#(n) value
 
 //   wd_axi_data            width of AXI4 data bus
 //   wd_ldst_data           width of load-store data bus
@@ -42,36 +42,36 @@ import Vector :: *;
 // ================================================================
 // Encoding of LD/ST size on ldst_M side
 
-Bit #(2) ldst_b =  2'b00;
-Bit #(2) ldst_h =  2'b01;
-Bit #(2) ldst_w =  2'b10;
-Bit #(2) ldst_d =  2'b11;
+Bit#(2) ldst_b =  2'b00;
+Bit#(2) ldst_h =  2'b01;
+Bit#(2) ldst_w =  2'b10;
+Bit#(2) ldst_d =  2'b11;
 
 // ================================================================
 // Round down addr to NAPOT (naturally aligned power of two)
 // where wdB is a power of two.
 
-function Bit #(wd_addr_t) fn_addr_to_NAPOT (Bit #(wd_addr_t) addr, Bit #(8) wdB);
+function Bit#(wd_addr_t) fn_addr_to_NAPOT (Bit#(wd_addr_t) addr, Bit#(8) wdB);
    let              wd_0_lsbs = countZerosLSB (wdB);
-   Bit #(wd_addr_t) mask      = ('1 << wd_0_lsbs);
+   Bit#(wd_addr_t) mask      = ('1 << wd_0_lsbs);
    return (addr & mask);
 endfunction   
 
 // ================================================================
 // Compute byte lane for addr on a given AXI bus width
 
-function Bit #(8) fn_addr_to_axi_data_bytelane (Bit #(wd_addr_t) addr,
+function Bit#(8) fn_addr_to_axi_data_bytelane (Bit#(wd_addr_t) addr,
 					       Integer           wdB_axi_data_I);
    Integer          wd_0_lsbs = log2 (wdB_axi_data_I);
-   Bit #(wd_addr_t) mask      = (1 << wd_0_lsbs) - 1;
-   Bit #(wd_addr_t) bytelane  = (addr & mask);
+   Bit#(wd_addr_t) mask      = (1 << wd_0_lsbs) - 1;
+   Bit#(wd_addr_t) bytelane  = (addr & mask);
    return bytelane [7:0];
 endfunction   
 
 // ================================================================
 // Max of 3 numbers
 
-function Bit #(n) fn_max3 (Bit #(n) x, Bit #(n) y, Bit #(n) z);
+function Bit#(n) fn_max3 (Bit#(n) x, Bit#(n) y, Bit#(n) z);
    return max (x, max (y, z));
 endfunction
 
@@ -80,11 +80,11 @@ endfunction
 // TODO: do these result in efficient HW?
 //       i.e., exploit fact that it's in units of bytes, not bits?
 
-function Bit #(nb) fn_lshift_n_bytes (Bit #(nb) x, Bit #(nsa) byte_shift_amt);
+function Bit#(nb) fn_lshift_n_bytes (Bit#(nb) x, Bit#(nsa) byte_shift_amt);
    return (x << (byte_shift_amt << 3));
 endfunction
 
-function Bit #(nb) fn_rshift_n_bytes (Bit #(nb) x, Bit #(nsa) byte_shift_amt);
+function Bit#(nb) fn_rshift_n_bytes (Bit#(nb) x, Bit#(nsa) byte_shift_amt);
    return (x >> (byte_shift_amt << 3));
 endfunction
 

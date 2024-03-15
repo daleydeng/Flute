@@ -20,14 +20,14 @@ package DM_CPU_Req_Rsp;
 
 typedef struct {
    Bool      write;
-   Bit #(a)  address;
-   Bit #(d)  data;
+   Bit#(a)  address;
+   Bit#(d)  data;
 } DM_CPU_Req #(numeric type a, numeric type d)
 deriving (Bits, Eq, FShow);
 
 typedef struct {
    Bool     ok;
-   Bit #(d) data;
+   Bit#(d) data;
 } DM_CPU_Rsp #(numeric type d)
 deriving (Bits, Eq, FShow);
 

@@ -92,9 +92,9 @@ module mkDM_Abstract_Commands (DM_Abstract_Commands_IFC);
    Reg #(DM_abstractcs_cmderr) rg_abstractcs_cmderr <- mkRegU;
 
    // Size of program buffer, in 32b words
-   Bit #(5) abstractcs_progbufsize = 0;
+   Bit#(5) abstractcs_progbufsize = 0;
    // Number of data registers implemented (rg_data0, rg_data1, rg_data2, rg_data3)
-   Bit #(4) abstractcs_datacount = 4;
+   Bit#(4) abstractcs_datacount = 4;
 
    DM_Word virt_rg_abstractcs = {3'b0,
 				 abstractcs_progbufsize,
@@ -138,7 +138,7 @@ module mkDM_Abstract_Commands (DM_Abstract_Commands_IFC);
    Reg #(Bool) rg_command_access_reg_write <- mkRegU;
 
    // regno: we only implement lower 13 bits of this 16-bit field
-   Reg #(Bit #(13)) rg_command_access_reg_regno <- mkRegU;
+   Reg #(Bit#(13)) rg_command_access_reg_regno <- mkRegU;
 
    DM_Word virt_rg_command = fn_mk_command_access_reg (
         DM_COMMAND_ACCESS_SIZE_LOWER32
@@ -218,7 +218,7 @@ module mkDM_Abstract_Commands (DM_Abstract_Commands_IFC);
 
 	    else begin
 	       Bool      is_write = fn_command_access_reg_write (dm_word);
-	       Bit #(13) regno    = truncate (fn_command_access_reg_regno (dm_word));
+	       Bit#(13) regno    = truncate (fn_command_access_reg_regno (dm_word));
 
 	       rg_command_access_reg_write <= is_write;
 	       rg_command_access_reg_regno <= regno;
@@ -255,13 +255,13 @@ module mkDM_Abstract_Commands (DM_Abstract_Commands_IFC);
    Bool is_fpr = False;
 `endif
 
-   Bit #(12) csr_addr = truncate (rg_command_access_reg_regno
+   Bit#(12) csr_addr = truncate (rg_command_access_reg_regno
 				  - fromInteger (dm_command_access_reg_regno_csr_0));
 
-   Bit #(5)  gpr_addr = truncate (rg_command_access_reg_regno
+   Bit#(5)  gpr_addr = truncate (rg_command_access_reg_regno
 				  - fromInteger (dm_command_access_reg_regno_gpr_0));
 
-   Bit #(5)  fpr_addr = truncate (rg_command_access_reg_regno
+   Bit#(5)  fpr_addr = truncate (rg_command_access_reg_regno
 				  - fromInteger (dm_command_access_reg_regno_fpr_0));
 
    // ----------------------------------------------------------------
@@ -313,7 +313,7 @@ module mkDM_Abstract_Commands (DM_Abstract_Commands_IFC);
 			   && rg_start_reg_access
 			   && (! rg_command_access_reg_write)
 			   && is_csr);
-      Bit #(XLEN) data = ?;
+      Bit#(XLEN) data = ?;
       let req = DM_CPU_Req {write: False, address: csr_addr, data: data};
       f_hart0_csr_reqs.enq (req);
       rg_start_reg_access <= False;
@@ -396,7 +396,7 @@ module mkDM_Abstract_Commands (DM_Abstract_Commands_IFC);
 			   && rg_start_reg_access
 			   && (! rg_command_access_reg_write)
 			   && is_gpr);
-      Bit #(XLEN) data = ?;
+      Bit#(XLEN) data = ?;
       let req = DM_CPU_Req {write: False, address: gpr_addr, data: data };
       f_hart0_gpr_reqs.enq (req);
       rg_start_reg_access <= False;
@@ -480,7 +480,7 @@ module mkDM_Abstract_Commands (DM_Abstract_Commands_IFC);
 			   && rg_start_reg_access
 			   && (! rg_command_access_reg_write)
 			   && is_fpr);
-      Bit #(FLEN) data = ?;
+      Bit#(FLEN) data = ?;
       let req = DM_CPU_Req {write: False, address: fpr_addr, data: data };
       f_hart0_fpr_reqs.enq (req);
       rg_start_reg_access <= False;

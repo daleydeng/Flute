@@ -43,7 +43,7 @@ import DM_Common      :: *;
 import DM_CPU_Req_Rsp :: *;
 
 // Tandem Verification
-import TV_Info  :: *;
+import tv_info  :: *;
 
 // ================================================================
 
@@ -100,10 +100,10 @@ module mkAWSteria_Core_Inner_Reclocked
    // External interrupt sources
 
    // Register Wire (bus) driven by 'ext_interrupts' method
-   Reg #(Bit #(N_Core_External_Interrupt_Sources)) rg_irqs <- mkReg (0);
+   Reg #(Bit#(N_Core_External_Interrupt_Sources)) rg_irqs <- mkReg (0);
 
    // Clock-crossing for wire (bus)
-   ReadOnly #(Bit #(N_Core_External_Interrupt_Sources)) ro_sync_irqs
+   ReadOnly #(Bit#(N_Core_External_Interrupt_Sources)) ro_sync_irqs
    <- mkNullCrossingWire (clocked_by clk_fast, clk_slow, rg_irqs);
 
    (* fire_when_enabled, no_implicit_conditions *)
@@ -122,12 +122,12 @@ module mkAWSteria_Core_Inner_Reclocked
    // Misc IO streams
 
    // Input stream
-   SyncFIFOIfc #(Bit #(32)) f_misc_from_host <- mkSyncFIFO (depth, clk_fast, rst_fast,
+   SyncFIFOIfc #(Bit#(32)) f_misc_from_host <- mkSyncFIFO (depth, clk_fast, rst_fast,
 							    clk_slow);
    mkConnection (core_inner.fi_misc, fn_SyncFIFOIfc_to_FIFOF_O (f_misc_from_host));
 
    // Output stream
-   SyncFIFOIfc #(Bit #(32)) f_misc_to_host <- mkSyncFIFO (depth, clk_slow, rst_slow,
+   SyncFIFOIfc #(Bit#(32)) f_misc_to_host <- mkSyncFIFO (depth, clk_slow, rst_slow,
 							  clk_fast);
    mkConnection (core_inner.fo_misc, fn_SyncFIFOIfc_to_FIFOF_I (f_misc_to_host));
 
@@ -175,14 +175,14 @@ module mkAWSteria_Core_Inner_Reclocked
    // Misc. control and status
 
    // PC Trace control
-   SyncFIFOIfc #(Tuple2 #(Bool, Bit #(64))) f_pc_trace_control <- mkSyncFIFO (depth,
+   SyncFIFOIfc #(Tuple2 #(Bool, Bit#(64))) f_pc_trace_control <- mkSyncFIFO (depth,
 									      clk_fast, rst_fast,
 									      clk_slow);
    mkConnection (fn_SyncFIFOIfc_to_FIFOF_O (f_pc_trace_control),
 		 core_inner.fi_pc_trace_control);
 
    // Set core's verbosity and logdelay
-   SyncFIFOIfc #(Tuple2 #(Bit #(4), Bit #(64))) f_verbosity_control <- mkSyncFIFO (depth,
+   SyncFIFOIfc #(Tuple2 #(Bit#(4), Bit#(64))) f_verbosity_control <- mkSyncFIFO (depth,
 										   clk_fast, rst_fast,
 										   clk_slow);
    mkConnection (fn_SyncFIFOIfc_to_FIFOF_O (f_verbosity_control),
@@ -192,14 +192,14 @@ module mkAWSteria_Core_Inner_Reclocked
 
 `ifdef WATCH_TOHOST
    // Set watch-tohost on/off with tohost address
-   SyncFIFOIfc #(Tuple2 #(Bool, Bit #(64))) f_watch_tohost_control <- mkSyncFIFO (depth,
+   SyncFIFOIfc #(Tuple2 #(Bool, Bit#(64))) f_watch_tohost_control <- mkSyncFIFO (depth,
 										  clk_fast, rst_fast,
 										  clk_slow);
    mkConnection (fn_SyncFIFOIfc_to_FIFOF_O (f_watch_tohost_control),
 		 core_inner.fi_watch_tohost_control);
 
    // Get tohost value
-   SyncFIFOIfc #(Bit #(64)) f_tohost_value <- mkSyncFIFO (depth,
+   SyncFIFOIfc #(Bit#(64)) f_tohost_value <- mkSyncFIFO (depth,
 							  clk_slow, rst_slow,
 							  clk_fast);
    mkConnection (fn_SyncFIFOIfc_to_FIFOF_I (f_tohost_value),
@@ -222,7 +222,7 @@ module mkAWSteria_Core_Inner_Reclocked
    // ----------------
    // External interrupt sources
 
-   method Action ext_interrupts (Bit #(N_Core_External_Interrupt_Sources) x);
+   method Action ext_interrupts (Bit#(N_Core_External_Interrupt_Sources) x);
       rg_irqs <= x;
    endmethod
 

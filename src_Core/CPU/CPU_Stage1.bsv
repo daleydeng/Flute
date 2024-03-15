@@ -70,7 +70,7 @@ endinterface
 // ================================================================
 // Implementation module
 
-module mkCPU_Stage1 #(Bit #(4)         verbosity,
+module mkCPU_Stage1 #(Bit#(4)         verbosity,
 		      GPR_RegFile_IFC  gpr_regfile,
 		      Bypass           bypass_from_stage2,
 		      Bypass           bypass_from_stage3,
@@ -81,7 +81,7 @@ module mkCPU_Stage1 #(Bit #(4)         verbosity,
 `endif
 		      CSR_RegFile_IFC  csr_regfile,
 		      Epoch            cur_epoch,
-		      Priv_Mode        cur_priv)
+		      PrivMode        cur_priv)
                     (CPU_Stage1_IFC);
 
    FIFOF #(Token) f_reset_reqs <- mkFIFOF;
@@ -91,7 +91,7 @@ module mkCPU_Stage1 #(Bit #(4)         verbosity,
    Reg #(Data_StageD_to_Stage1) rg_stage_input <- mkRegU;
 
    MISA misa   = csr_regfile.read_misa;
-   Bit #(2) xl = ((xlen == 32) ? misa_mxl_32 : misa_mxl_64);
+   Bit#(2) xl = ((xlen == 32) ? misa_mxl_32 : misa_mxl_64);
 
    // ----------------------------------------------------------------
    // BEHAVIOR
@@ -151,12 +151,14 @@ module mkCPU_Stage1 #(Bit #(4)         verbosity,
    // ALU function
    let alu_inputs = ALU_Inputs {cur_priv       : cur_priv,
 				pc             : rg_stage_input.pc,
-				is_i32_not_i16 : rg_stage_input.is_i32_not_i16,
+				is_compressed : !rg_stage_input.is_i32_not_i16,
 				instr          : rg_stage_input.instr,
 `ifdef ISA_C
 				instr_C        : rg_stage_input.instr_C,
 `endif
 				decoded_instr  : rg_stage_input.decoded_instr,
+            instruction    : rg_stage_input.instruction,
+            
 				rs1_val        : rs1_val_bypassed,
 				rs2_val        : rs2_val_bypassed,
 `ifdef ISA_F

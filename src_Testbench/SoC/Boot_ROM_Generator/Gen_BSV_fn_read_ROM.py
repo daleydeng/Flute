@@ -84,7 +84,7 @@ def gen_BSV_ROM_function (fin, fout):
     fout.write ("\n")
     fout.write ("// Function for 4-bytes values at addrs aligned to 'b000\n")
     fout.write ("\n")
-    fout.write ("function Bit #(32) fn_read_ROM_0 (Bit #(n) addr);\n")
+    fout.write ("function Bit#(32) fn_read_ROM_0 (Bit#(n) addr);\n")
     fout.write ("   return\n")
     fout.write ("      case (addr)\n")
     for case_arm in case_arms_0:
@@ -95,7 +95,7 @@ def gen_BSV_ROM_function (fin, fout):
     fout.write ("\n")
     fout.write ("// Function for 4-bytes values at addrs aligned to 'b100\n")
     fout.write ("\n")
-    fout.write ("function Bit #(32) fn_read_ROM_4 (Bit #(n) addr);\n")
+    fout.write ("function Bit#(32) fn_read_ROM_4 (Bit#(n) addr);\n")
     fout.write ("   return\n")
     fout.write ("      case (addr)\n")
     for case_arm in case_arms_4:

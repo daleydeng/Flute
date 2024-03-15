@@ -65,7 +65,7 @@ module mkAXI4_Lite_MMU_Cache_Adapter #(MMU_Cache_IFC cache)
 
    // For unnatural writes, we track the last byte processed as we
    // iterate through byte-by-byte, as well as make errors sticky,
-   Reg #(Bit #(ZLSBs_Aligned_Fabric_Addr)) rg_unnatural_last_offset <- mkReg (0);
+   Reg #(Bit#(ZLSBs_Aligned_Fabric_Addr)) rg_unnatural_last_offset <- mkReg (0);
    Reg #(AXI4_Lite_Resp) rg_unnatural_bresp <- mkReg (AXI4_LITE_OKAY);
 
    (* descending_urgency = "rl_rd_xaction, rl_wr_xaction" *)
@@ -73,9 +73,9 @@ module mkAXI4_Lite_MMU_Cache_Adapter #(MMU_Cache_IFC cache)
       AXI4_Lite_Wr_Addr #(Wd_Addr, Wd_User) wra <- pop_o (xactor_from_master.o_wr_addr);
       AXI4_Lite_Wr_Data #(Wd_Data)          wrd <- pop_o (xactor_from_master.o_wr_data);
 
-      Bit #(ZLSBs_Aligned_Fabric_Addr) offset = 0;
+      Bit#(ZLSBs_Aligned_Fabric_Addr) offset = 0;
       Fabric_Data mask    = 'hFF;
-      Bit #(3)    f3      = f3_SB;
+      Bit#(3)    f3      = f3_SB;
       Bool        natural = False;
       case (wrd.wstrb)
 `ifdef FABRIC64
@@ -96,9 +96,9 @@ module mkAXI4_Lite_MMU_Cache_Adapter #(MMU_Cache_IFC cache)
 	 'h2:  begin offset=1; mask =                  'hFF; f3=f3_SB; natural=True; end
 	 'h1:  begin offset=0; mask =                  'hFF; f3=f3_SB; natural=True; end
       endcase
-      Bit #(64) addr64 = zeroExtend (wra.awaddr);
+      Bit#(64) addr64 = zeroExtend (wra.awaddr);
       addr64 [zlsbs_aligned_fabric_addr-1:0] = offset;
-      Bit #(64) st_value = ((zeroExtend (wrd.wdata) >> {offset, 3'b0}) & mask);
+      Bit#(64) st_value = ((zeroExtend (wrd.wdata) >> {offset, 3'b0}) & mask);
       if (natural || (wrd.wstrb [0] == 1'b1)) begin
 	 cache.req (CACHE_ST,
 		    f3,
@@ -160,10 +160,10 @@ module mkAXI4_Lite_MMU_Cache_Adapter #(MMU_Cache_IFC cache)
 	 f_req.deq;
       end
       else begin
-	 Bit #(64) addr64 = zeroExtend (awaddr);
-	 Bit #(ZLSBs_Aligned_Fabric_Addr) offset = rg_unnatural_last_offset + 1;
+	 Bit#(64) addr64 = zeroExtend (awaddr);
+	 Bit#(ZLSBs_Aligned_Fabric_Addr) offset = rg_unnatural_last_offset + 1;
 	 addr64 [zlsbs_aligned_fabric_addr-1:0] = offset;
-	 Bit #(64) st_value = ((zeroExtend (wdata) >> {offset, 3'b0}) & 'hFF);
+	 Bit#(64) st_value = ((zeroExtend (wdata) >> {offset, 3'b0}) & 'hFF);
 	 if (wstrb [offset] == 1'b1) begin
 	    cache.req (CACHE_ST,
 		       f3_SB,
@@ -186,13 +186,13 @@ module mkAXI4_Lite_MMU_Cache_Adapter #(MMU_Cache_IFC cache)
       AXI4_Lite_Rd_Addr #(Wd_Addr, Wd_User) rda <- pop_o (xactor_from_master.o_rd_addr);
 
 `ifdef FABRIC32
-      Bit #(3) f3 = f3_LW;
+      Bit#(3) f3 = f3_LW;
 `endif
 `ifdef FABRIC64
-      Bit #(3) f3 = f3_LD;
+      Bit#(3) f3 = f3_LD;
 `endif
-      Bit #(64) addr64 = zeroExtend (rda.araddr);
-      Bit #(ZLSBs_Aligned_Fabric_Addr) offset = 0;
+      Bit#(64) addr64 = zeroExtend (rda.araddr);
+      Bit#(ZLSBs_Aligned_Fabric_Addr) offset = 0;
       addr64 [zlsbs_aligned_fabric_addr-1:0] = offset;
       cache.req (CACHE_LD,
 		 f3,

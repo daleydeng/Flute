@@ -37,7 +37,7 @@ import AWSteria_Core_IFC :: *;
 import DM_Common :: *;
 
 // Tandem Verification
-import TV_Info  :: *;
+import tv_info  :: *;
 
 // ================================================================
 
@@ -98,10 +98,10 @@ module mkAWSteria_Core_Reclocked
    // External interrupt sources
 
    // Register Wire (bus) driven by 'ext_interrupts' method
-   Reg #(Bit #(t_n_interrupt_sources)) rg_irqs <- mkReg (0);
+   Reg #(Bit#(t_n_interrupt_sources)) rg_irqs <- mkReg (0);
 
    // Clock-crossing for wire (bus)
-   ReadOnly #(Bit #(t_n_interrupt_sources)) ro_sync_irqs
+   ReadOnly #(Bit#(t_n_interrupt_sources)) ro_sync_irqs
    <- mkNullCrossingWire (clocked_by clk_fast, clk_slow, rg_irqs);
 
    (* fire_when_enabled, no_implicit_conditions *)
@@ -120,12 +120,12 @@ module mkAWSteria_Core_Reclocked
    // Misc IO streams
 
    // Input stream
-   SyncFIFOIfc #(Bit #(32)) f_misc_from_host <- mkSyncFIFO (depth, clk_fast, rst_fast,
+   SyncFIFOIfc #(Bit#(32)) f_misc_from_host <- mkSyncFIFO (depth, clk_fast, rst_fast,
 							    clk_slow);
    mkConnection (core.fi_misc, fn_SyncFIFOIfc_to_FIFOF_O (f_misc_from_host));
 
    // Output stream
-   SyncFIFOIfc #(Bit #(32)) f_misc_to_host <- mkSyncFIFO (depth, clk_slow, rst_slow,
+   SyncFIFOIfc #(Bit#(32)) f_misc_to_host <- mkSyncFIFO (depth, clk_slow, rst_slow,
 							  clk_fast);
    mkConnection (core.fo_misc, fn_SyncFIFOIfc_to_FIFOF_I (f_misc_to_host));
 
@@ -151,9 +151,9 @@ module mkAWSteria_Core_Reclocked
    // Non-Debug-Module Reset (reset "all" except DM)
    // These Bit#(0) values are just tokens for signaling 'reset request' and 'reset done'
 
-   SyncFIFOIfc #(Bit #(0)) f_ndm_reset_req <- mkSyncFIFO (depth, clk_slow, rst_slow,
+   SyncFIFOIfc #(Bit#(0)) f_ndm_reset_req <- mkSyncFIFO (depth, clk_slow, rst_slow,
 							  clk_fast);
-   SyncFIFOIfc #(Bit #(0)) f_ndm_reset_rsp <- mkSyncFIFO (depth, clk_fast, rst_fast,
+   SyncFIFOIfc #(Bit#(0)) f_ndm_reset_rsp <- mkSyncFIFO (depth, clk_fast, rst_fast,
 							  clk_slow);
 
    mkConnection (fn_SyncFIFOIfc_to_FIFOF_I (f_ndm_reset_req), core.cl_ndm_reset.request);
@@ -162,10 +162,10 @@ module mkAWSteria_Core_Reclocked
    // ----------------------------------------------------------------
    // Misc. control and status
 
-   SyncFIFOIfc #(Bit #(32)) f_control_status_req <- mkSyncFIFO (depth,
+   SyncFIFOIfc #(Bit#(32)) f_control_status_req <- mkSyncFIFO (depth,
 								clk_fast, rst_fast,
 								clk_slow);
-   SyncFIFOIfc #(Bit #(32)) f_control_status_rsp <- mkSyncFIFO (depth,
+   SyncFIFOIfc #(Bit#(32)) f_control_status_rsp <- mkSyncFIFO (depth,
 								clk_slow, rst_slow,
 								clk_fast);
 
@@ -188,7 +188,7 @@ module mkAWSteria_Core_Reclocked
    // ----------------
    // External interrupt sources
 
-   method Action ext_interrupts (Bit #(t_n_interrupt_sources) x);
+   method Action ext_interrupts (Bit#(t_n_interrupt_sources) x);
       rg_irqs <= x;
    endmethod
 

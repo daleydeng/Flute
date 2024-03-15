@@ -43,7 +43,7 @@ module mkAXI4_Accel_Dummy (AXI4_Accel_IFC);
 			Wd_Data,
 			Wd_User) mem_model <- mkAXI4_Mem_Model;
 
-   method Action init (Bit# (Wd_Id) axi4_id, Bit #(Wd_Addr) addr_base, Bit #(Wd_Addr) addr_lim);
+   method Action init (Bit# (Wd_Id) axi4_id, Bit#(Wd_Addr) addr_base, Bit#(Wd_Addr) addr_lim);
       mem_model.init (addr_base, addr_lim);
    endmethod
 

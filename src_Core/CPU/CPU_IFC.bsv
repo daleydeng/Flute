@@ -28,10 +28,10 @@ import DM_CPU_Req_Rsp :: *;
 
 `ifdef INCLUDE_PC_TRACE
 import PC_Trace :: *;
-
 `endif
+
 `ifdef INCLUDE_TANDEM_VERIF
-import TV_Trace_Data :: *;
+import tv_trace_data :: *;
 `endif
 
 // ================================================================
@@ -75,7 +75,7 @@ interface CPU_IFC;
    // Set CSR TIME (shadow-copy of MTIME)
 
    (* always_ready, always_enabled *)
-   method Action ma_set_csr_time (Bit #(64) t);
+   method Action ma_set_csr_time (Bit#(64) t);
 
    // ----------------
    // Software and timer interrupts (from Near_Mem_IO/CLINT)
@@ -104,7 +104,7 @@ interface CPU_IFC;
    // Optional interface to Tandem Verifier
 
 `ifdef INCLUDE_TANDEM_VERIF
-   interface Get #(Trace_Data)  trace_data_out;
+   interface Get #(TraceData)  trace_data_out;
 `endif
 
    // ----------------
@@ -113,7 +113,7 @@ interface CPU_IFC;
 `ifdef INCLUDE_GDB_CONTROL
    // run-control, other
    interface Server #(Bool, Bool)  hart0_server_run_halt;
-   interface Put #(Bit #(4))       hart0_put_other_req;
+   interface Put #(Bit#(4))       hart0_put_other_req;
 
    // GPR access
    interface Server #(DM_CPU_Req #(5,  XLEN), DM_CPU_Rsp #(XLEN)) hart0_gpr_mem_server;
@@ -133,14 +133,14 @@ interface CPU_IFC;
    // ----------------
    // Debugging: set core's verbosity
 
-   method Action set_verbosity (Bit #(4)  verbosity, Bit #(64)  logdelay);
+   method Action set_verbosity (Bit#(4)  verbosity, Bit#(64)  logdelay);
 
    // ----------------
    // For ISA tests: watch memory writes to <tohost> addr
 
 `ifdef WATCH_TOHOST
-   method Action set_watch_tohost (Bool watch_tohost, Bit #(64) tohost_addr);
-   method Bit #(64) mv_tohost_value;
+   method Action set_watch_tohost (Bool watch_tohost, Bit#(64) tohost_addr);
+   method Bit#(64) mv_tohost_value;
 `endif
 
    // Inform core that DDR4 has been initialized and is ready to accept requests
@@ -148,7 +148,7 @@ interface CPU_IFC;
 
    // Misc. status; 0 = running, no error
    (* always_ready *)
-   method Bit #(8) mv_status;
+   method Bit#(8) mv_status;
 
 endinterface
 

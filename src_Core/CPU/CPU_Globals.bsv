@@ -20,7 +20,7 @@ package CPU_Globals;
 // Project imports
 
 import isa_decls     :: *;
-import TV_Trace_Data :: *;
+import tv_trace_data :: *;
 
 // ================================================================
 // Output status of each stage
@@ -46,7 +46,7 @@ deriving (Eq, Bits, FShow);
 // control-flow redirection due (e.g., due to a mispredict).
 // Number of bits should be large enough to accommodate wrap-around.
 
-typedef Bit #(2)  Epoch;
+typedef Bit#(2)  Epoch;
 
 // ----------------
 // CF_Info ("control flow information") is sent from the execute stage
@@ -238,12 +238,12 @@ endinstance
 typedef struct {
    Addr       pc;
    Epoch      epoch;              // Branch prediction epoch
-   Priv_Mode  priv;               // Priv at which instr was fetched
+   PrivMode  priv;               // Priv at which instr was fetched
    Bool       is_i32_not_i16;     // True if a regular 32b instr, not a compressed (16b) instr
    Bool       exc;                // True if exc in icache access
    Exc_Code   exc_code;
    WordXL     tval;               // Trap value; can be different from PC, with 'C' extension
-   Instr      instr;              // Valid if no exception
+   InstrBits      instr;              // Valid if no exception
    WordXL     pred_pc;            // Predicted next pc
    } Data_StageF_to_StageD
 deriving (Bits);
@@ -292,7 +292,7 @@ endinstance
 
 typedef struct {
    Addr           pc;
-   Priv_Mode      priv;               // Priv at which instr was fetched
+   PrivMode      priv;               // Priv at which instr was fetched
    Epoch          epoch;              // Branch prediction epoch
 
    Bool           is_i32_not_i16;     // True if a regular 32b instr, not a compressed (16b) instr
@@ -301,12 +301,12 @@ typedef struct {
    Exc_Code       exc_code;
    WordXL         tval;               // Trap value; can be different from PC, with 'C' extension
 
-   Instr          instr;              // Valid if no exception
+   InstrBits          instr;              // Valid if no exception
    Instr_C        instr_C;            // Valid if no exception; original compressed instruction
    WordXL         pred_pc;            // Predicted next pc
    DecodedInstr  decoded_instr;
-   } Data_StageD_to_Stage1
-deriving (Bits);
+   Instruction   instruction;
+} Data_StageD_to_Stage1 deriving (Bits);
 
 instance FShow #(Data_StageD_to_Stage1);
    function Fmt fshow (Data_StageD_to_Stage1 x);
@@ -417,9 +417,9 @@ typedef enum {  OP_Stage2_ALU         // Pass-through (non mem, M, FD, AMO)
 deriving (Eq, Bits, FShow);
 
 typedef struct {
-   Priv_Mode  priv;
+   PrivMode  priv;
    Addr       pc;
-   Instr      instr;             // For debugging. Just funct3, funct7 are
+   InstrBits      instr;             // For debugging. Just funct3, funct7 are
                                  // enough for functionality.
    Op_Stage2  op_stage2;
    RegIdx    rd;
@@ -439,11 +439,11 @@ typedef struct {
    Bool       rd_in_fpr;         // The rd should update into FPR
    Bool       rs_frm_fpr;        // The rs is from FPR (FP stores)
    Bool       val1_frm_gpr;      // The val1 is from GPR for a FP instruction
-   Bit #(3)   rounding_mode;     // rounding mode from fcsr_frm or instr.rm
+   Bit#(3)   rounding_mode;     // rounding mode from fcsr_frm or instr.rm
 `endif
 
 `ifdef INCLUDE_TANDEM_VERIF
-   Trace_Data  trace_data;
+   TraceData  trace_data;
 `endif
    } Data_Stage1_to_Stage2
 deriving (Bits);
@@ -503,8 +503,8 @@ endinstance
 
 typedef struct {
    Addr      pc;            // For debugging only
-   Instr     instr;         // For debugging only
-   Priv_Mode priv;
+   InstrBits     instr;         // For debugging only
+   PrivMode priv;
 
    Bool      rd_valid;
    RegIdx   rd;
@@ -513,12 +513,12 @@ typedef struct {
 `ifdef ISA_F
    Bool      upd_flags;
    Bool      rd_in_fpr;
-   Bit #(5)  fpr_flags;
+   Bit#(5)  fpr_flags;
    WordFL    frd_val;
 `endif
 
 `ifdef INCLUDE_TANDEM_VERIF
-   Trace_Data             trace_data;
+   TraceData             trace_data;
 `endif
    } Data_Stage2_to_Stage3
 deriving (Bits);
@@ -552,7 +552,7 @@ typedef struct {
 `endif
 
 `ifdef INCLUDE_TANDEM_VERIF
-   Trace_Data     trace_data;
+   TraceData     trace_data;
 `endif
    } Output_Stage3
 deriving (Bits);

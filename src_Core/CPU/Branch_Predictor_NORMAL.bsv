@@ -50,7 +50,7 @@ interface Branch_Predictor_IFC;
    // fall-through PC if no prediction.
 
    (* always_ready *)
-   method WordXL  predict_rsp (Bool is_i32_not_i16, Instr instr);
+   method WordXL  predict_rsp (Bool is_i32_not_i16, InstrBits instr);
 
    // ----------------
    // Train BTB and RAS.
@@ -59,7 +59,7 @@ interface Branch_Predictor_IFC;
 
    method Action bp_train (WordXL   pc,
 			   Bool     is_i32_not_i16,
-			   Instr    instr,
+			   InstrBits    instr,
 			   CF_Info  cf_info);
 endinterface
 
@@ -71,14 +71,14 @@ typedef  512  BTB_Num_Sets;
 Integer  btb_num_sets = valueOf (BTB_Num_Sets);
 
 // Split a PC into a btb index and a btb tag
-// Bit #(XLEN) pc = { tag, index, 1'b0 }
+// Bit#(XLEN) pc = { tag, index, 1'b0 }
 
 typedef TLog #(BTB_Num_Sets)  BTB_Index_Sz;
 Integer btb_index_sz  = valueOf (BTB_Index_Sz);
 
-typedef Bit #(BTB_Index_Sz)                           BTB_Index;
+typedef Bit#(BTB_Index_Sz)                           BTB_Index;
 
-typedef Bit #(TSub #(TSub #(XLEN, BTB_Index_Sz), 1))  BTB_Tag;
+typedef Bit#(TSub #(TSub #(XLEN, BTB_Index_Sz), 1))  BTB_Tag;
 
 // ----------------
 // Pick out PC bits to use as index into BTB.
@@ -98,7 +98,7 @@ endfunction
 // ----------------
 // BTB entries
 
-typedef Bit #(TSub #(XLEN, 1)) Word_Addr;
+typedef Bit#(TSub #(XLEN, 1)) Word_Addr;
 
 typedef struct {
    Bool       valid;
@@ -118,7 +118,7 @@ typedef  16  RAS_Capacity;
 
 function Tuple3 #(Bool, Bool, WordXL) fn_ras_actions (WordXL  pc,
 						      Bool    is_i32_not_i16,
-						      Instr   instr);
+						      InstrBits   instr);
    // Classify instr, for 32-bit instuctions
    WordXL ret_pc        = pc + 4;
    Bool   rd_is_link    = fn_reg_is_link (instr_rd  (instr));
@@ -207,7 +207,7 @@ module mkBranch_Predictor (Branch_Predictor_IFC);
    //     11 = strong taken
    // This is a regfile separate from btb_bramcore2 to allow combinational lookup,
    // to enable read-modify-write in a cycle.
-   RegFile #(BTB_Index, Bit #(2)) rf_btb_fsms <- mkRegFileFull;
+   RegFile #(BTB_Index, Bit#(2)) rf_btb_fsms <- mkRegFileFull;
 
    // Return Address Stack (RAS). Top of stack is always at [0]. Push/pop by shifting.
    Reg #(Vector #(RAS_Capacity, WordXL)) rg_ras  <- mkReg (replicate (bogus_PC));
@@ -267,7 +267,7 @@ module mkBranch_Predictor (Branch_Predictor_IFC);
    // and are used to choose RAS actions if any, and size of
    // fall-through PC if no prediction.
 
-   method WordXL  predict_rsp (Bool is_i32_not_i16, Instr instr);
+   method WordXL  predict_rsp (Bool is_i32_not_i16, InstrBits instr);
       WordXL pred_pc   = bogus_PC;    // default: no prediction, invalid PC
       let    btb_entry = btb_bramcore2.a.read;
 
@@ -297,7 +297,7 @@ module mkBranch_Predictor (Branch_Predictor_IFC);
 
    method Action bp_train (WordXL   pc,
 			   Bool     is_i32_not_i16,
-			   Instr    instr,
+			   InstrBits    instr,
 			   CF_Info  cf_info);
       if (verbosity > 2)
 	 $display ("%0d: %m.bp_train: pc %0x  is_i32 %0d  instr %0x ",
@@ -319,7 +319,7 @@ module mkBranch_Predictor (Branch_Predictor_IFC);
 
       WordXL    pred_PC = bogus_PC;
       BTB_Index index_b = fn_pc_to_index (cf_info.from_PC);
-      Bit #(2)  fsm_val = rf_btb_fsms.sub (index_b);
+      Bit#(2)  fsm_val = rf_btb_fsms.sub (index_b);
 
       if (cf_info.cf_op == CF_BR) begin
 	 if (cf_info.taken)

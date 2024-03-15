@@ -79,7 +79,7 @@ endinterface
 // Convert size code into AXI4_Size code (number of bytes in a beat).
 // It just so happens that our coding coincides with AXI4's coding.
 
-function AXI4_Size  fv_size_code_to_AXI4_Size (Bit #(2) size_code);
+function AXI4_Size  fv_size_code_to_AXI4_Size (Bit#(2) size_code);
    return { 1'b0, size_code };
 endfunction
 
@@ -88,7 +88,7 @@ endfunction
 // For FABRIC64 this does nothing.
 // For FABRIC32 it discards the upper 32 bits.
 
-function Fabric_Addr fv_Addr_to_Fabric_Addr (Bit #(64) addr);
+function Fabric_Addr fv_Addr_to_Fabric_Addr (Bit#(64) addr);
    return truncate (addr);
 endfunction
 
@@ -96,7 +96,7 @@ endfunction
 // MODULE IMPLEMENTATION
 // Non-synthesizable (polymorphic in num_clients_t)
 
-module mkMMIO_AXI4_Adapter #(parameter Bit #(3) verbosity)
+module mkMMIO_AXI4_Adapter #(parameter Bit#(3) verbosity)
                            (MMIO_AXI4_Adapter_IFC #(num_clients_t))
    provisos (NumAlias #(TLog #(num_clients_t), log_num_clients_t));
 
@@ -109,8 +109,8 @@ module mkMMIO_AXI4_Adapter #(parameter Bit #(3) verbosity)
 
    // Limit the number of reads/writes outstanding to 15
    // TODO: change these to concurrent up/down counters?
-   Reg #(Bit #(4)) rg_rd_rsps_pending <- mkReg (0);
-   Reg #(Bit #(4)) rg_wr_rsps_pending <- mkReg (0);
+   Reg #(Bit#(4)) rg_rd_rsps_pending <- mkReg (0);
+   Reg #(Bit#(4)) rg_wr_rsps_pending <- mkReg (0);
 
    // Record errors on write-responses from mem
    Reg #(Bool) rg_wr_error <- mkReg (False);
@@ -127,8 +127,8 @@ module mkMMIO_AXI4_Adapter #(parameter Bit #(3) verbosity)
 
    // TODO: change mkFIFOF to mkSizedFIFOF (allowing multiple outstanding reads)
    // many reads can be outstanding
-   FIFOF #(Tuple4 #(Bit #(log_num_clients_t),    // client_id
-		    Bit #(64),                   // addr (only LSBs needed, rest for debugging
+   FIFOF #(Tuple4 #(Bit#(log_num_clients_t),    // client_id
+		    Bit#(64),                   // addr (only LSBs needed, rest for debugging
 		    AXI4_Size,
 		    AXI4_Len))                   // arlen (= # of beats - 1)
          f_rd_rsp_control <- mkFIFOF;
@@ -189,9 +189,9 @@ module mkMMIO_AXI4_Adapter #(parameter Bit #(3) verbosity)
    // Read responses
 
    match {.rd_client_id, .rd_addr, .rd_arsize, .rd_arlen} = f_rd_rsp_control.first;
-   Bit #(3) rd_addr_lsbs = rd_addr [2:0];
+   Bit#(3) rd_addr_lsbs = rd_addr [2:0];
 
-   Reg #(Bit #(64)) rg_rd_data_buf <- mkRegU;    // accumulate data across beats
+   Reg #(Bit#(64)) rg_rd_data_buf <- mkRegU;    // accumulate data across beats
 
    rule rl_rd_data (rg_rd_beat <= rd_arlen);
       // Get read-data response from AXI4
@@ -208,7 +208,7 @@ module mkMMIO_AXI4_Adapter #(parameter Bit #(3) verbosity)
       end
 
       // Accumulate beats into word64 and rg_rd_data
-      Bit #(64) word64 = rg_rd_data_buf;
+      Bit#(64) word64 = rg_rd_data_buf;
       if (rg_rd_beat == 0)
 	 word64 = zeroExtend (rd_data.rdata);
       else if (rg_rd_beat == 1)
@@ -229,7 +229,7 @@ module mkMMIO_AXI4_Adapter #(parameter Bit #(3) verbosity)
 	 // Adjust alignment of B,H,W data
 	 // addr [1:0] is non-zero only for B, H, W (so, single-beat, so data is in [31:0])
 	 if (rd_arsize != axsize_8) begin
-	    Bit #(6) shamt_bits = ?;
+	    Bit#(6) shamt_bits = ?;
 	    if (valueOf (Wd_Data) == 32)
 	       shamt_bits = { 1'b0, rd_addr_lsbs [1:0], 3'b000 };
 	    else if (valueOf (Wd_Data) == 64)
@@ -260,21 +260,21 @@ module mkMMIO_AXI4_Adapter #(parameter Bit #(3) verbosity)
    // BEHAVIOR: write requests
 
    // Regs holding state during write-data burst
-   Reg #(Bit #(log_num_clients_t))  rg_wr_client_id <- mkRegU;
-   Reg #(Bit #(8))                  rg_awlen        <- mkReg (0);
-   Reg #(Bit #(64))                 rg_wr_data_buf  <- mkRegU;
-   Reg #(Bit #(8))                  rg_wr_strb_buf  <- mkRegU;
+   Reg #(Bit#(log_num_clients_t))  rg_wr_client_id <- mkRegU;
+   Reg #(Bit#(8))                  rg_awlen        <- mkReg (0);
+   Reg #(Bit#(64))                 rg_wr_data_buf  <- mkRegU;
+   Reg #(Bit#(8))                  rg_wr_strb_buf  <- mkRegU;
 
    // Beat counter: There are pending beats when rg_wr_beat <= rg_awlen
-   Reg #(Bit #(8))  rg_wr_beat <- mkReg (1);
+   Reg #(Bit#(8))  rg_wr_beat <- mkReg (1);
 
    function Action fa_wr_req (Integer j, FIFOF #(Single_Req) f_reqs_j);
       action
 	 let req = f_reqs_j.first;    // Don't deq it until data beats sent
 
 	 // Data is in lsbs
-	 Bit #(64) word64 = req.data;
-	 Bit #(8)  strb   = case (req.size_code)
+	 Bit#(64) word64 = req.data;
+	 Bit#(8)  strb   = case (req.size_code)
 			       2'b00: 8'h_01;
 			       2'b01: 8'h_03;
 			       2'b10: 8'h_0F;
@@ -357,8 +357,8 @@ module mkMMIO_AXI4_Adapter #(parameter Bit #(3) verbosity)
       rg_wr_beat <= rg_wr_beat + 1;
 
       // Send AXI write-data
-      Bit #(Wd_Data)             wdata = truncate (rg_wr_data_buf);
-      Bit #(TDiv #(Wd_Data, 8))  wstrb = truncate (rg_wr_strb_buf);
+      Bit#(Wd_Data)             wdata = truncate (rg_wr_data_buf);
+      Bit#(TDiv #(Wd_Data, 8))  wstrb = truncate (rg_wr_strb_buf);
       let wr_data = AXI4_Wr_Data {wdata:  wdata,
 				  wstrb:  wstrb,
 				  wlast:  last,
@@ -432,7 +432,7 @@ endmodule
 typedef 3 Num_MMIO_L1_Clients;    // Using DMA_Cache
 
 (* synthesize *)
-module mkMMIO_AXI4_Adapter_2 #(parameter Bit #(3) verbosity)
+module mkMMIO_AXI4_Adapter_2 #(parameter Bit#(3) verbosity)
                              (MMIO_AXI4_Adapter_IFC #(Num_MMIO_L1_Clients));
    let ifc <- mkMMIO_AXI4_Adapter (verbosity);
    return ifc;

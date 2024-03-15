@@ -66,7 +66,7 @@ typedef struct {
    PTE         pte;        // relevant if result == PTW_OK or PTW_PAGE_FAULT
 
    // Info for PTE insertion into TLB
-   Bit #(2)     level;
+   Bit#(2)     level;
    PA           pte_pa;
    } PTW_Rsp
 deriving (Bits, FShow);

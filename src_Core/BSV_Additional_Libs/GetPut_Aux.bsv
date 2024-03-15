@@ -135,7 +135,7 @@ module mkMux_Clients_Server #(Integer                          n_in_flight,
    provisos (Log #(nc_t, lognc_t));
 
    // These FIFOs remember, for each server, to which client each response should be directed
-   FIFOF #(Bit #(lognc_t)) f_client_id <- mkFIFOF;
+   FIFOF #(Bit#(lognc_t)) f_client_id <- mkFIFOF;
 
    for (Integer j = 0; j < valueOf (nc_t); j = j + 1)
       rule rl_cj_to_s;

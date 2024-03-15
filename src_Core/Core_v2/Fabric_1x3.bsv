@@ -22,7 +22,7 @@ import SoC_Map      :: *;
 
 typedef 1  Num_Initiators_1x3;
 
-typedef Bit #(TLog #(Num_Initiators_1x3))  Initiator_Num_1x3;
+typedef Bit#(TLog #(Num_Initiators_1x3))  Initiator_Num_1x3;
 
 Initiator_Num_1x3  cpu_mmio_master_num = ?;
 
@@ -31,7 +31,7 @@ Initiator_Num_1x3  cpu_mmio_master_num = ?;
 
 typedef 3  Num_Targets_1x3;
 
-typedef Bit #(TLog #(Num_Targets_1x3))  Target_Num_1x3;
+typedef Bit#(TLog #(Num_Targets_1x3))  Target_Num_1x3;
 
 Target_Num_1x3  default_target_num     = 0;
 Target_Num_1x3  near_mem_io_target_num = 1;    // memory-mapped MTIME, MTIMECMP, MSIP etc.
