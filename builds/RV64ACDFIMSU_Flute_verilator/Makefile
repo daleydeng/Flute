@@ -12,7 +12,7 @@ PRIVS  ?= MSU
 # RISC-V config macros passed into Bluespec 'bsc' compiler
 
 BSC_COMPILATION_FLAGS += \
-	(shell $(REPO)/scripts/gen_defs.py --arch=RV64 --float) \
+	$(shell $(REPO)/scripts/gen_defs.py --arch=RV64 --float=D) \
 	-D ISA_PRIV_M  -D ISA_PRIV_U  -D ISA_PRIV_S  \
 	-D SV39  \
 	-D ISA_I  -D ISA_M  -D ISA_A  -D ISA_C\

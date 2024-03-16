@@ -524,15 +524,24 @@ endfunction: fv_OP_and_OP_IMM_shifts
 function ALU_Outputs fv_OP_and_OP_IMM (ALU_Inputs inputs);
    let instr = inputs.instruction;
    let ast = instr.ast;
-   let funct3 = instr.fmt == InstrFmtR ? ast.R.funct3 : ast.I.funct3;
+   let funct3 = 0;
+   let funct7 = 0;
 
-   Bool trap = False;
+   case (ast) matches
+      tagged R .x: begin 
+         funct3 = x.funct3;
+         funct7 = x.funct7;
+      end
+      tagged I .x: funct3 = x.funct3;
+   endcase
+
+   let trap = False;
    if (instr.fmt != InstrFmtR && instr.fmt != InstrFmtI)
       trap = True;
 
    if (instr.fmt == InstrFmtR) // For op_OP, check Must Be Zero bits in funct7
-      trap = (ast.R.funct7 != 0 && ast.R.funct7 != f7_SUB)
-         || (ast.R.funct7 == f7_SUB && ast.R.funct3 != 0);
+      trap = (funct7 != 0 && funct7 != f7_SUB)
+         || (funct7 == f7_SUB && funct3 != 0);
 
    if (funct3 != f3_ADD 
       && funct3 != f3_XOR 

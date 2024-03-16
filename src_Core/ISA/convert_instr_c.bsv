@@ -8,6 +8,7 @@ package convert_instr_c;
 export convert_instr_C;
 
 import isa_decls   :: *;
+import convert_instr_c_bh :: *;
 
 `define check(val) \
    case (val) matches \
@@ -213,7 +214,13 @@ function Tuple2#(Bool, InstrBits) decode_C_LWSP (InstrCBits  instr_C);
 		       && (i.rd_rs1 != 0)
 		       && (i.funct3 == f3_C_LWSP));
 
-      let instr = mkInstr_I (zeroExtend (offset),  /*rs1*/reg_sp,  f3_LW,  i.rd_rs1,  op_LOAD);
+      let instr = encode_instr_I(
+         zeroExtend(offset),  
+         /*rs1*/reg_sp,  
+         f3_LW,  
+         i.rd_rs1,  
+         op_LOAD
+      );
 
       return tuple2 (is_legal, instr);
    end
@@ -231,7 +238,7 @@ function Tuple2#(Bool, InstrBits) decode_C_LDSP (InstrCBits  instr_C);
 		       && (i.rd_rs1 != 0)
 		       && (i.funct3 == f3_C_LDSP));
 
-      let instr = mkInstr_I (zeroExtend (offset),  /*rs1*/reg_sp,  f3_LD,  i.rd_rs1,  op_LOAD);
+      let instr = encode_instr_I (zeroExtend (offset),  /*rs1*/reg_sp,  f3_LD,  i.rd_rs1,  op_LOAD);
 
       return tuple2 (is_legal, instr);
    end
@@ -250,7 +257,7 @@ function Tuple2#(Bool, InstrBits) decode_C_LQSP (InstrCBits  instr_C);
 		       && (i.rd_rs1 != 0)
 		       && (i.funct3 == f3_C_LQSP));
 
-      let     instr = mkInstr_I (zeroExtend (offset),  /*rs1*/reg_sp,  f3_LQ,  i.rd_rs1,  op_LOAD);
+      let     instr = encode_instr_I (zeroExtend (offset),  /*rs1*/reg_sp,  f3_LQ,  i.rd_rs1,  op_LOAD);
 
       return tuple2 (is_legal, instr);
    end
@@ -266,7 +273,7 @@ function Tuple2#(Bool, InstrBits) decode_C_FLWSP (InstrCBits  instr_C);
       Bit#(8) offset = { i.imm_6_2 [1:0], i.imm_12, i.imm_6_2 [4:2], 2'b0 };
 
       let is_legal = i.op == opcode_C2 && i.funct3 == f3_C_FLWSP;
-      let     instr = mkInstr_I (zeroExtend (offset),  /*rs1*/reg_sp,  f3_FLW,  /*rd*/i.rd_rs1,  op_LOAD_FP);
+      let     instr = encode_instr_I (zeroExtend (offset),  /*rs1*/reg_sp,  f3_FLW,  /*rd*/i.rd_rs1,  op_LOAD_FP);
       return tuple2 (is_legal, instr);
    end
 endfunction
@@ -282,7 +289,7 @@ function Tuple2#(Bool, InstrBits) decode_C_FLDSP (InstrCBits  instr_C);
 
       let is_legal = i.op == opcode_C2 && i.funct3 == f3_C_FLDSP;
 
-      let     instr = mkInstr_I (zeroExtend (offset),  /*rs1*/reg_sp,  f3_FLD,  i.rd_rs1,  op_LOAD_FP);
+      let     instr = encode_instr_I (zeroExtend (offset),  /*rs1*/reg_sp,  f3_FLD,  i.rd_rs1,  op_LOAD_FP);
       return tuple2 (is_legal, instr);
    end
 endfunction
@@ -299,7 +306,7 @@ function Tuple2#(Bool, InstrBits) decode_C_SWSP (InstrCBits  instr_C);
       Bit#(8) offset = { i.imm_12_7 [1:0], i.imm_12_7 [5:2], 2'b0 };
 
       let is_legal = i.op == opcode_C2 && i.funct3 == f3_C_SWSP;
-      let instr = mkInstr_S_type (zeroExtend (offset), i.rs2, /*rs1*/reg_sp, f3_SW, op_STORE);
+      let instr = encode_instr_S (zeroExtend (offset), i.rs2, /*rs1*/reg_sp, f3_SW, op_STORE);
 
       return tuple2 (is_legal, instr);
    end
@@ -315,7 +322,7 @@ function Tuple2#(Bool, InstrBits) decode_C_SDSP (InstrCBits  instr_C);
 
       let is_legal = i.op == opcode_C2 && i.funct3 == f3_C_SDSP;
 
-      let instr = mkInstr_S_type (zeroExtend (offset), i.rs2, /*rs1*/reg_sp, f3_SD, op_STORE);
+      let instr = encode_instr_S (zeroExtend (offset), i.rs2, /*rs1*/reg_sp, f3_SD, op_STORE);
 
       return tuple2 (is_legal, instr);
    end
@@ -332,7 +339,7 @@ function Tuple2#(Bool, InstrBits) decode_C_SQSP (InstrCBits  instr_C);
 
       let is_legal = i.op == opcode_C2 && i.funct3 == f3_C_SQSP;
 
-      let instr = mkInstr_S_type (zeroExtend (offset), i.rs2, /*rs1*/reg_sp, f3_SQ, op_STORE);
+      let instr = encode_instr_S (zeroExtend (offset), i.rs2, /*rs1*/reg_sp, f3_SQ, op_STORE);
 
       return tuple2 (is_legal, instr);
    end
@@ -348,7 +355,7 @@ function Tuple2#(Bool, InstrBits) decode_C_FSWSP(InstrCBits  instr_C);
       Bit#(8) offset = { i.imm_12_7 [1:0], i.imm_12_7 [5:2], 2'b0 };
 
       let is_legal = op == opcode_C2 && funct3 == f3_C_FSWSP;
-      let instr = mkInstr_S_type (zeroExtend (offset), i.rs2, /*rs1*/reg_sp, f3_FSW, op_STORE_FP);
+      let instr = encode_instr_S (zeroExtend (offset), i.rs2, /*rs1*/reg_sp, f3_FSW, op_STORE_FP);
 
       return tuple2 (is_legal, instr);
    end
@@ -364,7 +371,7 @@ function Tuple2#(Bool, InstrBits) decode_C_FSDSP (InstrCBits  instr_C);
       Bit#(9) offset = { i.imm_12_7 [2:0], i.imm_12_7 [5:3], 3'b0 };
 
       let is_legal = i.op == opcode_C2 && i.funct3 == f3_C_FSDSP;
-      let instr = mkInstr_S_type (zeroExtend (offset), i.rs2, /*rs1*/reg_sp, f3_FSD, op_STORE_FP);
+      let instr = encode_instr_S (zeroExtend (offset), i.rs2, /*rs1*/reg_sp, f3_FSD, op_STORE_FP);
       return tuple2 (is_legal, instr);
    end
 endfunction
@@ -382,7 +389,7 @@ function Tuple2#(Bool, InstrBits) decode_C_LW (InstrCBits  instr_C);
 
       let is_legal = i.op == opcode_C0 && i.funct3 == f3_C_LW;
 
-      let instr = mkInstr_I (zeroExtend (offset),  get_creg(i.rs1_C),  
+      let instr = encode_instr_I (zeroExtend (offset),  get_creg(i.rs1_C),  
          f3_LW,  get_creg(i.rd_C),  op_LOAD);
 
       return tuple2 (is_legal, instr);
@@ -398,7 +405,7 @@ function Tuple2#(Bool, InstrBits) decode_C_LD (InstrCBits  instr_C);
       Bit#(8) offset = { i.imm_6_5, i.imm_12_10, 3'b0 };
 
       let is_legal = i.op == opcode_C0 && i.funct3 == f3_C_LD;
-      let instr = mkInstr_I (zeroExtend(offset),  get_creg(i.rs1_C), 
+      let instr = encode_instr_I (zeroExtend(offset),  get_creg(i.rs1_C), 
           f3_LD,  get_creg(i.rd_C),  op_LOAD);
 
       return tuple2 (is_legal, instr);
@@ -415,7 +422,7 @@ function Tuple2#(Bool, InstrBits) decode_C_LQ (InstrCBits  instr_C);
       Bit#(9) offset = { i.imm_12_10 [0], i.imm_6_5, i.imm_12_10 [2], i.imm_12_10 [1], 4'b0 };
 
       let is_legal = i.op == opcode_C0 && i.funct3 == f3_C_LQ;
-      let instr = mkInstr_I (zeroExtend(offset),  get_creg(i.rs1_C), 
+      let instr = encode_instr_I (zeroExtend(offset),  get_creg(i.rs1_C), 
           f3_LQ,  get_creg(i.rd_C),  op_LOAD);
 
       return tuple2 (is_legal, instr);
@@ -432,7 +439,7 @@ function Tuple2#(Bool, InstrBits) decode_C_FLW(InstrCBits  instr_C);
       Bit#(7) offset = { i.imm_6_5[0], i.imm_12_10, i.imm_6_5[1], 2'b0 };
 
       let is_legal =i.op == opcode_C0 && i.funct3 == f3_C_FLW;
-      let instr = mkInstr_I (zeroExtend (offset),  get_creg(i.rs1_C),  
+      let instr = encode_instr_I (zeroExtend (offset),  get_creg(i.rs1_C),  
          f3_FLW,  get_creg(i.rd_C),  op_LOAD_FP);
 
       return tuple2 (is_legal, instr);
@@ -449,7 +456,7 @@ function Tuple2#(Bool, InstrBits) decode_C_FLD (InstrCBits  instr_C);
       Bit#(8) offset = { i.imm_6_5, i.imm_12_10, 3'b0 };
 
       let is_legal = i.op == opcode_C0 && i.funct3 == f3_C_FLD;
-      let instr = mkInstr_I (zeroExtend (offset),  get_creg(i.rs1_C),  
+      let instr = encode_instr_I (zeroExtend (offset),  get_creg(i.rs1_C),  
          f3_FLD,  get_creg(i.rd_C),  op_LOAD_FP);
 
       return tuple2 (is_legal, instr);
@@ -468,7 +475,7 @@ function Tuple2#(Bool, InstrBits) decode_C_SW (InstrCBits  instr_C);
       Bit#(7) offset = { i.imm_6_5[0], i.imm_12_10, i.imm_6_5[1], 2'b0 };
 
       let is_legal = i.op == opcode_C0 && i.funct3 == f3_C_SW;
-      let instr = mkInstr_S_type (zeroExtend (offset), get_creg(i.rs2_C), 
+      let instr = encode_instr_S (zeroExtend (offset), get_creg(i.rs2_C), 
          get_creg(i.rs1_C), f3_SW, op_STORE);
       
       return tuple2 (is_legal, instr);
@@ -484,7 +491,7 @@ function Tuple2#(Bool, InstrBits) decode_C_SD (InstrCBits  instr_C);
       Bit#(8) offset = { i.imm_6_5, i.imm_12_10, 3'b0 };
 
       let is_legal = i.op == opcode_C0 && i.funct3 == f3_C_SD;
-      let instr = mkInstr_S_type (zeroExtend (offset), get_creg(i.rs2_C), 
+      let instr = encode_instr_S (zeroExtend (offset), get_creg(i.rs2_C), 
          get_creg(i.rs1_C), f3_SD, op_STORE);
 
       return tuple2 (is_legal, instr);
@@ -501,7 +508,7 @@ function Tuple2#(Bool, InstrBits) decode_C_SQ (InstrCBits  instr_C);
       Bit#(9) offset = { i.imm_12_10[0], i.imm_6_5, i.imm_12_10[2], i.imm_12_10[1], 4'b0 };
 
       let is_legal = op == opcode_C0 && funct3 == f3_C_SQ;
-      let instr = mkInstr_S_type (zeroExtend (offset), get_creg(i.rs2_C), 
+      let instr = encode_instr_S (zeroExtend (offset), get_creg(i.rs2_C), 
          get_creg(i.rs1_C), f3_SQ, op_STORE);
 
       return tuple2 (is_legal, instr);
@@ -520,7 +527,7 @@ function Tuple2#(Bool, InstrBits) decode_C_FSW(InstrCBits  instr_C);
 
       Bool is_legal = op == opcode_C0 && funct3 == f3_C_FSW;
 
-      let instr = mkInstr_S_type (zeroExtend (offset), rs2, rs1, f3_FSW, op_STORE_FP);
+      let instr = encode_instr_S (zeroExtend (offset), rs2, rs1, f3_FSW, op_STORE_FP);
       
       return tuple2 (is_legal, instr);
    end
@@ -536,7 +543,7 @@ function Tuple2#(Bool, InstrBits) decode_C_FSD(InstrCBits  instr_C);
       Bit#(8) offset = { i.imm_6_5, i.imm_12_10, 3'b0 };
 
       let is_legal = i.op == opcode_C0 && i.funct3 == f3_C_FSD;
-      let instr = mkInstr_S_type (zeroExtend (offset), get_creg(i.rs2_C),
+      let instr = encode_instr_S (zeroExtend (offset), get_creg(i.rs2_C),
          get_creg(i.rs1_C), f3_FSD, op_STORE_FP);
       
       return tuple2 (is_legal, instr);
@@ -567,7 +574,7 @@ function Tuple2#(Bool, InstrBits) decode_C_J(InstrCBits  instr_C);
       let is_legal = i.op == opcode_C1 && i.funct3 == f3_C_J;
 
       Bit#(21) imm21 = signExtend (offset);
-      let instr = mkInstr_J_type (imm21, /*rd*/ reg_zero, op_JAL);
+      let instr = encode_instr_J (imm21, /*rd*/ reg_zero, op_JAL);
       
       return tuple2 (is_legal, instr);
    end
@@ -592,7 +599,7 @@ function Tuple2#(Bool, InstrBits) decode_C_JAL (InstrCBits  instr_C);
 
       let is_legal = i.op == opcode_C1 && i.funct3 == f3_C_JAL;
       Bit#(21) imm21 = signExtend (offset);
-      let       instr = mkInstr_J_type  (imm21,  /*rd*/ reg_ra,  op_JAL);
+      let       instr = encode_instr_J  (imm21,  /*rd*/ reg_ra,  op_JAL);
       
       return tuple2 (is_legal, instr);
    end
@@ -609,7 +616,7 @@ function Tuple2#(Bool, InstrBits) decode_C_JR (InstrCBits  instr_bits);
 		       && (i.rd_rs1 != 0)
 		       && (i.rs2 == 0));
 
-      return tuple2 (is_legal, mkInstr_I(0, /*rs1*/i.rd_rs1, f3_JALR, reg_zero, op_JALR));
+      return tuple2 (is_legal, encode_instr_I(0, /*rs1*/i.rd_rs1, f3_JALR, reg_zero, op_JALR));
    end
 endfunction
 
@@ -623,7 +630,7 @@ function Tuple2#(Bool, InstrBits) decode_C_JALR (InstrCBits  instr_bits);
 		       && (i.rd_rs1 != 0)
 		       && (i.rs2 == 0));
 
-      return tuple2 (is_legal, mkInstr_I(/*imm12*/ 0, /*rs1*/i.rd_rs1, f3_JALR, reg_ra, op_JALR));
+      return tuple2 (is_legal, encode_instr_I(/*imm12*/ 0, /*rs1*/i.rd_rs1, f3_JALR, reg_ra, op_JALR));
    end
 endfunction
 
@@ -638,7 +645,7 @@ function Tuple2#(Bool, InstrBits) decode_C_BEQZ (InstrCBits  instr_C);
       let is_legal = i.op == opcode_C1 && i.funct3 == f3_C_BEQZ;
 
       Bit#(13) imm13 = signExtend (offset);
-      let instr = mkInstr_B_type (imm13, /*rs2*/reg_zero, get_creg(i.rs1_C),
+      let instr = encode_instr_B (imm13, /*rs2*/reg_zero, get_creg(i.rs1_C),
          f3_BEQ, op_BRANCH);
 
       return tuple2 (is_legal, instr);
@@ -657,7 +664,7 @@ function Tuple2#(Bool, InstrBits) decode_C_BNEZ (InstrCBits  instr_C);
 
       RegIdx   rs2   = reg_zero;
       Bit#(13) imm13 = signExtend (offset);
-      let instr = mkInstr_B_type (imm13, /*rs2*/reg_zero, get_creg(i.rs1_C),
+      let instr = encode_instr_B (imm13, /*rs2*/reg_zero, get_creg(i.rs1_C),
          f3_BNE, op_BRANCH);
 
       return tuple2 (is_legal, instr);
@@ -679,7 +686,7 @@ function Tuple2#(Bool, InstrBits) decode_C_LI (InstrCBits  instr_C);
 		       && (i.rd_rs1 != 0));
 
       Bit#(12) imm12 = signExtend (imm6);
-      let       instr = mkInstr_I (imm12, /*rs1*/reg_zero, f3_ADDI, i.rd_rs1, op_OP_IMM);
+      let       instr = encode_instr_I (imm12, /*rs1*/reg_zero, f3_ADDI, i.rd_rs1, op_OP_IMM);
 
       return tuple2 (is_legal, instr);
    end
@@ -699,7 +706,7 @@ function Tuple2#(Bool, InstrBits) decode_C_LUI (InstrCBits  instr_C);
 		       && (nzimm6 != 0));
 
       Bit#(20) imm20 = signExtend (nzimm6);
-      let instr = mkInstr_U_type (imm20, i.rd_rs1, op_LUI);
+      let instr = encode_instr_U (imm20, i.rd_rs1, op_LUI);
 
       return tuple2 (is_legal, instr);
    end
@@ -721,7 +728,7 @@ function Tuple2#(Bool, InstrBits) decode_C_ADDI (InstrCBits  instr_C);
 		       && (nzimm6 != 0));
 
       Bit#(12) imm12 = signExtend (nzimm6);
-      let       instr = mkInstr_I (imm12, /*rs1*/i.rd_rs1, f3_ADDI, /*rd*/i.rd_rs1, op_OP_IMM);
+      let       instr = encode_instr_I (imm12, /*rs1*/i.rd_rs1, f3_ADDI, /*rd*/i.rd_rs1, op_OP_IMM);
 
       return tuple2 (is_legal, instr);
    end
@@ -740,7 +747,7 @@ function Tuple2#(Bool, InstrBits) decode_C_NOP (InstrCBits  instr_C);
 		       && (nzimm6 == 0));
 
       Bit#(12) imm12 = signExtend (nzimm6);
-      let       instr = mkInstr_I (imm12, /*rs1*/i.rd_rs1, f3_ADDI, /*rd*/i.rd_rs1, op_OP_IMM);
+      let       instr = encode_instr_I (imm12, /*rs1*/i.rd_rs1, f3_ADDI, /*rd*/i.rd_rs1, op_OP_IMM);
 
       return tuple2 (is_legal, instr);
    end
@@ -759,7 +766,7 @@ function Tuple2#(Bool, InstrBits) decode_C_ADDIW (InstrCBits  instr_C);
 		       && (i.rd_rs1 != 0));
 
       Bit#(12) imm12 = signExtend (imm6);
-      let       instr = mkInstr_I (imm12, /*rs1*/ i.rd_rs1, f3_ADDIW, /*rd*/ i.rd_rs1, op_OP_IMM_32);
+      let       instr = encode_instr_I (imm12, /*rs1*/ i.rd_rs1, f3_ADDIW, /*rd*/ i.rd_rs1, op_OP_IMM_32);
 
       return tuple2 (is_legal, instr);
    end
@@ -779,7 +786,7 @@ function Tuple2#(Bool, InstrBits) decode_C_ADDI16SP (InstrCBits  instr_C);
 		       && (nzimm10 != 0));
 
       Bit#(12) imm12 = signExtend (nzimm10);
-      let       instr = mkInstr_I (imm12, i.rd_rs1, f3_ADDI, i.rd_rs1, op_OP_IMM);
+      let       instr = encode_instr_I (imm12, i.rd_rs1, f3_ADDI, i.rd_rs1, op_OP_IMM);
 
       return tuple2 (is_legal, instr);
    end
@@ -797,7 +804,7 @@ function Tuple2#(Bool, InstrBits) decode_C_ADDI4SPN (InstrCBits  instr_C);
 		       && (nzimm10 != 0));
 
       Bit#(12) imm12 = zeroExtend (nzimm10);
-      let instr = mkInstr_I (imm12, /*rs1*/reg_sp, f3_ADDI, get_creg(i.rd_C), op_OP_IMM);
+      let instr = encode_instr_I (imm12, /*rs1*/reg_sp, f3_ADDI, get_creg(i.rd_C), op_OP_IMM);
 
       return tuple2 (is_legal, instr);
    end
@@ -819,7 +826,7 @@ function Tuple2#(Bool, InstrBits) decode_C_SLLI (InstrCBits  instr_C, Bit#(2)  x
       Bit#(12) imm12 = (  (xl == misa_mxl_32)
 			 ? { msbs7_SLLI, i.imm_6_2 }
 			 : { msbs6_SLLI, shamt6 } );
-      let instr = mkInstr_I (imm12, i.rd_rs1, f3_SLLI, i.rd_rs1, op_OP_IMM);
+      let instr = encode_instr_I (imm12, i.rd_rs1, f3_SLLI, i.rd_rs1, op_OP_IMM);
 
       return tuple2 (is_legal, instr);
    end
@@ -845,7 +852,7 @@ function Tuple2#(Bool, InstrBits) decode_C_SRLI(InstrCBits  instr_C, Bit#(2)  xl
 			 ? { msbs7_SRLI, i.imm_6_2 }
 			 : { msbs6_SRLI, shamt6 } );
       let rd_rs1 = get_creg(i.rs1_C);
-      let instr = mkInstr_I (imm12, /*rs1*/rd_rs1, f3_SRLI, /*rd*/rd_rs1, op_OP_IMM);
+      let instr = encode_instr_I (imm12, /*rs1*/rd_rs1, f3_SRLI, /*rd*/rd_rs1, op_OP_IMM);
 
       return tuple2 (is_legal, instr);
    end
@@ -872,7 +879,7 @@ function Tuple2#(Bool, InstrBits) decode_C_SRAI (InstrCBits  instr_C, Bit#(2)  x
 			 ? { msbs7_SRAI, i.imm_6_2 }
 			 : { msbs6_SRAI, shamt6 } );
       let rd_rs1 = get_creg(i.rs1_C);
-      let instr = mkInstr_I (imm12, /*rs1*/rd_rs1, f3_SRAI, /*rd*/rd_rs1, op_OP_IMM);
+      let instr = encode_instr_I (imm12, /*rs1*/rd_rs1, f3_SRAI, /*rd*/rd_rs1, op_OP_IMM);
 
       return tuple2 (is_legal, instr);
    end
@@ -894,7 +901,7 @@ function Tuple2#(Bool, InstrBits) decode_C_ANDI (InstrCBits  instr_C);
 
       Bit#(12) imm12 = signExtend (imm6);
       let rd_rs1 = get_creg(i.rs1_C);
-      let instr = mkInstr_I (imm12, /*rs1*/ rd_rs1, f3_ANDI, /*rd*/rd_rs1, op_OP_IMM);
+      let instr = encode_instr_I (imm12, /*rs1*/ rd_rs1, f3_ANDI, /*rd*/rd_rs1, op_OP_IMM);
 
       return tuple2 (is_legal, instr);
    end

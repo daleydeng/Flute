@@ -15,7 +15,7 @@ build_dir:
 .PHONY: compile
 compile: build_dir
 	@echo "INFO: Re-compiling Core (CPU, Caches)"
-	bsc -u -elab -sim  $(TMP_DIRS)  $(BSC_COMPILATION_FLAGS)  -p $(BSC_PATH)  $(TOPFILE)
+	bsc -u -elab -cpp -sim  $(TMP_DIRS)  $(BSC_COMPILATION_FLAGS)  -p $(BSC_PATH)  $(TOPFILE)
 	@echo "INFO: Re-compiled  Core (CPU, Caches)"
 
 # ================================================================
@@ -25,7 +25,7 @@ SIM_EXE_FILE = exe_HW_sim
 
 BSC_C_FLAGS += \
 	-Xl -v \
-	-Xc -O3 -Xc++ -O3 \
+	-Xc -O3 -Xc++ -O3 -cpp\
 
 # You may have to remove this line above
 # for Bluespec_2019.05.beta2-debian9stretch-amd64

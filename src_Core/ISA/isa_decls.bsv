@@ -1,154 +1,19 @@
 package isa_decls;
 
-`ifdef RV32
-typedef 32 XLEN;
-`elsif RV64
-typedef 64 XLEN;
-`elsif RV128
-typedef 128 XLEN;
-`endif
+export isa_decls_bh::*, isa_decls::*;
 
-typedef TMul#(2, XLEN)  XLEN_2;
-typedef TSub#(XLEN, 2)  XLEN_MINUS_2;
-Integer xlen = valueOf (XLEN);
-
-typedef enum { RV32, RV64 } RVVersion deriving (Eq, Bits);
-RVVersion rv_version = xlen == 32 ? RV32 : RV64;
-
-typedef  8 BitsPerByte;
-typedef  Bit#(BitsPerByte) Byte;
-Integer  bits_per_byte = valueOf(BitsPerByte);
-
-typedef  XLEN BitsPerWordXL;
-typedef  Bit#(BitsPerWordXL)  WordXL;
-
-typedef  TDiv#(BitsPerWordXL, BitsPerByte) BytesPerWordXL;
-Integer  bytes_per_wordxl = valueOf(BytesPerWordXL);
-
-typedef  TLog#(BytesPerWordXL)              Bits_per_Byte_in_WordXL;
-typedef  Bit#(Bits_per_Byte_in_WordXL)        Byte_in_WordXL;
-Integer  bits_per_byte_in_wordxl = valueOf (Bits_per_Byte_in_WordXL);
-
-typedef  Int#(XLEN)  IntXL;     // Signed register data
-typedef  WordXL       Addr;
-
-// ================================================================
-// FLEN and related constants, for floating point data
-// Can have one or two fpu sizes (should they be merged sooner than later ?).
-
-// ISA_D => ISA_F (ISA_D implies ISA_F)
-// The combination ISA_D and !ISA_F is not permitted
-
-`ifdef ISA_F
-
-`ifdef ISA_D
-typedef 64 FLEN;
-`else
-typedef 32 FLEN;
-`endif // ISA_D
-
-typedef  Bit#(FLEN)  WordFL;
-typedef  TDiv#(FLEN, BitsPerByte) BytesPerWordFL;
-`endif // ISA_F
-
-// ================================================================
-// Tokens are used for signalling/synchronization, and have no payload
-typedef Bit#(0) Token;
-
-// ================================================================
-// Instruction fields
-// This is used for encoding Tandem Verifier traces
-typedef enum {ISIZE16, ISIZE32} ISize deriving (Bits, Eq, FShow);
-
-typedef  Bit#(32)  InstrBits;
-typedef  Bit#(7)   Opcode;
-typedef  Bit#(5)   RegIdx;       // 32 registers, 0..31
-typedef  Bit#(12)  CSRAddr;
-
-typedef  32         NumRegs;
-Integer  num_regs = valueOf(NumRegs);
-
-InstrBits illegal_instr = 32'h0000_0000;
-
-function  Opcode    instr_opcode   (InstrBits x); return x [6:0]; endfunction
-function  Bit#(2)   instr_funct2   (InstrBits x); return x [26:25]; endfunction
-function  Bit#(3)   instr_funct3   (InstrBits x); return x [14:12]; endfunction
-function  Bit#(5)   instr_funct5   (InstrBits x); return x [31:27]; endfunction
-function  Bit#(7)   instr_funct7   (InstrBits x); return x [31:25]; endfunction
-function  Bit#(10)  instr_funct10  (InstrBits x); return { x [31:25], x [14:12] }; endfunction
-function  Bit#(2)   instr_fmt      (InstrBits x); return x [26:25]; endfunction
-
-function  RegIdx    instr_rd       (InstrBits x); return x [11:7]; endfunction
-function  RegIdx    instr_rs1      (InstrBits x); return x [19:15]; endfunction
-function  RegIdx    instr_rs2      (InstrBits x); return x [24:20]; endfunction
-function  RegIdx    instr_rs3      (InstrBits x); return x [31:27]; endfunction
-function  CSRAddr    instr_csr      (InstrBits x); return x [31:20]; endfunction
-function  Bit#(12)  instr_I_imm12  (InstrBits x); return x [31:20]; endfunction
-function  Bit#(12)  instr_S_imm12  (InstrBits x); return { x [31:25], x [11:7] }; endfunction
-function  Bit#(20)  instr_U_imm20  (InstrBits x); return x [31:12]; endfunction
-
-function  Bit#(13)  instr_B_imm13 (InstrBits x); 
-   return { x [31], x [7], x [30:25], x [11:8], 1'b0 };
-endfunction
-
-function  Bit#(21)  instr_J_imm21 (InstrBits x);
-   return { x [31], x [19:12], x [20], x [30:21], 1'b0 };
-endfunction
-
-// For FENCE decode
-function  Bit#(4)   instr_pred (InstrBits x); return x [27:24]; endfunction
-function  Bit#(4)   instr_succ (InstrBits x); return x [23:20]; endfunction
-
-// For AMO decode
-function  Bit#(2)   instr_aqrl (InstrBits x); return x [26:25]; endfunction
-
+import isa_decls_bh::*;
 // ----------------
 // Decoded instructions
-typedef enum {
-   InstrFmtNone,
-   InstrFmtR,
-   InstrFmtI
-} InstrFmt deriving (Bits, Eq, FShow);
 
 typedef struct {
-   InstrFmt fmt;
-   union tagged {
-      InstrBits Raw;
-      struct {
-         Bit#(7) funct7;
-         Bit#(5) rs2;
-         Bit#(5) rs1;
-         Bit#(3) funct3;
-         Bit#(5) rd;
-         Bit#(7) opcode;
-      }  R;
-      struct {
-         Bit#(12) imm12;
-         Bit#(5) rs1;
-         Bit#(3) funct3;
-         Bit#(5) rd;
-         Bit#(7) opcode;
-      } I;
-   } ast;
-} Instruction deriving (Bits, FShow);
-
-function Instruction decode_instruction(InstrBits bits);
-   return case (bits[6:0])
-      'b0110011: Instruction {fmt: InstrFmtR, ast: tagged R(unpack(bits))};
-      'b0010011: Instruction {fmt: InstrFmtI, ast: tagged I(unpack(bits))};
-      default: Instruction {fmt: InstrFmtNone, ast: tagged Raw(bits)};
-   endcase;
-endfunction
-
-
-typedef struct {
-   Opcode    opcode;
+   Opcode   opcode;
 
    RegIdx   rd;
    RegIdx   rs1;
    RegIdx   rs2;
    RegIdx   rs3;
-   CSRAddr   csr;
+   CSRAddr  csr;
 
    Bit#(3)  funct3;
    Bit#(5)  funct5;
@@ -195,39 +60,24 @@ function DecodedInstr decode_instr (InstrBits instr);
       };
 endfunction
 
-// ================================================================
-// Instruction constructors
-// Used in 'C' decode to construct equivalent 32-bit instructions
-
-// I-type
-function InstrBits  mkInstr_I (Bit#(12) imm12, RegIdx rs1, Bit#(3) funct3, RegIdx rd, Bit#(7) opcode);
-   let instr = { imm12, rs1, funct3, rd, opcode };
-   return instr;
+function InstrBits encode_instr_I(Bit#(12) imm12, RegIdx rs1, Bit#(3) funct3, RegIdx rd, Bit#(7) opcode);
+   return {imm12, rs1, funct3, rd, opcode};
 endfunction
 
-// S-type
-
-function InstrBits  mkInstr_S_type (Bit#(12) imm12, RegIdx rs2, RegIdx rs1, Bit#(3) funct3, Bit#(7) opcode);
-   let instr = { imm12 [11:5], rs2, rs1, funct3, imm12 [4:0], opcode };
-   return instr;
+function InstrBits encode_instr_S(Bit#(12) imm12, RegIdx rs2, RegIdx rs1, Bit#(3) funct3, Bit#(7) opcode);
+   return {imm12[11:5], rs2, rs1, funct3, imm12[4:0], opcode};
 endfunction
 
-// B-type
-function InstrBits  mkInstr_B_type (Bit#(13) imm13, RegIdx rs2, RegIdx rs1, Bit#(3) funct3, Bit#(7) opcode);
-   let instr = { imm13 [12], imm13 [10:5], rs2, rs1, funct3, imm13 [4:1], imm13 [11], opcode };
-   return instr;
+function InstrBits encode_instr_B(Bit#(13) imm13, RegIdx rs2, RegIdx rs1, Bit#(3) funct3, Bit#(7) opcode);
+   return {imm13[12], imm13[10:5], rs2, rs1, funct3, imm13[4:1], imm13[11], opcode};
 endfunction
 
-// U-type
-function InstrBits  mkInstr_U_type (Bit#(20) imm20, RegIdx rd, Bit#(7) opcode);
-   let instr = { imm20, rd, opcode };
-   return instr;
+function InstrBits encode_instr_U(Bit#(20) imm20, RegIdx rd, Bit#(7) opcode);
+   return {imm20, rd, opcode};
 endfunction
 
-// J-type
-function InstrBits  mkInstr_J_type (Bit#(21) imm21, RegIdx rd, Bit#(7) opcode);
-   let instr = { imm21 [20], imm21 [10:1], imm21 [11], imm21 [19:12], rd, opcode };
-   return instr;
+function InstrBits encode_instr_J (Bit#(21) imm21, RegIdx rd, Bit#(7) opcode);
+   return {imm21[20], imm21[10:1], imm21[11], imm21[19:12], rd, opcode};
 endfunction
 
 RegIdx x0  =  0;    RegIdx x1  =  1;    RegIdx x2  =  2;    RegIdx x3  =  3;

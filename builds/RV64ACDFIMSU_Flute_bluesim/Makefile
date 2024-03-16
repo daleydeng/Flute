@@ -16,9 +16,9 @@ CACHES ?= WT_L1
 # ================================================================
 # RISC-V config macros passed into Bluespec 'bsc' compiler
 
-
+# $(shell $(REPO)/scripts/gen_defs.py --arch=RV64 --float=D)
 BSC_COMPILATION_FLAGS += \
-	$(shell $(REPO)/scripts/gen_defs.py --arch=RV64 --float=D) \
+        $(shell $(REPO)/scripts/gen_defs.py --arch=RV64 --float=D) \
 	-D RV64 \
 	-D ISA_I  -D ISA_M  -D ISA_A  -D ISA_C \
 	-D ISA_F  -D ISA_D  -D INCLUDE_FDIV  -D INCLUDE_FSQRT \
