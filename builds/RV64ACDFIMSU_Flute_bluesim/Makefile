@@ -16,7 +16,9 @@ CACHES ?= WT_L1
 # ================================================================
 # RISC-V config macros passed into Bluespec 'bsc' compiler
 
+
 BSC_COMPILATION_FLAGS += \
+	$(shell $(REPO)/scripts/gen_defs.py --arch=RV64 --float=D) \
 	-D RV64 \
 	-D ISA_I  -D ISA_M  -D ISA_A  -D ISA_C \
 	-D ISA_F  -D ISA_D  -D INCLUDE_FDIV  -D INCLUDE_FSQRT \
@@ -27,13 +29,14 @@ BSC_COMPILATION_FLAGS += \
 	-D Near_Mem_Caches    \
 	-D FABRIC64    \
 	-D WATCH_TOHOST    \
-
-#	-D INCLUDE_TANDEM_VERIF    \
+	-D INCLUDE_TANDEM_VERIF    \
 
 
 # Default ISA test
 
-TEST ?= rv64ui-p-add
+# TEST ?= rv64ui-p-add
+TEST ?= rv64uc-p-rvc
+# TEST ?= rv64uc-v-rvc
 
 #================================================================
 # Common boilerplate rules

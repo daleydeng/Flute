@@ -66,7 +66,7 @@ import AXI4_Accel     :: *;
 `endif
 
 `ifdef INCLUDE_TANDEM_VERIF
-import tv_info :: *;
+import tv_buffer :: *;
 `endif
 
 `ifdef INCLUDE_GDB_CONTROL
@@ -85,7 +85,7 @@ interface SoC_Top_IFC;
 
 `ifdef INCLUDE_TANDEM_VERIF
    // To tandem verifier
-   interface Get #(TV_Info) tv_verifier_info_get;
+   interface Get #(TVBuffer) tv_verifier_info_get;
 `endif
 
    // External real memory

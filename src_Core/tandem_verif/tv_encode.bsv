@@ -14,7 +14,7 @@ import GetPut_Aux :: *;
 import Cur_Cycle  :: *;
 
 import isa_decls     :: *;
-import tv_info       :: *;
+import tv_buffer       :: *;
 import tv_trace_data :: *;
 
 // ================================================================
@@ -28,7 +28,7 @@ interface TV_Encode_IFC;
    // This module produces tuples (n,vb),
    // where 'vb' is a vector of bytes
    // with relevant bytes in locations [0]..[n-1]
-   interface Get #(Tuple2 #(Bit#(32), TV_Vec_Bytes)) tv_vb_out;
+   interface Get #(Tuple2 #(Bit#(32), TVVecBytes)) tv_vb_out;
 endinterface
 
 // ================================================================
@@ -45,7 +45,7 @@ module mkTV_Encode (TV_Encode_IFC);
    Reg #(WordXL) rg_last_pc <- mkReg (0);
 
    FIFOF #(TraceData)                        f_trace_data <- mkFIFOF;
-   FIFOF #(Tuple2 #(Bit#(32), TV_Vec_Bytes)) f_vb         <- mkFIFOF;
+   FIFOF #(Tuple2 #(Bit#(32), TVVecBytes)) f_vb         <- mkFIFOF;
 
    // ----------------------------------------------------------------
    // BEHAVIOR
@@ -627,8 +627,8 @@ endfunction
 // vsubst substitutes vb1[j1:j1+j2-1] with vb2[0:j2-1]
 
 function Tuple2 #(Bit#(32),
-		  TV_Vec_Bytes)
-   vsubst (Bit#(32) j1, TV_Vec_Bytes vb1,
+		  TVVecBytes)
+   vsubst (Bit#(32) j1, TVVecBytes vb1,
 	   Bit#(32) j2, Vector #(m, Byte)          vb2);
 
    function Byte f (Integer j);
@@ -648,17 +648,17 @@ endfunction
 // ================================================================
 // Encoding of TraceData into byte vectors
 // Every function below returns:
-//     (n, vb) :: Tuple2 #(Bit#(32), TV_Vec_Bytes)
+//     (n, vb) :: Tuple2 #(Bit#(32), TVVecBytes)
 // where vb is a vector of bytes with relevant bytes in vb[0]..vb[n-1]
 
 // ================================================================
 
-function Tuple2 #(Bit#(32), TV_Vec_Bytes) encode_byte (Byte x);
+function Tuple2 #(Bit#(32), TVVecBytes) encode_byte (Byte x);
    return tuple2 (1, replicate (x));
 endfunction
 
-function Tuple2 #(Bit#(32), TV_Vec_Bytes) encode_mlen (Bit#(64) word);
-   TV_Vec_Bytes vb = newVector;
+function Tuple2 #(Bit#(32), TVVecBytes) encode_mlen (Bit#(64) word);
+   TVVecBytes vb = newVector;
    Bit#(32)            n;
    vb [0] = word[7:0];
    vb [1] = word [15:8];
@@ -679,8 +679,8 @@ function Tuple2 #(Bit#(32), TV_Vec_Bytes) encode_mlen (Bit#(64) word);
    return tuple2 (n, vb);
 endfunction
 
-function Tuple2 #(Bit#(32), TV_Vec_Bytes) encode_mdata (MemReqSize mem_req_size, WordXL word);
-   TV_Vec_Bytes vb = newVector;
+function Tuple2 #(Bit#(32), TVVecBytes) encode_mdata (MemReqSize mem_req_size, WordXL word);
+   TVVecBytes vb = newVector;
    vb [0] = word[7:0];
    vb [1] = word [15:8];
    vb [2] = word [23:16];
@@ -695,9 +695,9 @@ function Tuple2 #(Bit#(32), TV_Vec_Bytes) encode_mdata (MemReqSize mem_req_size,
    return tuple2 (n, vb);
 endfunction
 
-function Tuple2 #(Bit#(32), TV_Vec_Bytes) encode_instr (ISize isize, Bit#(32) instr);
+function Tuple2 #(Bit#(32), TVVecBytes) encode_instr (ISize isize, Bit#(32) instr);
 
-   TV_Vec_Bytes vb = newVector;
+   TVVecBytes vb = newVector;
    Bit#(32)           n  = ((isize == ISIZE16) ? 3 : 5);
    vb [0] = ((isize == ISIZE16) ? te_op_16b_instr : te_op_32b_instr);
    vb [1] = instr [7:0];
@@ -707,8 +707,8 @@ function Tuple2 #(Bit#(32), TV_Vec_Bytes) encode_instr (ISize isize, Bit#(32) in
    return tuple2 (n, vb);
 endfunction
 
-function Tuple2 #(Bit#(32), TV_Vec_Bytes) encode_reg (Bit#(16) regnum, WordXL word);
-   TV_Vec_Bytes vb = newVector;
+function Tuple2 #(Bit#(32), TVVecBytes) encode_reg (Bit#(16) regnum, WordXL word);
+   TVVecBytes vb = newVector;
    Bit#(32) n = 0;
    vb [0] = te_op_full_reg;
    vb [1] = regnum [7:0];
@@ -730,8 +730,8 @@ function Tuple2 #(Bit#(32), TV_Vec_Bytes) encode_reg (Bit#(16) regnum, WordXL wo
 endfunction
 
 `ifdef ISA_F
-function Tuple2 #(Bit#(32), TV_Vec_Bytes) encode_fpr (Bit#(16) regnum, WordFL word);
-   TV_Vec_Bytes vb = newVector;
+function Tuple2 #(Bit#(32), TVVecBytes) encode_fpr (Bit#(16) regnum, WordFL word);
+   TVVecBytes vb = newVector;
    Bit#(32) n = 0;
    vb [0] = te_op_full_reg;
    vb [1] = regnum [7:0];
@@ -752,16 +752,16 @@ function Tuple2 #(Bit#(32), TV_Vec_Bytes) encode_fpr (Bit#(16) regnum, WordFL wo
 endfunction
 `endif
 
-function Tuple2 #(Bit#(32), TV_Vec_Bytes) encode_priv (Bit#(5) priv);
-   TV_Vec_Bytes vb = newVector;
+function Tuple2 #(Bit#(32), TVVecBytes) encode_priv (Bit#(5) priv);
+   TVVecBytes vb = newVector;
    vb [0] = te_op_addl_state;
    vb [1] = te_op_addl_state_priv;
    vb [2] = zeroExtend (priv);
    return tuple2 (3, vb);
 endfunction
 
-function Tuple2 #(Bit#(32), TV_Vec_Bytes) encode_pc (WordXL pc, WordXL next_pc);
-   TV_Vec_Bytes vb = newVector;
+function Tuple2 #(Bit#(32), TVVecBytes) encode_pc (WordXL pc, WordXL next_pc);
+   TVVecBytes vb = newVector;
    Bit#(32) n;
    vb [0] = te_op_addl_state;
    vb [1] = te_op_addl_state_pc;
@@ -799,8 +799,8 @@ function Tuple2 #(Bit#(32), TV_Vec_Bytes) encode_pc (WordXL pc, WordXL next_pc);
    return tuple2 (n, vb);
 endfunction
 
-function Tuple2 #(Bit#(32), TV_Vec_Bytes) encode_eaddr (WordXL word);
-   TV_Vec_Bytes vb = newVector;
+function Tuple2 #(Bit#(32), TVVecBytes) encode_eaddr (WordXL word);
+   TVVecBytes vb = newVector;
    Bit#(32)            n;
    vb [0] = te_op_addl_state;
    vb [1] = te_op_addl_state_eaddr;
@@ -819,8 +819,8 @@ function Tuple2 #(Bit#(32), TV_Vec_Bytes) encode_eaddr (WordXL word);
    return tuple2 (n, vb);
 endfunction
 
-function Tuple2 #(Bit#(32), TV_Vec_Bytes) encode_stval (MemReqSize mem_req_size, WordXL word);
-   TV_Vec_Bytes vb = newVector;
+function Tuple2 #(Bit#(32), TVVecBytes) encode_stval (MemReqSize mem_req_size, WordXL word);
+   TVVecBytes vb = newVector;
    vb [0] = te_op_addl_state;
    vb [1] = case (mem_req_size)
 	       f3_SIZE_B: te_op_addl_state_data8;
@@ -843,8 +843,8 @@ function Tuple2 #(Bit#(32), TV_Vec_Bytes) encode_stval (MemReqSize mem_req_size,
 endfunction
 
 `ifdef ISA_F
-function Tuple2 #(Bit#(32), TV_Vec_Bytes) encode_fstval (MemReqSize mem_req_size, WordFL word);
-   TV_Vec_Bytes vb = newVector;
+function Tuple2 #(Bit#(32), TVVecBytes) encode_fstval (MemReqSize mem_req_size, WordFL word);
+   TVVecBytes vb = newVector;
    vb [0] = te_op_addl_state;
    vb [1] = case (mem_req_size)
 	       f3_SIZE_B: te_op_addl_state_data8;  // not possible

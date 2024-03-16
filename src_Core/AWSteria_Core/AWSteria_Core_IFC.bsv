@@ -31,7 +31,7 @@ import AXI4_Types :: *;
 import DM_Common :: *;    // for Server_DMI
 
 // Local: Tandem Verification
-import tv_info  :: *;
+import tv_buffer  :: *;
 
 // ================================================================
 // Interrupt definitions
@@ -117,7 +117,7 @@ interface AWSteria_Core_IFC #(numeric type wd_id_mem,
    // ----------------------------------------------------------------
    // Tandem Verification output
 
-   interface FIFOF_O #(TV_Info)  fo_tv_info;
+   interface FIFOF_O #(TVBuffer)  fo_tv_buffer;
 
    // ----------------------------------------------------------------
    // Debug Module interfaces

@@ -302,7 +302,7 @@ typedef struct {
    WordXL         tval;               // Trap value; can be different from PC, with 'C' extension
 
    InstrBits          instr;              // Valid if no exception
-   Instr_C        instr_C;            // Valid if no exception; original compressed instruction
+   InstrCBits        instr_C;            // Valid if no exception; original compressed instruction
    WordXL         pred_pc;            // Predicted next pc
    DecodedInstr  decoded_instr;
    Instruction   instruction;

@@ -4,6 +4,8 @@ package isa_decls;
 typedef 32 XLEN;
 `elsif RV64
 typedef 64 XLEN;
+`elsif RV128
+typedef 128 XLEN;
 `endif
 
 typedef TMul#(2, XLEN)  XLEN_2;
@@ -41,17 +43,12 @@ typedef  WordXL       Addr;
 
 `ifdef ISA_D
 typedef 64 FLEN;
-Bool has_fpu_32 = False;
-Bool has_fpu_64 = True;
 `else
 typedef 32 FLEN;
-Bool has_fpu_32 = True;
-Bool has_fpu_64 = False;
 `endif // ISA_D
 
-typedef  Bit#(FLEN)  WordFL;    // Floating point data
+typedef  Bit#(FLEN)  WordFL;
 typedef  TDiv#(FLEN, BitsPerByte) BytesPerWordFL;
-
 `endif // ISA_F
 
 // ================================================================
@@ -63,8 +60,7 @@ typedef Bit#(0) Token;
 // This is used for encoding Tandem Verifier traces
 typedef enum {ISIZE16, ISIZE32} ISize deriving (Bits, Eq, FShow);
 
-typedef 32 INST_LEN;
-typedef  Bit#(INST_LEN)  InstrBits;
+typedef  Bit#(32)  InstrBits;
 typedef  Bit#(7)   Opcode;
 typedef  Bit#(5)   RegIdx;       // 32 registers, 0..31
 typedef  Bit#(12)  CSRAddr;
@@ -109,7 +105,7 @@ function  Bit#(2)   instr_aqrl (InstrBits x); return x [26:25]; endfunction
 // ----------------
 // Decoded instructions
 typedef enum {
-   InstrFmtIllegal,
+   InstrFmtNone,
    InstrFmtR,
    InstrFmtI
 } InstrFmt deriving (Bits, Eq, FShow);
@@ -140,7 +136,7 @@ function Instruction decode_instruction(InstrBits bits);
    return case (bits[6:0])
       'b0110011: Instruction {fmt: InstrFmtR, ast: tagged R(unpack(bits))};
       'b0010011: Instruction {fmt: InstrFmtI, ast: tagged I(unpack(bits))};
-      default: Instruction {fmt: InstrFmtIllegal, ast: tagged Raw(bits)};
+      default: Instruction {fmt: InstrFmtNone, ast: tagged Raw(bits)};
    endcase;
 endfunction
 
@@ -203,14 +199,8 @@ endfunction
 // Instruction constructors
 // Used in 'C' decode to construct equivalent 32-bit instructions
 
-// // R-type
-// function InstrBits  mkInstr_R_type (Bit#(7) funct7, RegIdx rs2, RegIdx rs1, Bit#(3) funct3, RegIdx rd, Bit#(7) opcode);
-//    let instr = { funct7, rs2, rs1, funct3, rd, opcode };
-//    return instr;
-// endfunction
-
 // I-type
-function InstrBits  mkInstr_I_type (Bit#(12) imm12, RegIdx rs1, Bit#(3) funct3, RegIdx rd, Bit#(7) opcode);
+function InstrBits  mkInstr_I (Bit#(12) imm12, RegIdx rs1, Bit#(3) funct3, RegIdx rd, Bit#(7) opcode);
    let instr = { imm12, rs1, funct3, rd, opcode };
    return instr;
 endfunction
@@ -511,8 +501,8 @@ Bit#(10) f10_SLLW   = 10'b000_0000_001;
 Bit#(10) f10_SRLW   = 10'b000_0000_101;
 Bit#(10) f10_SRAW   = 10'b010_0000_101;
 
-Bit#(7) funct7_ADDW = 7'b_000_0000;    Bit#(3) funct3_ADDW  = 3'b_000;
-Bit#(7) funct7_SUBW = 7'b_010_0000;    Bit#(3) funct3_SUBW  = 3'b_000;
+Bit#(7) funct7_ADDW = 7'b_000_0000;    Bit#(3) f3_ADDW  = 3'b_000;
+Bit#(7) funct7_SUBW = 7'b_010_0000;    Bit#(3) f3_SUBW  = 3'b_000;
 
 Bit#(10) f10_MULW   = 10'b000_0001_000;
 Bit#(10) f10_DIVW   = 10'b000_0001_100;
@@ -549,7 +539,7 @@ Bit#(3) f3_BGEU  = 3'b111;
 Opcode op_JAL  = 7'b11_011_11;
 
 Opcode op_JALR = 7'b11_001_11;
-Bit#(3) funct3_JALR = 3'b000;
+Bit#(3) f3_JALR = 3'b000;
 
 `ifdef ISA_F
 // ================================================================
@@ -608,26 +598,26 @@ Bit#(7) f7_FMUL_S      = 7'h8 ;
 Bit#(7) f7_FDIV_S      = 7'hC ;
 Bit#(7) f7_FSQRT_S     = 7'h2C; Bit#(5) rs2_FSQRT_S   = 5'b00000;
 
-Bit#(7) f7_FSGNJ_S     = 7'h10;                                    Bit#(3) funct3_FSGNJ_S  = 3'b000;
-Bit#(7) f7_FSGNJN_S    = 7'h10;                                    Bit#(3) funct3_FSGNJN_S = 3'b001;
-Bit#(7) f7_FSGNJX_S    = 7'h10;                                    Bit#(3) funct3_FSGNJX_S = 3'b010;
+Bit#(7) f7_FSGNJ_S     = 7'h10;                                    Bit#(3) f3_FSGNJ_S  = 3'b000;
+Bit#(7) f7_FSGNJN_S    = 7'h10;                                    Bit#(3) f3_FSGNJN_S = 3'b001;
+Bit#(7) f7_FSGNJX_S    = 7'h10;                                    Bit#(3) f3_FSGNJX_S = 3'b010;
 
-Bit#(7) f7_FMIN_S      = 7'h14;                                    Bit#(3) funct3_FMIN_S   = 3'b000;
-Bit#(7) f7_FMAX_S      = 7'h14;                                    Bit#(3) funct3_FMAX_S   = 3'b001;
+Bit#(7) f7_FMIN_S      = 7'h14;                                    Bit#(3) f3_FMIN_S   = 3'b000;
+Bit#(7) f7_FMAX_S      = 7'h14;                                    Bit#(3) f3_FMAX_S   = 3'b001;
 
 Bit#(7) f7_FCVT_W_S    = 7'h60; Bit#(5) rs2_FCVT_W_S  = 5'b00000;
 Bit#(7) f7_FCVT_WU_S   = 7'h60; Bit#(5) rs2_FCVT_WU_S = 5'b00001;
-Bit#(7) f7_FMV_X_W     = 7'h70; Bit#(5) rs2_FMV_X_W   = 5'b00000; Bit#(3) funct3_FMV_X_W  = 3'b000;
+Bit#(7) f7_FMV_X_W     = 7'h70; Bit#(5) rs2_FMV_X_W   = 5'b00000; Bit#(3) f3_FMV_X_W  = 3'b000;
 
 Bit#(7) f7_FCMP_S      = 7'h50;
-Bit#(7) f7_FEQ_S       = 7'h50;                                    Bit#(3) funct3_FEQ_S    = 3'b010;
-Bit#(7) f7_FLT_S       = 7'h50;                                    Bit#(3) funct3_FLT_S    = 3'b001;
-Bit#(7) f7_FLE_S       = 7'h50;                                    Bit#(3) funct3_FLE_S    = 3'b000;
+Bit#(7) f7_FEQ_S       = 7'h50;                                    Bit#(3) f3_FEQ_S    = 3'b010;
+Bit#(7) f7_FLT_S       = 7'h50;                                    Bit#(3) f3_FLT_S    = 3'b001;
+Bit#(7) f7_FLE_S       = 7'h50;                                    Bit#(3) f3_FLE_S    = 3'b000;
 
-Bit#(7) f7_FCLASS_S    = 7'h70; Bit#(5) rs2_FCLASS_S  = 5'b00000; Bit#(3) funct3_FCLASS_S = 3'b001;
+Bit#(7) f7_FCLASS_S    = 7'h70; Bit#(5) rs2_FCLASS_S  = 5'b00000; Bit#(3) f3_FCLASS_S = 3'b001;
 Bit#(7) f7_FCVT_S_W    = 7'h68; Bit#(5) rs2_FCVT_S_W  = 5'b00000;
 Bit#(7) f7_FCVT_S_WU   = 7'h68; Bit#(5) rs2_FCVT_S_WU = 5'b00001;
-Bit#(7) f7_FMV_W_X     = 7'h78; Bit#(5) rs2_FMV_W_X   = 5'b00000; Bit#(3) funct3_FMV_W_X  = 3'b000;
+Bit#(7) f7_FMV_W_X     = 7'h78; Bit#(5) rs2_FMV_W_X   = 5'b00000; Bit#(3) f3_FMV_W_X  = 3'b000;
 
 // ----------------
 // RV64F
@@ -646,22 +636,22 @@ Bit#(7) f7_FMUL_D      = 7'h9 ;
 Bit#(7) f7_FDIV_D      = 7'hD ;
 Bit#(7) f7_FSQRT_D     = 7'h2D; Bit#(5) rs2_FSQRT_D  = 5'b00000;
 
-Bit#(7) f7_FSGNJ_D     = 7'h11;                                    Bit#(3) funct3_FSGNJ_D  = 3'b000;
-Bit#(7) f7_FSGNJN_D    = 7'h11;                                    Bit#(3) funct3_FSGNJN_D = 3'b001;
-Bit#(7) f7_FSGNJX_D    = 7'h11;                                    Bit#(3) funct3_FSGNJX_D = 3'b010;
+Bit#(7) f7_FSGNJ_D     = 7'h11;                                    Bit#(3) f3_FSGNJ_D  = 3'b000;
+Bit#(7) f7_FSGNJN_D    = 7'h11;                                    Bit#(3) f3_FSGNJN_D = 3'b001;
+Bit#(7) f7_FSGNJX_D    = 7'h11;                                    Bit#(3) f3_FSGNJX_D = 3'b010;
 
-Bit#(7) f7_FMIN_D      = 7'h15;                                    Bit#(3) funct3_FMIN_D   = 3'b000;
-Bit#(7) f7_FMAX_D      = 7'h15;                                    Bit#(3) funct3_FMAX_D   = 3'b001;
+Bit#(7) f7_FMIN_D      = 7'h15;                                    Bit#(3) f3_FMIN_D   = 3'b000;
+Bit#(7) f7_FMAX_D      = 7'h15;                                    Bit#(3) f3_FMAX_D   = 3'b001;
 
 Bit#(7) f7_FCVT_S_D    = 7'h20; Bit#(5) rs2_FCVT_S_D = 5'b00001;
 Bit#(7) f7_FCVT_D_S    = 7'h21; Bit#(5) rs2_FCVT_D_S = 5'b00000;
 
 Bit#(7) f7_FCMP_D      = 7'h51;
-Bit#(7) f7_FEQ_D       = 7'h51;                                    Bit#(3) funct3_FEQ_D    = 3'b010;
-Bit#(7) f7_FLT_D       = 7'h51;                                    Bit#(3) funct3_FLT_D    = 3'b001;
-Bit#(7) f7_FLE_D       = 7'h51;                                    Bit#(3) funct3_FLE_D    = 3'b000;
+Bit#(7) f7_FEQ_D       = 7'h51;                                    Bit#(3) f3_FEQ_D    = 3'b010;
+Bit#(7) f7_FLT_D       = 7'h51;                                    Bit#(3) f3_FLT_D    = 3'b001;
+Bit#(7) f7_FLE_D       = 7'h51;                                    Bit#(3) f3_FLE_D    = 3'b000;
 
-Bit#(7) f7_FCLASS_D    = 7'h71; Bit#(5) rs2_FCLASS_D  = 5'b00000; Bit#(3) funct3_FCLASS_D = 3'b001;
+Bit#(7) f7_FCLASS_D    = 7'h71; Bit#(5) rs2_FCLASS_D  = 5'b00000; Bit#(3) f3_FCLASS_D = 3'b001;
 Bit#(7) f7_FCVT_W_D    = 7'h61; Bit#(5) rs2_FCVT_W_D  = 5'b00000;
 Bit#(7) f7_FCVT_WU_D   = 7'h61; Bit#(5) rs2_FCVT_WU_D = 5'b00001;
 Bit#(7) f7_FCVT_D_W    = 7'h69; Bit#(5) rs2_FCVT_D_W  = 5'b00000;
@@ -672,10 +662,10 @@ Bit#(7) f7_FCVT_D_WU   = 7'h69; Bit#(5) rs2_FCVT_D_WU = 5'b00001;
 
 Bit#(7) f7_FCVT_L_D    = 7'h61; Bit#(5) rs2_FCVT_L_D  = 5'b00010;
 Bit#(7) f7_FCVT_LU_D   = 7'h61; Bit#(5) rs2_FCVT_LU_D = 5'b00011;
-Bit#(7) f7_FMV_X_D     = 7'h71; Bit#(5) rs2_FMV_X_D   = 5'b00000; Bit#(3) funct3_FMV_X_D = 3'b000;
+Bit#(7) f7_FMV_X_D     = 7'h71; Bit#(5) rs2_FMV_X_D   = 5'b00000; Bit#(3) f3_FMV_X_D = 3'b000;
 Bit#(7) f7_FCVT_D_L    = 7'h69; Bit#(5) rs2_FCVT_D_L  = 5'b00010;
 Bit#(7) f7_FCVT_D_LU   = 7'h69; Bit#(5) rs2_FCVT_D_LU = 5'b00011;
-Bit#(7) f7_FMV_D_X     = 7'h79; Bit#(5) rs2_FMV_D_X   = 5'b00000; Bit#(3) funct3_FMV_D_X = 3'b000;
+Bit#(7) f7_FMV_D_X     = 7'h79; Bit#(5) rs2_FMV_D_X   = 5'b00000; Bit#(3) f3_FMV_D_X = 3'b000;
 
 // ----------------------------------------------------------------
 // is_fop_rd_in_gpr: Checks if the request generates a result which
@@ -811,21 +801,21 @@ function Bool is_fp_instr_legal (Bit#(7) funct7,
 `ifdef INCLUDE_FSQRT
 	  || ((funct7== f7_FSQRT_S)   && (rs2 == rs2_FSQRT_S))
 `endif
-	  || ((funct7== f7_FSGNJ_S)                              && (rm == funct3_FSGNJ_S))
-	  || ((funct7== f7_FSGNJN_S)                             && (rm == funct3_FSGNJN_S))
-	  || ((funct7== f7_FSGNJX_S)                             && (rm == funct3_FSGNJX_S))
-	  || ((funct7== f7_FMIN_S)                               && (rm == funct3_FMIN_S))
-	  || ((funct7== f7_FMAX_S)                               && (rm == funct3_FMAX_S))
+	  || ((funct7== f7_FSGNJ_S)                              && (rm == f3_FSGNJ_S))
+	  || ((funct7== f7_FSGNJN_S)                             && (rm == f3_FSGNJN_S))
+	  || ((funct7== f7_FSGNJX_S)                             && (rm == f3_FSGNJX_S))
+	  || ((funct7== f7_FMIN_S)                               && (rm == f3_FMIN_S))
+	  || ((funct7== f7_FMAX_S)                               && (rm == f3_FMAX_S))
 	  || ((funct7== f7_FCVT_W_S)  && (rs2 == rs2_FCVT_W_S))
 	  || ((funct7== f7_FCVT_WU_S) && (rs2 == rs2_FCVT_WU_S))
-	  || ((funct7== f7_FMV_X_W)   && (rs2 == rs2_FMV_X_W)    && (rm == funct3_FMV_X_W))
-	  || ((funct7== f7_FEQ_S)     &&                            (rm == funct3_FEQ_S))
-	  || ((funct7== f7_FLT_S)     &&                            (rm == funct3_FLT_S))
-	  || ((funct7== f7_FLE_S)     &&                            (rm == funct3_FLE_S))
-	  || ((funct7== f7_FCLASS_S)  && (rs2 == rs2_FCLASS_S)   && (rm == funct3_FCLASS_S))
+	  || ((funct7== f7_FMV_X_W)   && (rs2 == rs2_FMV_X_W)    && (rm == f3_FMV_X_W))
+	  || ((funct7== f7_FEQ_S)     &&                            (rm == f3_FEQ_S))
+	  || ((funct7== f7_FLT_S)     &&                            (rm == f3_FLT_S))
+	  || ((funct7== f7_FLE_S)     &&                            (rm == f3_FLE_S))
+	  || ((funct7== f7_FCLASS_S)  && (rs2 == rs2_FCLASS_S)   && (rm == f3_FCLASS_S))
 	  || ((funct7== f7_FCVT_S_W)  && (rs2 == rs2_FCVT_S_W))
 	  || ((funct7== f7_FCVT_S_WU) && (rs2 == rs2_FCVT_S_WU))
-	  || ((funct7== f7_FMV_W_X)   && (rs2 == rs2_FMV_W_X)    && (rm == funct3_FMV_W_X))
+	  || ((funct7== f7_FMV_W_X)   && (rs2 == rs2_FMV_W_X)    && (rm == f3_FMV_W_X))
 	 ));
 
    // ----------------
@@ -852,17 +842,17 @@ function Bool is_fp_instr_legal (Bit#(7) funct7,
 `ifdef INCLUDE_FSQRT
 	  || ((funct7== f7_FSQRT_D)   && (rs2 == rs2_FSQRT_D))
 `endif
-	  || ((funct7== f7_FSGNJ_D)                              && (rm == funct3_FSGNJ_D))
-	  || ((funct7== f7_FSGNJN_D)                             && (rm == funct3_FSGNJN_D))
-	  || ((funct7== f7_FSGNJX_D)                             && (rm == funct3_FSGNJX_D))
-	  || ((funct7== f7_FMIN_D)                               && (rm == funct3_FMIN_D))
-	  || ((funct7== f7_FMAX_D)                               && (rm == funct3_FMAX_D))
+	  || ((funct7== f7_FSGNJ_D)                              && (rm == f3_FSGNJ_D))
+	  || ((funct7== f7_FSGNJN_D)                             && (rm == f3_FSGNJN_D))
+	  || ((funct7== f7_FSGNJX_D)                             && (rm == f3_FSGNJX_D))
+	  || ((funct7== f7_FMIN_D)                               && (rm == f3_FMIN_D))
+	  || ((funct7== f7_FMAX_D)                               && (rm == f3_FMAX_D))
 	  || ((funct7== f7_FCVT_S_D)  && (rs2 == rs2_FCVT_S_D))
 	  || ((funct7== f7_FCVT_D_S)  && (rs2 == rs2_FCVT_D_S))
-	  || ((funct7== f7_FEQ_D)                                && (rm == funct3_FEQ_D))
-	  || ((funct7== f7_FLT_D)                                && (rm == funct3_FLT_D))
-	  || ((funct7== f7_FLE_D)                                && (rm == funct3_FLE_D))
-	  || ((funct7== f7_FCLASS_D)  && (rs2 == rs2_FCLASS_D))  && (rm == funct3_FCLASS_D)
+	  || ((funct7== f7_FEQ_D)                                && (rm == f3_FEQ_D))
+	  || ((funct7== f7_FLT_D)                                && (rm == f3_FLT_D))
+	  || ((funct7== f7_FLE_D)                                && (rm == f3_FLE_D))
+	  || ((funct7== f7_FCLASS_D)  && (rs2 == rs2_FCLASS_D))  && (rm == f3_FCLASS_D)
 	  || ((funct7== f7_FCVT_W_D)  && (rs2 == rs2_FCVT_W_D))
 	  || ((funct7== f7_FCVT_WU_D) && (rs2 == rs2_FCVT_WU_D))
 	  || ((funct7== f7_FCVT_D_W)  && (rs2 == rs2_FCVT_D_W))
@@ -876,10 +866,10 @@ function Bool is_fp_instr_legal (Bit#(7) funct7,
       && rv64
       && (   ((funct7== f7_FCVT_L_D)  && (rs2 == rs2_FCVT_L_D))
 	  || ((funct7== f7_FCVT_LU_D) && (rs2 == rs2_FCVT_LU_D))
-	  || ((funct7== f7_FMV_X_D)   && (rs2 == rs2_FMV_X_D))   && (rm == funct3_FMV_X_D)
+	  || ((funct7== f7_FMV_X_D)   && (rs2 == rs2_FMV_X_D))   && (rm == f3_FMV_X_D)
 	  || ((funct7== f7_FCVT_D_L)  && (rs2 == rs2_FCVT_D_L))
 	  || ((funct7== f7_FCVT_D_LU) && (rs2 == rs2_FCVT_D_LU))
-	  || ((funct7== f7_FMV_D_X)   && (rs2 == rs2_FMV_D_X))   && (rm == funct3_FMV_D_X)
+	  || ((funct7== f7_FMV_D_X)   && (rs2 == rs2_FMV_D_X))   && (rm == f3_FMV_D_X)
 	  ));
 
    // ----------------

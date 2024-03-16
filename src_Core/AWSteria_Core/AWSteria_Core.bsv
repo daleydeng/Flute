@@ -291,7 +291,7 @@ module mkAWSteria_Core #(Clock clk1,        // extra clock
    // ----------------
    // Tandem Verification output
 
-   interface fo_tv_info = core_inner.fo_tv_info;
+   interface fo_tv_buffer = core_inner.fo_tv_buffer;
 
    // ----------------------------------------------------------------
    // Debug Module interfaces

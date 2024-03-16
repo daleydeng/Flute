@@ -14,23 +14,18 @@ export
 CPU_Stage1_IFC (..),
 mkCPU_Stage1;
 
-// ================================================================
-// BSV library imports
-
 import FIFOF        :: *;
 import GetPut       :: *;
 import ClientServer :: *;
 import ConfigReg    :: *;
 
-// ----------------
-// BSV additional libs
-
 import Cur_Cycle :: *;
 
-// ================================================================
-// Project imports
-
 import isa_decls        :: *;
+`ifdef ISA_C
+import isa_decode_cext     :: *;
+`endif
+
 import CPU_Globals      :: *;
 import Near_Mem_IFC     :: *;
 import GPR_RegFile      :: *;
@@ -40,10 +35,7 @@ import FPR_RegFile      :: *;
 import CSR_RegFile      :: *;
 import EX_ALU_functions :: *;
 
-`ifdef ISA_C
-// 'C' extension (16b compressed instructions)
-import CPU_Decode_C     :: *;
-`endif
+
 
 // ================================================================
 // Interface

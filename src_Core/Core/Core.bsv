@@ -61,7 +61,7 @@ import PLIC_16_2_7       :: *;
 
 `ifdef INCLUDE_TANDEM_VERIF
 import tv_trace_data::*;
-import tv_info::*;
+import tv_buffer::*;
 import tv_encode::*;
 `endif
 
@@ -402,9 +402,9 @@ module mkCore
 
 `ifdef INCLUDE_TANDEM_VERIF
    interface Get tv_verifier_info_get;
-      method ActionValue #(TV_Info) get();
+      method ActionValue #(TVBuffer) get();
          match { .n, .v } <- tv_encode.tv_vb_out.get;
-         return (TV_Info { num_bytes: n, vec_bytes: v });
+         return (TVBuffer { num_bytes: n, vec_bytes: v });
       endmethod
    endinterface
 `endif

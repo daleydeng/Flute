@@ -210,7 +210,7 @@ deriving (Bits, FShow);
 // ================================================================
 // Convert RISC-V funct3 code into AXI4_Size code (number of bytes in a beat)
 
-function AXI4_Size fn_funct3_to_AXI4_Size (Bit#(3) funct3);
+function AXI4_Size fn_f3_to_AXI4_Size (Bit#(3) funct3);
    Bit#(2)   x = funct3 [1:0];
    AXI4_Size  result;
    if      (x == f3_SIZE_B)        result = axsize_1;
@@ -1622,7 +1622,7 @@ module mkMMU_Cache  #(parameter Bool dmem_not_imem)  (MMU_Cache_IFC);
 		   cur_cycle, d_or_i, rg_f3, rg_addr, rg_pa);
 
       Fabric_Addr fabric_addr = fn_PA_to_Fabric_Addr (rg_pa);
-      fa_fabric_send_read_req (fabric_addr, fn_funct3_to_AXI4_Size (rg_f3));
+      fa_fabric_send_read_req (fabric_addr, fn_f3_to_AXI4_Size (rg_f3));
 
 `ifdef ISA_A
       // Invalidate LR/SC reservation if AMO_LR
@@ -1721,7 +1721,7 @@ module mkMMU_Cache  #(parameter Bool dmem_not_imem)  (MMU_Cache_IFC);
 		   cur_cycle, d_or_i, rg_f3, rg_addr, rg_pa);
 
       Fabric_Addr fabric_addr = fn_PA_to_Fabric_Addr (rg_pa);
-      fa_fabric_send_read_req (fabric_addr, fn_funct3_to_AXI4_Size (rg_f3));
+      fa_fabric_send_read_req (fabric_addr, fn_f3_to_AXI4_Size (rg_f3));
 
       rg_state <= IO_AWAITING_AMO_READ_RSP;
 

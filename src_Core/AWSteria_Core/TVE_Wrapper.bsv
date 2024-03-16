@@ -50,7 +50,7 @@ import DM_CPU_Req_Rsp :: *;
 import Dma_Server_Mux :: *;
 
 import tv_trace_data :: *;
-import tv_info       :: *;
+import tv_buffer       :: *;
 import tv_encode     :: *;
 
 // tv_taps needed when both GDB_CONTROL and TANDEM_VERIF are present
@@ -103,7 +103,7 @@ interface TVE_Wrapper_IFC;
 			      Wd_User)        sba_S;
 
    // TV output
-   interface FIFOF_O #(TV_Info)               fo_tv_info;
+   interface FIFOF_O #(TVBuffer)               fo_tv_buffer;
 
    // DMA interface
    interface AXI4_Slave_IFC #(Wd_Id_Dma,
@@ -229,14 +229,14 @@ module mkTVE_Wrapper1 #(TVE_Wrapper_Param param)
    rule rl_bogus_for_sched_attributes_only;
    endrule
 
-   // Adapter to convert 2-tuple tv_encode output to TV_Info struct
+   // Adapter to convert 2-tuple tv_encode output to TVBuffer struct
    // Note: would not be necessary if TV Encoder directly produced this struct
    // TODO: change TV Encoder for this?
-   FIFOF #(TV_Info) f_tv_info <- mkFIFOF;
+   FIFOF #(TVBuffer) f_tv_buffer <- mkFIFOF;
 
    rule rl_tv_adapter;
       match { .n, .v } <- tv_encode.tv_vb_out.get;
-      f_tv_info.enq (TV_Info { num_bytes: n, vec_bytes: v });
+      f_tv_buffer.enq (TVBuffer { num_bytes: n, vec_bytes: v });
    endrule
 
    // ================================================================
@@ -255,7 +255,7 @@ module mkTVE_Wrapper1 #(TVE_Wrapper_Param param)
    interface AXI4_Slave_IFC  sba_S        = dm_mem_tap.slave;
 
    // TV output
-   interface FIFOF_O         fo_tv_info   = to_FIFOF_O (f_tv_info);
+   interface FIFOF_O         fo_tv_buffer   = to_FIFOF_O (f_tv_buffer);
    // DMA server
    interface AXI4_Slave_IFC  dma_S        = dma_server_mux.initiator_A_server;
 endmodule
@@ -276,14 +276,14 @@ module mkTVE_Wrapper2 #(TVE_Wrapper_Param param)
    // Connect CPU's TV output data to TV Encoder
    mkConnection (tv_encode.trace_data_in, param.cpu_trace_data_out);
 
-   // Adapter to convert 2-tuple tv_encode output to TV_Info struct
+   // Adapter to convert 2-tuple tv_encode output to TVBuffer struct
    // Note: would not be necessary if TV Encoder directly produced this struct
    // TODO: change TV Encoder for this?
-   FIFOF #(TV_Info) f_tv_info <- mkFIFOF;
+   FIFOF #(TVBuffer) f_tv_buffer <- mkFIFOF;
 
    rule rl_tv_adapter;
       match { .n, .v } <- tv_encode.tv_vb_out.get;
-      f_tv_info.enq (TV_Info { num_bytes: n, vec_bytes: v });
+      f_tv_buffer.enq (TVBuffer { num_bytes: n, vec_bytes: v });
    endrule
 
    // ================================================================
@@ -302,7 +302,7 @@ module mkTVE_Wrapper2 #(TVE_Wrapper_Param param)
    interface AXI4_Slave_IFC  sba_S        = dummy_AXI4_Slave_ifc;
 
    // TV output
-   interface FIFOF_O         fo_tv_info   = to_FIFOF_O (f_tv_info);
+   interface FIFOF_O         fo_tv_buffer   = to_FIFOF_O (f_tv_buffer);
    // DMA server
    interface AXI4_Slave_IFC  dma_S        = param.cpu_dma_server;
 endmodule
@@ -336,7 +336,7 @@ module mkTVE_Wrapper3 #(TVE_Wrapper_Param param)
    interface AXI4_Slave_IFC  sba_S        = dma_server_mux.initiator_B_server;
 
    // TV output
-   interface FIFOF_O         fo_tv_info   = dummy_FIFOF_O;
+   interface FIFOF_O         fo_tv_buffer   = dummy_FIFOF_O;
    // DMA server
    interface AXI4_Slave_IFC  dma_S        = dma_server_mux.initiator_A_server;
 endmodule
@@ -363,7 +363,7 @@ module mkTVE_Wrapper4 #(TVE_Wrapper_Param param)
    interface AXI4_Slave_IFC  sba_S        = dummy_AXI4_Slave_ifc;
 
    // TV output
-   interface FIFOF_O         fo_tv_info   = dummy_FIFOF_O;
+   interface FIFOF_O         fo_tv_buffer   = dummy_FIFOF_O;
    // DMA server
    interface AXI4_Slave_IFC  dma_S        = param.cpu_dma_server;
 endmodule

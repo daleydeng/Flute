@@ -136,19 +136,19 @@ function Tuple3 #(Bool, Bool, WordXL) fn_ras_actions (WordXL  pc,
       let rs1    = instr [11:7];
       let rs2    = instr [6:2];
       let op     = instr [1:0];
-      if ((funct3 == funct3_C_J) && (op == opcode_C1)) begin
+      if ((funct3 == f3_C_J) && (op == opcode_C1)) begin
 	 // C.J = JAL x0, offset
 	 rd_is_link    = False;    // rd is x0
 	 instr_is_JAL  = True;
 	 instr_is_JALR = False;
       end
-      else if ((funct3 == funct3_C_JAL) && (op == opcode_C1) && (xlen == 32)) begin
+      else if ((funct3 == f3_C_JAL) && (op == opcode_C1) && (xlen == 32)) begin
 	 // C.JAL = JAL x1, offset
 	 rd_is_link    = True;    // rd is x1
 	 instr_is_JAL  = True;
 	 instr_is_JALR = False;
       end
-      else if ((funct4 == funct4_C_JR) && (rs1 != 0) && (rs2 == 0) && (op == opcode_C2)) begin
+      else if ((funct4 == f4_C_JR) && (rs1 != 0) && (rs2 == 0) && (op == opcode_C2)) begin
 	 // C.JR = JALR x0, 0(rs1)
 	 rd_is_link    = False;    // rd is x0
 	 rs1_is_link   = is_reg_link (rs1);
@@ -156,7 +156,7 @@ function Tuple3 #(Bool, Bool, WordXL) fn_ras_actions (WordXL  pc,
 	 instr_is_JAL  = False;
 	 instr_is_JALR = True;
       end
-      else if ((funct4 == funct4_C_JALR) && (rs1 != 0) && (rs2 == 0) && (op == opcode_C2)) begin
+      else if ((funct4 == f4_C_JALR) && (rs1 != 0) && (rs2 == 0) && (op == opcode_C2)) begin
 	 // C.JALR = JALR x1, 0(rs1)
 	 rd_is_link    = True;    // rd is x1
 	 rs1_is_link   = is_reg_link (rs1);

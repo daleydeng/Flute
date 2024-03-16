@@ -70,7 +70,7 @@ import DM_CPU_Req_Rsp    :: *;
 import PC_Trace          :: *;    // Lightweight PC trace info
 `endif
 
-import tv_info           :: *;    // Tandem Verification info
+import tv_buffer           :: *;    // Tandem Verification info
 
 // ----------------
 // RISC-V CPU and related IPs
@@ -126,7 +126,7 @@ interface AWSteria_Core_Inner_IFC;
    // ----------------
    // Tandem Verification output
 
-   interface FIFOF_O #(TV_Info)  fo_tv_info;
+   interface FIFOF_O #(TVBuffer)  fo_tv_buffer;
 
    // ----------------------------------------------------------------
    // Debug Module interfaces
@@ -492,7 +492,7 @@ module mkAWSteria_Core_Inner (AWSteria_Core_Inner_IFC);
    // ----------------
    // Tandem Verification output
 
-   interface fo_tv_info = tve_wrapper.fo_tv_info;
+   interface fo_tv_buffer = tve_wrapper.fo_tv_buffer;
 
    // ----------------------------------------------------------------
    // Debug Module interfaces

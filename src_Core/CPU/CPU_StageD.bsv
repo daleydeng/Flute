@@ -6,36 +6,24 @@ package CPU_StageD;
 // This is Stage D ("decode") of the "Flute_V3" CPU.
 
 // ================================================================
-// Exports
 
 export
 CPU_StageD_IFC (..),
 mkCPU_StageD;
 
-// ================================================================
-// BSV library imports
-
 import FIFOF        :: *;
 import GetPut       :: *;
 import ClientServer :: *;
 import ConfigReg    :: *;
-
-// ----------------
-// BSV additional libs
-
 import Cur_Cycle :: *;
 
-// ================================================================
-// Project imports
-
 import isa_decls        :: *;
+`ifdef ISA_C
+import isa_decode_cext     :: *;
+`endif
+
 import CPU_Globals      :: *;
 import Near_Mem_IFC     :: *;
-
-`ifdef ISA_C
-// 'C' extension (16b compressed instructions)
-import CPU_Decode_C     :: *;
-`endif
 
 // ================================================================
 // Interface
@@ -75,9 +63,9 @@ module mkCPU_StageD #(Bit#(4)  verbosity, MISA misa)
 
    InstrBits instr = rg_data.instr;
 `ifdef ISA_C
-   Instr_C instr_C = instr [15:0];
+   InstrCBits instr_C = instr [15:0];
    if (! rg_data.is_i32_not_i16)
-      instr = fv_decode_C (misa, xl, instr_C);
+      instr = decode_instr_C (misa, xl, instr_C);
 `endif
 
    // ----------------------------------------------------------------

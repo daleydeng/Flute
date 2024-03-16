@@ -42,7 +42,7 @@ typedef struct {
    Addr           pc;
    InstrBits      instr;
 `ifdef ISA_C
-   Instr_C        instr_C;
+   InstrCBits        instr_C;
 `endif
    DecodedInstr  decoded_instr;
    Instruction   instruction;
@@ -380,7 +380,7 @@ endfunction
 // JALR
 
 function ALU_Outputs fv_JALR (ALU_Inputs inputs);
-   Bool funct3_is_not_zero = (inputs.decoded_instr.funct3 != 0);
+   Bool f3_is_not_zero = (inputs.decoded_instr.funct3 != 0);
 
    let rs1_val = inputs.rs1_val;
    let rs2_val = inputs.rs2_val;
@@ -407,7 +407,7 @@ function ALU_Outputs fv_JALR (ALU_Inputs inputs);
 			    taken_PC    : next_pc };
 
    let alu_outputs = alu_outputs_base;
-   alu_outputs.control   = ((misaligned_target || funct3_is_not_zero)
+   alu_outputs.control   = ((misaligned_target || f3_is_not_zero)
 			    ? CONTROL_TRAP
 			    : CONTROL_BRANCH);
    alu_outputs.exc_code  = exc_code_INSTR_ADDR_MISALIGNED;

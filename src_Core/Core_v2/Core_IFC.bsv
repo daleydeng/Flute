@@ -41,7 +41,7 @@ import PC_Trace  :: *;
 `endif
 
 `ifdef INCLUDE_TANDEM_VERIF
-import tv_info  :: *;
+import tv_buffer  :: *;
 `endif
 
 `ifdef INCLUDE_GDB_CONTROL
@@ -104,7 +104,7 @@ interface Core_IFC #(numeric type t_n_interrupt_sources);
    // with relevant bytes in locations [0]..[n-1]
 
 `ifdef INCLUDE_TANDEM_VERIF
-   interface Get #(TV_Info)  tv_verifier_info_get;
+   interface Get #(TVBuffer)  tv_verifier_info_get;
 `endif
 
    // ----------------------------------------------------------------

@@ -37,7 +37,7 @@ import AWSteria_Core_IFC :: *;
 import DM_Common :: *;
 
 // Tandem Verification
-import tv_info  :: *;
+import tv_buffer  :: *;
 
 // ================================================================
 
@@ -132,10 +132,10 @@ module mkAWSteria_Core_Reclocked
    // ----------------
    // Tandem Verification output
 
-   SyncFIFOIfc #(TV_Info)  f_tv_info  <- mkSyncFIFO (depth, clk_slow, rst_slow,
+   SyncFIFOIfc #(TVBuffer)  f_tv_buffer  <- mkSyncFIFO (depth, clk_slow, rst_slow,
 						     clk_fast);
 
-   mkConnection (core.fo_tv_info, fn_SyncFIFOIfc_to_FIFOF_I (f_tv_info));
+   mkConnection (core.fo_tv_buffer, fn_SyncFIFOIfc_to_FIFOF_I (f_tv_buffer));
 
    // ----------------------------------------------------------------
    // Debug Module interfaces
@@ -206,7 +206,7 @@ module mkAWSteria_Core_Reclocked
    // ----------------
    // Tandem Verification output
 
-   interface fo_tv_info  = fn_SyncFIFOIfc_to_FIFOF_O (f_tv_info);
+   interface fo_tv_buffer  = fn_SyncFIFOIfc_to_FIFOF_O (f_tv_buffer);
 
    // ----------------
    // Debug Module interfaces

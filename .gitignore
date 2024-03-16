@@ -22,4 +22,6 @@ RTL_Catamaran_Core*
 Verilog_RTL
 Logs/
 trace_out.dat
-!scripts/*/trace_out.dat
+scripts/samples/
+.*
+!.gitignore

@@ -23,7 +23,7 @@ import GetPut_Aux :: *;
 // Project imports
 
 import isa_decls      :: *;
-import tv_info        :: *;
+import tv_buffer        :: *;
 import SoC_Top        :: *;
 import Mem_Controller :: *;
 import Mem_Model      :: *;
@@ -149,9 +149,9 @@ module mkTop_HW_Side (Empty) ;
 
 `ifdef INCLUDE_TANDEM_VERIF
    rule rl_tv_vb_out;
-      let tv_info <- soc_top.tv_verifier_info_get.get;
-      let n  = tv_info.num_bytes;
-      let vb = tv_info.vec_bytes;
+      let tv_buffer <- soc_top.tv_verifier_info_get.get;
+      let n  = tv_buffer.num_bytes;
+      let vb = tv_buffer.vec_bytes;
 
       Bit#(32) success = 1;
 

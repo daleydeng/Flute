@@ -54,7 +54,7 @@ import AXI4_Lite_Types :: *;
 `endif
 
 `ifdef INCLUDE_TANDEM_VERIF
-import tv_info :: *;
+import tv_buffer :: *;
 import AXI4_Stream ::*;
 `endif
 
@@ -292,7 +292,7 @@ endmodule
 // ================================================================
 // TV AXI4 Stream Parameters
 
-typedef SizeOf #(TV_Info)Wd_SData;
+typedef SizeOf #(TVBuffer)Wd_SData;
 typedef 0 Wd_SDest;
 typedef 0 Wd_SUser;
 typedef 0 Wd_SId;
@@ -300,11 +300,11 @@ typedef 0 Wd_SId;
 // ================================================================
 
 interface TV_Xactor;
-   interface Put #(TV_Info) tv_in;
+   interface Put #(TVBuffer) tv_in;
    interface AXI4_Stream_Master_IFC #(Wd_SId, Wd_SDest, Wd_SData, Wd_SUser)  axi_out;
 endinterface
 
-function AXI4_Stream #(Wd_SId, Wd_SDest, Wd_SData, Wd_SUser) fn_TVToAxiS (TV_Info x);
+function AXI4_Stream #(Wd_SId, Wd_SDest, Wd_SData, Wd_SUser) fn_TVToAxiS (TVBuffer x);
    return AXI4_Stream {tid: ?,
 		       tdata: pack(x),
 		       tstrb: '1,
