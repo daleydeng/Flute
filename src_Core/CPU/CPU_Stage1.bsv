@@ -23,7 +23,7 @@ import Cur_Cycle :: *;
 
 import isa_decls        :: *;
 `ifdef ISA_C
-import isa_decode_cext     :: *;
+import convert_instr_c     :: *;
 `endif
 
 import CPU_Globals      :: *;

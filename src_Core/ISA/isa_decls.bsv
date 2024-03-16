@@ -501,8 +501,8 @@ Bit#(10) f10_SLLW   = 10'b000_0000_001;
 Bit#(10) f10_SRLW   = 10'b000_0000_101;
 Bit#(10) f10_SRAW   = 10'b010_0000_101;
 
-Bit#(7) funct7_ADDW = 7'b_000_0000;    Bit#(3) f3_ADDW  = 3'b_000;
-Bit#(7) funct7_SUBW = 7'b_010_0000;    Bit#(3) f3_SUBW  = 3'b_000;
+Bit#(7) f7_ADDW = 7'b_000_0000;    Bit#(3) f3_ADDW  = 3'b_000;
+Bit#(7) f7_SUBW = 7'b_010_0000;    Bit#(3) f3_SUBW  = 3'b_000;
 
 Bit#(10) f10_MULW   = 10'b000_0001_000;
 Bit#(10) f10_DIVW   = 10'b000_0001_100;

@@ -1,11 +1,11 @@
-package isa_decode_cext;
+package convert_instr_c;
 // ================================================================
-// decode_instr_C() is a function that decodes and expands a 16-bit
+// convert_instr_C() is a function that decodes and expands a 16-bit
 // "compressed" RISC-V instruction ('C' extension) into its full
 // 32-bit equivalent.
 // ================================================================
 
-export decode_instr_C;
+export convert_instr_C;
 
 import isa_decls   :: *;
 
@@ -73,7 +73,7 @@ import isa_decls   :: *;
 `define check_32_64_d(val) `check_n2d(val, misa_mxl_32, misa_mxl_64)
 `define check_64_128(val) `check_n2(val, misa_mxl_64, misa_mxl_128)
 
-function InstrBits decode_instr_C (MISA misa, Bit #(2) xl, InstrCBits instr_C);
+function InstrBits convert_instr_C (MISA misa, Bit #(2) xl, InstrCBits instr_C);
    InstrBits out = illegal_instr;
    Bool illegal = misa.c != 1;
    Bool found = False;
@@ -295,11 +295,11 @@ endfunction
 function Tuple2#(Bool, InstrBits) decode_C_SWSP (InstrCBits  instr_C);
    begin
       // InstrBits fields: CSS-type
-      match { .funct3, .imm_at_12_7, .rs2, .op } = fv_ifields_CSS_type (instr_C);
-      Bit#(8) offset = { imm_at_12_7 [1:0], imm_at_12_7 [5:2], 2'b0 };
+      let i = parse_instr_C(instr_C, InstrCFmtCSS).ast.CSS;
+      Bit#(8) offset = { i.imm_12_7 [1:0], i.imm_12_7 [5:2], 2'b0 };
 
-      let is_legal = op == opcode_C2 && funct3 == f3_C_SWSP;
-      let instr = mkInstr_S_type (zeroExtend (offset), rs2, /*rs1*/reg_sp, f3_SW, op_STORE);
+      let is_legal = i.op == opcode_C2 && i.funct3 == f3_C_SWSP;
+      let instr = mkInstr_S_type (zeroExtend (offset), i.rs2, /*rs1*/reg_sp, f3_SW, op_STORE);
 
       return tuple2 (is_legal, instr);
    end
@@ -310,12 +310,12 @@ endfunction
 function Tuple2#(Bool, InstrBits) decode_C_SDSP (InstrCBits  instr_C);
    begin
       // InstrBits fields: CSS-type
-      match { .funct3, .imm_at_12_7, .rs2, .op } = fv_ifields_CSS_type (instr_C);
-      Bit#(9) offset = { imm_at_12_7 [2:0], imm_at_12_7 [5:3], 3'b0 };
+      let i = parse_instr_C(instr_C, InstrCFmtCSS).ast.CSS;
+      Bit#(9) offset = { i.imm_12_7[2:0], i.imm_12_7[5:3], 3'b0 };
 
-      let is_legal = op == opcode_C2 && funct3 == f3_C_SDSP;
+      let is_legal = i.op == opcode_C2 && i.funct3 == f3_C_SDSP;
 
-      let instr = mkInstr_S_type (zeroExtend (offset), rs2, /*rs1*/reg_sp, f3_SD, op_STORE);
+      let instr = mkInstr_S_type (zeroExtend (offset), i.rs2, /*rs1*/reg_sp, f3_SD, op_STORE);
 
       return tuple2 (is_legal, instr);
    end
@@ -327,12 +327,12 @@ endfunction
 function Tuple2#(Bool, InstrBits) decode_C_SQSP (InstrCBits  instr_C);
    begin
       // InstrBits fields: CSS-type
-      match { .funct3, .imm_at_12_7, .rs2, .op } = fv_ifields_CSS_type (instr_C);
-      Bit#(10) offset = { imm_at_12_7 [3:0], imm_at_12_7 [5:4], 4'b0 };
+      let i = parse_instr_C(instr_C, InstrCFmtCSS).ast.CSS;
+      Bit#(10) offset = { i.imm_12_7[3:0], i.imm_12_7[5:4], 4'b0 };
 
-      let is_legal = op == opcode_C2 && funct3 == f3_C_SQSP;
+      let is_legal = i.op == opcode_C2 && i.funct3 == f3_C_SQSP;
 
-      let instr = mkInstr_S_type (zeroExtend (offset), rs2, /*rs1*/reg_sp, f3_SQ, op_STORE);
+      let instr = mkInstr_S_type (zeroExtend (offset), i.rs2, /*rs1*/reg_sp, f3_SQ, op_STORE);
 
       return tuple2 (is_legal, instr);
    end
@@ -344,11 +344,11 @@ endfunction
 function Tuple2#(Bool, InstrBits) decode_C_FSWSP(InstrCBits  instr_C);
    begin
       // InstrBits fields: CSS-type
-      match { .funct3, .imm_at_12_7, .rs2, .op } = fv_ifields_CSS_type (instr_C);
-      Bit#(8) offset = { imm_at_12_7 [1:0], imm_at_12_7 [5:2], 2'b0 };
+      let i = parse_instr_C(instr_C, InstrCFmtCSS).ast.CSS;
+      Bit#(8) offset = { i.imm_12_7 [1:0], i.imm_12_7 [5:2], 2'b0 };
 
       let is_legal = op == opcode_C2 && funct3 == f3_C_FSWSP;
-      let       instr = mkInstr_S_type (zeroExtend (offset), rs2, /*rs1*/reg_sp, f3_FSW, op_STORE_FP);
+      let instr = mkInstr_S_type (zeroExtend (offset), i.rs2, /*rs1*/reg_sp, f3_FSW, op_STORE_FP);
 
       return tuple2 (is_legal, instr);
    end
@@ -360,11 +360,11 @@ endfunction
 function Tuple2#(Bool, InstrBits) decode_C_FSDSP (InstrCBits  instr_C);
    begin
       // InstrBits fields: CSS-type
-      match { .funct3, .imm_at_12_7, .rs2, .op } = fv_ifields_CSS_type (instr_C);
-      Bit#(9) offset = { imm_at_12_7 [2:0], imm_at_12_7 [5:3], 3'b0 };
+      let i = parse_instr_C(instr_C, InstrCFmtCSS).ast.CSS;
+      Bit#(9) offset = { i.imm_12_7 [2:0], i.imm_12_7 [5:3], 3'b0 };
 
-      let is_legal = op == opcode_C2 && funct3 == f3_C_FSDSP;
-      let       instr = mkInstr_S_type (zeroExtend (offset), rs2, /*rs1*/reg_sp, f3_FSD, op_STORE_FP);
+      let is_legal = i.op == opcode_C2 && i.funct3 == f3_C_FSDSP;
+      let instr = mkInstr_S_type (zeroExtend (offset), i.rs2, /*rs1*/reg_sp, f3_FSD, op_STORE_FP);
       return tuple2 (is_legal, instr);
    end
 endfunction
@@ -377,13 +377,13 @@ endfunction
 function Tuple2#(Bool, InstrBits) decode_C_LW (InstrCBits  instr_C);
    begin
       // InstrBits fields: CL-type
-      match { .funct3, .imm_at_12_10, .rs1, .imm_at_6_5, .rd, .op } = fv_ifields_CL_type (instr_C);
-      Bit#(7) offset = { imm_at_6_5 [0], imm_at_12_10, imm_at_6_5 [1], 2'b0 };
+      let i = parse_instr_C(instr_C, InstrCFmtCL).ast.CL;
+      Bit#(7) offset = { i.imm_6_5 [0], i.imm_12_10, i.imm_6_5 [1], 2'b0 };
 
-      Bool is_legal = ((op == opcode_C0)
-		       && (funct3 == f3_C_LW));
+      let is_legal = i.op == opcode_C0 && i.funct3 == f3_C_LW;
 
-      let instr = mkInstr_I (zeroExtend (offset),  rs1,  f3_LW,  rd,  op_LOAD);
+      let instr = mkInstr_I (zeroExtend (offset),  get_creg(i.rs1_C),  
+         f3_LW,  get_creg(i.rd_C),  op_LOAD);
 
       return tuple2 (is_legal, instr);
    end
@@ -394,11 +394,12 @@ endfunction
 function Tuple2#(Bool, InstrBits) decode_C_LD (InstrCBits  instr_C);
    begin
       // InstrBits fields: CL-type
-      match { .funct3, .imm_at_12_10, .rs1, .imm_at_6_5, .rd, .op } = fv_ifields_CL_type (instr_C);
-      Bit#(8) offset = { imm_at_6_5, imm_at_12_10, 3'b0 };
+      let i = parse_instr_C(instr_C, InstrCFmtCL).ast.CL;
+      Bit#(8) offset = { i.imm_6_5, i.imm_12_10, 3'b0 };
 
-      let is_legal = op == opcode_C0 && funct3 == f3_C_LD;
-      let instr = mkInstr_I (zeroExtend (offset),  rs1,  f3_LD,  rd,  op_LOAD);
+      let is_legal = i.op == opcode_C0 && i.funct3 == f3_C_LD;
+      let instr = mkInstr_I (zeroExtend(offset),  get_creg(i.rs1_C), 
+          f3_LD,  get_creg(i.rd_C),  op_LOAD);
 
       return tuple2 (is_legal, instr);
    end
@@ -410,13 +411,12 @@ endfunction
 function Tuple2#(Bool, InstrBits) decode_C_LQ (InstrCBits  instr_C);
    begin
       // InstrBits fields: CL-type
-      match { .funct3, .imm_at_12_10, .rs1, .imm_at_6_5, .rd, .op } = fv_ifields_CL_type (instr_C);
-      Bit#(9) offset = { imm_at_12_10 [0], imm_at_6_5, imm_at_12_10 [2], imm_at_12_10 [1], 4'b0 };
+      let i = parse_instr_C(instr_C, InstrCFmtCL).ast.CL;
+      Bit#(9) offset = { i.imm_12_10 [0], i.imm_6_5, i.imm_12_10 [2], i.imm_12_10 [1], 4'b0 };
 
-      Bool is_legal = ((op == opcode_C0)
-		       && (funct3 == f3_C_LQ));
-
-      let     instr = mkInstr_I (zeroExtend (offset),  rs1,  f3_LQ,  rd,  op_LOAD);
+      let is_legal = i.op == opcode_C0 && i.funct3 == f3_C_LQ;
+      let instr = mkInstr_I (zeroExtend(offset),  get_creg(i.rs1_C), 
+          f3_LQ,  get_creg(i.rd_C),  op_LOAD);
 
       return tuple2 (is_legal, instr);
    end
@@ -428,13 +428,12 @@ endfunction
 function Tuple2#(Bool, InstrBits) decode_C_FLW(InstrCBits  instr_C);
    begin
       // InstrBits fields: CL-type
-      match { .funct3, .imm_at_12_10, .rs1, .imm_at_6_5, .rd, .op } = fv_ifields_CL_type (instr_C);
-      Bit#(7) offset = { imm_at_6_5 [0], imm_at_12_10, imm_at_6_5 [1], 2'b0 };
+      let i = parse_instr_C(instr_C, InstrCFmtCL).ast.CL;
+      Bit#(7) offset = { i.imm_6_5[0], i.imm_12_10, i.imm_6_5[1], 2'b0 };
 
-      Bool is_legal = ((op == opcode_C0)
-		       && (funct3 == f3_C_FLW));
-
-      let     instr = mkInstr_I (zeroExtend (offset),  rs1,  f3_FLW,  rd,  op_LOAD_FP);
+      let is_legal =i.op == opcode_C0 && i.funct3 == f3_C_FLW;
+      let instr = mkInstr_I (zeroExtend (offset),  get_creg(i.rs1_C),  
+         f3_FLW,  get_creg(i.rd_C),  op_LOAD_FP);
 
       return tuple2 (is_legal, instr);
    end
@@ -446,13 +445,12 @@ endfunction
 function Tuple2#(Bool, InstrBits) decode_C_FLD (InstrCBits  instr_C);
    begin
       // InstrBits fields: CL-type
-      match { .funct3, .imm_at_12_10, .rs1, .imm_at_6_5, .rd, .op } = fv_ifields_CL_type (instr_C);
-      Bit#(8) offset = { imm_at_6_5, imm_at_12_10, 3'b0 };
+      let i = parse_instr_C(instr_C, InstrCFmtCL).ast.CL;
+      Bit#(8) offset = { i.imm_6_5, i.imm_12_10, 3'b0 };
 
-      Bool is_legal = ((op == opcode_C0)
-		       && (funct3 == f3_C_FLD));
-
-      let instr = mkInstr_I (zeroExtend (offset),  rs1,  f3_FLD,  rd,  op_LOAD_FP);
+      let is_legal = i.op == opcode_C0 && i.funct3 == f3_C_FLD;
+      let instr = mkInstr_I (zeroExtend (offset),  get_creg(i.rs1_C),  
+         f3_FLD,  get_creg(i.rd_C),  op_LOAD_FP);
 
       return tuple2 (is_legal, instr);
    end
@@ -466,12 +464,12 @@ endfunction
 function Tuple2#(Bool, InstrBits) decode_C_SW (InstrCBits  instr_C);
    begin
       // InstrBits fields: CS-type
-      match { .funct3, .imm_at_12_10, .rs1, .imm_at_6_5, .rs2, .op } = fv_ifields_CS_type (instr_C);
-      Bit#(7) offset = { imm_at_6_5 [0], imm_at_12_10, imm_at_6_5 [1], 2'b0 };
+      let i = parse_instr_C(instr_C, InstrCFmtCS).ast.CS;
+      Bit#(7) offset = { i.imm_6_5[0], i.imm_12_10, i.imm_6_5[1], 2'b0 };
 
-      Bool is_legal = op == opcode_C0 && funct3 == f3_C_SW;
-
-      let instr = mkInstr_S_type (zeroExtend (offset), rs2, rs1, f3_SW, op_STORE);
+      let is_legal = i.op == opcode_C0 && i.funct3 == f3_C_SW;
+      let instr = mkInstr_S_type (zeroExtend (offset), get_creg(i.rs2_C), 
+         get_creg(i.rs1_C), f3_SW, op_STORE);
       
       return tuple2 (is_legal, instr);
    end
@@ -482,12 +480,13 @@ endfunction
 function Tuple2#(Bool, InstrBits) decode_C_SD (InstrCBits  instr_C);
    begin
       // InstrBits fields: CS-type
-      match { .funct3, .imm_at_12_10, .rs1, .imm_at_6_5, .rs2, .op } = fv_ifields_CS_type (instr_C);
-      Bit#(8) offset = { imm_at_6_5, imm_at_12_10, 3'b0 };
+      let i = parse_instr_C(instr_C, InstrCFmtCS).ast.CS;
+      Bit#(8) offset = { i.imm_6_5, i.imm_12_10, 3'b0 };
 
-      let is_legal = op == opcode_C0 && funct3 == f3_C_SD;
-      let instr = mkInstr_S_type (zeroExtend (offset), rs2, rs1, f3_SD, op_STORE);
-      
+      let is_legal = i.op == opcode_C0 && i.funct3 == f3_C_SD;
+      let instr = mkInstr_S_type (zeroExtend (offset), get_creg(i.rs2_C), 
+         get_creg(i.rs1_C), f3_SD, op_STORE);
+
       return tuple2 (is_legal, instr);
    end
 endfunction
@@ -495,18 +494,16 @@ endfunction
 
 `ifdef RV128
 // C_SQ: expands to SQ
-function Tuple2#(Bool, InstrBits) decode_C_SQ (MISA  misa,  Bit#(2)  xl,  InstrCBits  instr_C);
+function Tuple2#(Bool, InstrBits) decode_C_SQ (InstrCBits  instr_C);
    begin
       // InstrBits fields: CS-type
-      match { .funct3, .imm_at_12_10, .rs1, .imm_at_6_5, .rs2, .op } = fv_ifields_CS_type (instr_C);
-      Bit#(9) offset = { imm_at_12_10 [0], imm_at_6_5, imm_at_12_10 [2], imm_at_12_10 [1], 4'b0 };
+      let i = parse_instr_C(instr_C, InstrCFmtCS).ast.CS;
+      Bit#(9) offset = { i.imm_12_10[0], i.imm_6_5, i.imm_12_10[2], i.imm_12_10[1], 4'b0 };
 
-      Bool is_legal = ((misa.c == 1'b1)
-		       && (op == opcode_C0)
-		       && (funct3 == f3_C_SQ));
+      let is_legal = op == opcode_C0 && funct3 == f3_C_SQ;
+      let instr = mkInstr_S_type (zeroExtend (offset), get_creg(i.rs2_C), 
+         get_creg(i.rs1_C), f3_SQ, op_STORE);
 
-      let instr = mkInstr_S_type (zeroExtend (offset), rs2, rs1, f3_SQ, op_STORE);
-      
       return tuple2 (is_legal, instr);
    end
 endfunction
@@ -517,8 +514,9 @@ endfunction
 function Tuple2#(Bool, InstrBits) decode_C_FSW(InstrCBits  instr_C);
    begin
       // InstrBits fields: CS-type
-      match { .funct3, .imm_at_12_10, .rs1, .imm_at_6_5, .rs2, .op } = fv_ifields_CS_type (instr_C);
-      Bit#(7) offset = { imm_at_6_5 [0], imm_at_12_10, imm_at_6_5 [1], 2'b0 };
+      let i = parse_instr_C(instr_C, InstrCFmtCS).ast.CS;
+      match { .funct3, .i.imm_12_10, .rs1, .i.imm_6_5, .rs2, .op } = fv_ifields_CS_type (instr_C);
+      Bit#(7) offset = { i.imm_6_5 [0], i.imm_12_10, i.imm_6_5 [1], 2'b0 };
 
       Bool is_legal = op == opcode_C0 && funct3 == f3_C_FSW;
 
@@ -534,11 +532,12 @@ endfunction
 function Tuple2#(Bool, InstrBits) decode_C_FSD(InstrCBits  instr_C);
    begin
       // InstrBits fields: CS-type
-      match { .funct3, .imm_at_12_10, .rs1, .imm_at_6_5, .rs2, .op } = fv_ifields_CS_type (instr_C);
-      Bit#(8) offset = { imm_at_6_5, imm_at_12_10, 3'b0 };
+      let i = parse_instr_C(instr_C, InstrCFmtCS).ast.CS;
+      Bit#(8) offset = { i.imm_6_5, i.imm_12_10, 3'b0 };
 
-      Bool is_legal = op == opcode_C0 && funct3 == f3_C_FSD;
-      let instr = mkInstr_S_type (zeroExtend (offset), rs2, rs1, f3_FSD, op_STORE_FP);
+      let is_legal = i.op == opcode_C0 && i.funct3 == f3_C_FSD;
+      let instr = mkInstr_S_type (zeroExtend (offset), get_creg(i.rs2_C),
+         get_creg(i.rs1_C), f3_FSD, op_STORE_FP);
       
       return tuple2 (is_legal, instr);
    end
@@ -553,22 +552,22 @@ endfunction
 function Tuple2#(Bool, InstrBits) decode_C_J(InstrCBits  instr_C);
    begin
       // InstrBits fields: CJ-type
-      match { .funct3, .imm_at_12_2, .op } = fv_ifields_CJ_type (instr_C);
-      Bit#(12) offset = {imm_at_12_2 [10],
-			  imm_at_12_2 [6],
-			  imm_at_12_2 [8:7],
-			  imm_at_12_2 [4],
-			  imm_at_12_2 [5],
-			  imm_at_12_2 [0],
-			  imm_at_12_2 [9],
-			  imm_at_12_2 [3:1],
-			  1'b0};
+      let i = parse_instr_C(instr_C, InstrCFmtCJ).ast.CJ;
+      Bit#(12) offset = {
+         i.imm_12_2 [10],
+         i.imm_12_2 [6],
+         i.imm_12_2 [8:7],
+         i.imm_12_2 [4],
+         i.imm_12_2 [5],
+         i.imm_12_2 [0],
+         i.imm_12_2 [9],
+         i.imm_12_2 [3:1],
+      1'b0};
 
-      let is_legal = op == opcode_C1 && funct3 == f3_C_J;
+      let is_legal = i.op == opcode_C1 && i.funct3 == f3_C_J;
 
-      RegIdx   rd    = reg_zero;
       Bit#(21) imm21 = signExtend (offset);
-      let       instr = mkInstr_J_type (imm21, rd, op_JAL);
+      let instr = mkInstr_J_type (imm21, /*rd*/ reg_zero, op_JAL);
       
       return tuple2 (is_legal, instr);
    end
@@ -579,21 +578,21 @@ endfunction
 function Tuple2#(Bool, InstrBits) decode_C_JAL (InstrCBits  instr_C);
    begin
       // InstrBits fields: CJ-type
-      match { .funct3, .imm_at_12_2, .op } = fv_ifields_CJ_type (instr_C);
-      Bit#(12) offset = {imm_at_12_2 [10],
-			  imm_at_12_2 [6],
-			  imm_at_12_2 [8:7],
-			  imm_at_12_2 [4],
-			  imm_at_12_2 [5],
-			  imm_at_12_2 [0],
-			  imm_at_12_2 [9],
-			  imm_at_12_2 [3:1],
-			  1'b0};
+      let i = parse_instr_C(instr_C, InstrCFmtCJ).ast.CJ;
+      Bit#(12) offset = {
+         i.imm_12_2 [10],
+         i.imm_12_2 [6],
+         i.imm_12_2 [8:7],
+         i.imm_12_2 [4],
+         i.imm_12_2 [5],
+         i.imm_12_2 [0],
+         i.imm_12_2 [9],
+         i.imm_12_2 [3:1],
+         1'b0};
 
-      let is_legal = op == opcode_C1 && funct3 == f3_C_JAL;
-      RegIdx   rd    = reg_ra;
+      let is_legal = i.op == opcode_C1 && i.funct3 == f3_C_JAL;
       Bit#(21) imm21 = signExtend (offset);
-      let       instr = mkInstr_J_type  (imm21,  rd,  op_JAL);
+      let       instr = mkInstr_J_type  (imm21,  /*rd*/ reg_ra,  op_JAL);
       
       return tuple2 (is_legal, instr);
    end
@@ -632,14 +631,15 @@ endfunction
 function Tuple2#(Bool, InstrBits) decode_C_BEQZ (InstrCBits  instr_C);
    begin
       // InstrBits fields: CB-type
-      match { .funct3, .imm_at_12_10, .rs1, .imm_at_6_2, .op } = fv_ifields_CB_type (instr_C);
-      Bit#(9) offset = { imm_at_12_10 [2], imm_at_6_2 [4:3], imm_at_6_2 [0], imm_at_12_10 [1:0], imm_at_6_2 [2:1], 1'b0 };
+      let i = parse_instr_C(instr_C, InstrCFmtCB).ast.CB;
+      Bit#(9) offset = { i.imm_12_10[2], i.imm_6_2[4:3], i.imm_6_2[0], 
+                        i.imm_12_10[1:0], i.imm_6_2[2:1], 1'b0 };
       
-      let is_legal = op == opcode_C1 && funct3 == f3_C_BEQZ;
+      let is_legal = i.op == opcode_C1 && i.funct3 == f3_C_BEQZ;
 
-      RegIdx   rs2   = reg_zero;
       Bit#(13) imm13 = signExtend (offset);
-      let       instr = mkInstr_B_type (imm13, rs2, rs1, f3_BEQ, op_BRANCH);
+      let instr = mkInstr_B_type (imm13, /*rs2*/reg_zero, get_creg(i.rs1_C),
+         f3_BEQ, op_BRANCH);
 
       return tuple2 (is_legal, instr);
    end
@@ -649,14 +649,16 @@ endfunction
 function Tuple2#(Bool, InstrBits) decode_C_BNEZ (InstrCBits  instr_C);
    begin
       // InstrBits fields: CB-type
-      match { .funct3, .imm_at_12_10, .rs1, .imm_at_6_2, .op } = fv_ifields_CB_type (instr_C);
-      Bit#(9) offset = { imm_at_12_10 [2], imm_at_6_2 [4:3], imm_at_6_2 [0], imm_at_12_10 [1:0], imm_at_6_2 [2:1], 1'b0 };
+      let i = parse_instr_C(instr_C, InstrCFmtCB).ast.CB;
+      Bit#(9) offset = { i.imm_12_10[2], i.imm_6_2[4:3], i.imm_6_2[0], 
+         i.imm_12_10[1:0], i.imm_6_2 [2:1], 1'b0 };
       
-      Bool is_legal = op == opcode_C1 && funct3 == f3_C_BNEZ;
+      let is_legal = i.op == opcode_C1 && i.funct3 == f3_C_BNEZ;
 
       RegIdx   rs2   = reg_zero;
       Bit#(13) imm13 = signExtend (offset);
-      let       instr = mkInstr_B_type (imm13, rs2, rs1, f3_BNE, op_BRANCH);
+      let instr = mkInstr_B_type (imm13, /*rs2*/reg_zero, get_creg(i.rs1_C),
+         f3_BNE, op_BRANCH);
 
       return tuple2 (is_legal, instr);
    end
@@ -787,16 +789,15 @@ endfunction
 function Tuple2#(Bool, InstrBits) decode_C_ADDI4SPN (InstrCBits  instr_C);
    begin
       // InstrBits fields: CIW-type
-      match { .funct3, .imm_at_12_5, .rd, .op } = fv_ifields_CIW_type (instr_C);
-      Bit#(10) nzimm10 = { imm_at_12_5 [5:2], imm_at_12_5 [7:6], imm_at_12_5 [0], imm_at_12_5 [1], 2'b0 };
+      let i = parse_instr_C(instr_C, InstrCFmtCIW).ast.CIW;
+      Bit#(10) nzimm10 = { i.imm_12_5 [5:2], i.imm_12_5 [7:6], i.imm_12_5 [0], i.imm_12_5 [1], 2'b0 };
 
-      Bool is_legal = ((op == opcode_C0)
-		       && (funct3 == f3_C_ADDI4SPN)
+      let is_legal = ((i.op == opcode_C0)
+		       && (i.funct3 == f3_C_ADDI4SPN)
 		       && (nzimm10 != 0));
 
-      RegIdx   rs1   = reg_sp;
       Bit#(12) imm12 = zeroExtend (nzimm10);
-      let       instr = mkInstr_I (imm12, rs1, f3_ADDI, rd, op_OP_IMM);
+      let instr = mkInstr_I (imm12, /*rs1*/reg_sp, f3_ADDI, get_creg(i.rd_C), op_OP_IMM);
 
       return tuple2 (is_legal, instr);
    end
@@ -829,22 +830,22 @@ endfunction
 function Tuple2#(Bool, InstrBits) decode_C_SRLI(InstrCBits  instr_C, Bit#(2)  xl);
    begin
       // InstrBits fields: CB-type
-      match { .funct3, .imm_at_12_10, .rd_rs1, .imm_at_6_2, .op } = fv_ifields_CB_type (instr_C);
-      Bit#(1) shamt6_5 = imm_at_12_10 [2];
-      Bit#(2) funct2   = imm_at_12_10 [1:0];
-      Bit#(6) shamt6   = { shamt6_5, imm_at_6_2 };
+      let i = parse_instr_C(instr_C, InstrCFmtCB).ast.CB;      
+      Bit#(1) shamt6_5 = i.imm_12_10 [2];
+      Bit#(2) funct2   = i.imm_12_10 [1:0];
+      Bit#(6) shamt6   = { shamt6_5, i.imm_6_2 };
 
-      Bool is_legal = ((op == opcode_C1)
-		       && (funct3 == f3_C_SRLI)
+      let is_legal = ((i.op == opcode_C1)
+		       && (i.funct3 == f3_C_SRLI)
 		       && (funct2 == f2_C_SRLI)
-		       && (rd_rs1 != 0)
              && (shamt6 != 0)
 		       && ((xl == misa_mxl_32) ? (shamt6_5 == 0) : True));
 
-      Bit#(12) imm12 = (  (xl == misa_mxl_32)
-			 ? { msbs7_SRLI, imm_at_6_2 }
+      Bit#(12) imm12 = ((xl == misa_mxl_32)
+			 ? { msbs7_SRLI, i.imm_6_2 }
 			 : { msbs6_SRLI, shamt6 } );
-      let       instr = mkInstr_I (imm12, rd_rs1, f3_SRLI, rd_rs1, op_OP_IMM);
+      let rd_rs1 = get_creg(i.rs1_C);
+      let instr = mkInstr_I (imm12, /*rs1*/rd_rs1, f3_SRLI, /*rd*/rd_rs1, op_OP_IMM);
 
       return tuple2 (is_legal, instr);
    end
@@ -856,22 +857,22 @@ endfunction
 function Tuple2#(Bool, InstrBits) decode_C_SRAI (InstrCBits  instr_C, Bit#(2)  xl);
    begin
       // InstrBits fields: CB-type
-      match { .funct3, .imm_at_12_10, .rd_rs1, .imm_at_6_2, .op } = fv_ifields_CB_type (instr_C);
-      Bit#(1) shamt6_5 = imm_at_12_10 [2];
-      Bit#(2) funct2   = imm_at_12_10 [1:0];
-      Bit#(6) shamt6   = { shamt6_5, imm_at_6_2 };
+      let i = parse_instr_C(instr_C, InstrCFmtCB).ast.CB;
+      Bit#(1) shamt6_5 = i.imm_12_10 [2];
+      Bit#(2) funct2   = i.imm_12_10 [1:0];
+      Bit#(6) shamt6   = { shamt6_5, i.imm_6_2 };
 
-      let is_legal = ((op == opcode_C1)
-		       && (funct3 == f3_C_SRAI)
-		       && (funct2 == f2_C_SRAI)
-		       && (rd_rs1 != 0)
-                       && (shamt6 != 0)
-		       && ((xl == misa_mxl_32) ? (shamt6_5 == 0) : True));
+      let is_legal = ((i.op == opcode_C1)
+            && (i.funct3 == f3_C_SRAI)
+            && (funct2 == f2_C_SRAI)
+            && (shamt6 != 0)
+            && ((xl == misa_mxl_32) ? (shamt6_5 == 0) : True));
 
       Bit#(12) imm12 = (  (xl == misa_mxl_32)
-			 ? { msbs7_SRAI, imm_at_6_2 }
+			 ? { msbs7_SRAI, i.imm_6_2 }
 			 : { msbs6_SRAI, shamt6 } );
-      let instr = mkInstr_I (imm12, rd_rs1, f3_SRAI, rd_rs1, op_OP_IMM);
+      let rd_rs1 = get_creg(i.rs1_C);
+      let instr = mkInstr_I (imm12, /*rs1*/rd_rs1, f3_SRAI, /*rd*/rd_rs1, op_OP_IMM);
 
       return tuple2 (is_legal, instr);
    end
@@ -882,17 +883,18 @@ endfunction
 function Tuple2#(Bool, InstrBits) decode_C_ANDI (InstrCBits  instr_C);
    begin
       // InstrBits fields: CB-type
-      match { .funct3, .imm_at_12_10, .rd_rs1, .imm_at_6_2, .op } = fv_ifields_CB_type (instr_C);
-      Bit#(1) imm6_5 = imm_at_12_10 [2];
-      Bit#(6) imm6   = { imm6_5, imm_at_6_2 };
-      Bit#(2) funct2 = imm_at_12_10 [1:0];
+      let i = parse_instr_C(instr_C, InstrCFmtCB).ast.CB;
+      Bit#(1) imm6_5 = i.imm_12_10 [2];
+      Bit#(6) imm6   = { imm6_5, i.imm_6_2 };
+      Bit#(2) funct2 = i.imm_12_10 [1:0];
 
-      Bool is_legal = ((op == opcode_C1)
-		       && (funct3 == f3_C_ANDI)
+      Bool is_legal = ((i.op == opcode_C1)
+		       && (i.funct3 == f3_C_ANDI)
 		       && (funct2 == f2_C_ANDI));
 
       Bit#(12) imm12 = signExtend (imm6);
-      let       instr = mkInstr_I (imm12, rd_rs1, f3_ANDI, rd_rs1, op_OP_IMM);
+      let rd_rs1 = get_creg(i.rs1_C);
+      let instr = mkInstr_I (imm12, /*rs1*/ rd_rs1, f3_ANDI, /*rd*/rd_rs1, op_OP_IMM);
 
       return tuple2 (is_legal, instr);
    end
@@ -933,12 +935,14 @@ endfunction
 function Tuple2#(Bool, InstrBits) decode_C_AND (InstrCBits  instr_C);
    begin
       // InstrBits fields: CA-type
-      match { .funct6, .rd_rs1, .funct2, .rs2, .op } = fv_ifields_CA_type (instr_C);
+      let i = parse_instr_C(instr_C, InstrCFmtCA).ast.CA;
+      let is_legal = ((i.op == opcode_C1)
+		       && (i.funct6 == f6_C_AND)
+		       && (i.funct2 == f2_C_AND));
 
-      Bool is_legal = ((op == opcode_C1)
-		       && (funct6 == f6_C_AND)
-		       && (funct2 == f2_C_AND));
-      return tuple2 (is_legal, {f7_AND, rs2, rd_rs1, f3_AND, rd_rs1, op_OP});
+      return tuple2 (is_legal, {
+         f7_AND, get_creg(i.rs2_C), get_creg(i.rd_rs1_C), f3_AND, 
+         get_creg(i.rd_rs1_C), op_OP});
    end
 endfunction
 
@@ -946,13 +950,15 @@ endfunction
 function Tuple2#(Bool, InstrBits) decode_C_OR (InstrCBits  instr_C);
    begin
       // InstrBits fields: CA-type
-      match { .funct6, .rd_rs1, .funct2, .rs2, .op } = fv_ifields_CA_type (instr_C);
+      let i = parse_instr_C(instr_C, InstrCFmtCA).ast.CA;
 
-      Bool is_legal = ((op == opcode_C1)
-		       && (funct6 == f6_C_OR)
-		       && (funct2 == f2_C_OR));
+      let is_legal = ((i.op == opcode_C1)
+		       && (i.funct6 == f6_C_OR)
+		       && (i.funct2 == f2_C_OR));
 
-      return tuple2 (is_legal, {f7_OR, rs2, rd_rs1, f3_OR, rd_rs1, op_OP});
+      return tuple2 (is_legal, {
+         f7_OR, get_creg(i.rs2_C), get_creg(i.rd_rs1_C), f3_OR, 
+         get_creg(i.rd_rs1_C), op_OP});
    end
 endfunction
 
@@ -960,13 +966,15 @@ endfunction
 function Tuple2#(Bool, InstrBits) decode_C_XOR (InstrCBits  instr_C);
    begin
       // InstrBits fields: CA-type
-      match { .funct6, .rd_rs1, .funct2, .rs2, .op } = fv_ifields_CA_type (instr_C);
+      let i = parse_instr_C(instr_C, InstrCFmtCA).ast.CA;
 
-      let is_legal = ((op == opcode_C1)
-		       && (funct6 == f6_C_XOR)
-		       && (funct2 == f2_C_XOR));
+      let is_legal = ((i.op == opcode_C1)
+		       && (i.funct6 == f6_C_XOR)
+		       && (i.funct2 == f2_C_XOR));
 
-      return tuple2 (is_legal, {f7_XOR, rs2, rd_rs1, f3_XOR, rd_rs1, op_OP});
+      return tuple2 (is_legal, {
+         f7_XOR, get_creg(i.rs2_C), get_creg(i.rd_rs1_C), f3_XOR, 
+         get_creg(i.rd_rs1_C), op_OP});
    end
 endfunction
 
@@ -974,13 +982,14 @@ endfunction
 function Tuple2#(Bool, InstrBits) decode_C_SUB (InstrCBits  instr_C);
    begin
       // InstrBits fields: CA-type
-      match { .funct6, .rd_rs1, .funct2, .rs2, .op } = fv_ifields_CA_type (instr_C);
+      let i = parse_instr_C(instr_C, InstrCFmtCA).ast.CA;
+      let is_legal = ((i.op == opcode_C1)
+		       && (i.funct6 == f6_C_SUB)
+		       && (i.funct2 == f2_C_SUB));
 
-      let is_legal = ((op == opcode_C1)
-		       && (funct6 == f6_C_SUB)
-		       && (funct2 == f2_C_SUB));
-
-      return tuple2 (is_legal, {f7_SUB, rs2, rd_rs1, f3_SUB, rd_rs1, op_OP});
+      return tuple2 (is_legal, {
+         f7_SUB, get_creg(i.rs2_C), get_creg(i.rd_rs1_C), f3_SUB, 
+         get_creg(i.rd_rs1_C), op_OP});
    end
 endfunction
 
@@ -988,13 +997,15 @@ endfunction
 function Tuple2#(Bool, InstrBits) decode_C_ADDW(InstrCBits  instr_C);
    begin
       // InstrBits fields: CA-type
-      match { .funct6, .rd_rs1, .funct2, .rs2, .op } = fv_ifields_CA_type (instr_C);
+      let i = parse_instr_C(instr_C, InstrCFmtCA).ast.CA;
 
-      let is_legal = ((op == opcode_C1)
-		       && (funct6 == f6_C_ADDW)
-		       && (funct2 == f2_C_ADDW));
+      let is_legal = ((i.op == opcode_C1)
+		       && (i.funct6 == f6_C_ADDW)
+		       && (i.funct2 == f2_C_ADDW));
 
-      return tuple2 (is_legal, {funct7_ADDW, rs2, rd_rs1, f3_ADDW, rd_rs1, op_OP_32});
+      return tuple2 (is_legal, {
+         f7_ADDW, get_creg(i.rs2_C), get_creg(i.rd_rs1_C), f3_ADDW, 
+         get_creg(i.rd_rs1_C), op_OP_32});
    end
 endfunction
 `endif
@@ -1003,13 +1014,15 @@ endfunction
 function Tuple2#(Bool, InstrBits) decode_C_SUBW(InstrCBits  instr_C);
    begin
       // InstrBits fields: CA-type
-      match { .funct6, .rd_rs1, .funct2, .rs2, .op } = fv_ifields_CA_type (instr_C);
+      let i = parse_instr_C(instr_C, InstrCFmtCA).ast.CA;
 
-      let is_legal = ((op == opcode_C1)
-		       && (funct6 == f6_C_SUBW)
-		       && (funct2 == f2_C_SUBW));
+      let is_legal = ((i.op == opcode_C1)
+		       && (i.funct6 == f6_C_SUBW)
+		       && (i.funct2 == f2_C_SUBW));
 
-      return tuple2 (is_legal, {funct7_SUBW, rs2, rd_rs1, f3_SUBW, rd_rs1, op_OP_32});
+      return tuple2 (is_legal, {
+         f7_SUBW, get_creg(i.rs2_C), get_creg(i.rd_rs1_C), f3_SUBW, 
+         get_creg(i.rd_rs1_C), op_OP_32});
    end
 endfunction
 `endif

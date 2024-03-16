@@ -43,29 +43,29 @@ typedef struct {
       } CI;
       struct {
          Bit#(3) funct3;
-         Bit#(6) imm_6;
+         Bit#(6) imm_12_7;
          Bit#(5) rs2;
          Bit#(2) op;
       } CSS;
       struct {
          Bit#(3) funct3;
-         Bit#(8) imm_8;
+         Bit#(8) imm_12_5;
          Bit#(3) rd_C;
          Bit#(2) op;
       } CIW;
       struct {
          Bit#(3) funct3;
-         Bit#(3) imm_h3;
+         Bit#(3) imm_12_10;
          Bit#(3) rs1_C;
-         Bit#(2) imm_l2;
+         Bit#(2) imm_6_5;
          Bit#(3) rd_C;
          Bit#(2) op;
       } CL;
       struct {
          Bit#(3) funct3;
-         Bit#(3) imm_h3;
+         Bit#(3) imm_12_10;
          Bit#(3) rs1_C;
-         Bit#(2) imm_l2;
+         Bit#(2) imm_6_5;
          Bit#(3) rs2_C;
          Bit#(2) op;
       } CS;
@@ -78,14 +78,14 @@ typedef struct {
       } CA;
       struct {
          Bit#(3) funct3;
-         Bit#(3) offset_h3;
+         Bit#(3) imm_12_10;
          Bit#(3) rs1_C;
-         Bit#(5) offset_l5;
+         Bit#(5) imm_6_2;
          Bit#(2) op;
       } CB;
       struct {
          Bit#(3) funct3;
-         Bit#(11) jump;
+         Bit#(11) imm_12_2;
          Bit#(2) op;
       } CJ;
    } ast;
@@ -106,7 +106,7 @@ function InstructionC parse_instr_C(InstrCBits bits, InstrCFmt fmt);
    endcase;
 endfunction
 
-function Bit#(5) from_creg(Bit#(3) r_c);
+function Bit#(5) get_creg(Bit#(3) r_c);
    return {2'b01, r_c};
 endfunction
 
@@ -193,78 +193,3 @@ Bit#(6) f6_C_SUBW     = 6'b_100_1_11;
 Bit#(2) f2_C_SUBW     = 2'b_00;
 
 Bit#(4) f4_C_EBREAK   = 4'b_1001;
-
-// ================================================================
-// Functions to extract instruction fields from 'C' (compressed) instructions
-
-// function Tuple5 #(Bit#(3), Bit#(1), Bit#(5), Bit#(5), Bit#(2))  fv_ifields_CI_type (InstrCBits  instr);
-//    let funct3     = instr [15:13];
-//    let imm_at_12  = instr [12:12];
-//    let rd_rs1     = instr [11: 7];
-//    let imm_at_6_2 = instr [ 6: 2];
-//    let op         = instr [ 1: 0];
-//    return tuple5 (funct3, imm_at_12, rd_rs1, imm_at_6_2, op);
-// endfunction
-
-function Tuple4 #(Bit#(3), Bit#(6), RegIdx, Bit#(2))  fv_ifields_CSS_type (InstrCBits  instr);
-   let funct3      = instr [15:13];
-   let imm_at_12_7 = instr [12: 7];
-   let rs2         = instr [ 6: 2];
-   let op          = instr [ 1: 0];
-   return tuple4 (funct3, imm_at_12_7, rs2, op);
-endfunction
-
-function Tuple4 #(Bit#(3), Bit#(8), RegIdx, Bit#(2))  fv_ifields_CIW_type (InstrCBits  instr);
-   let funct3      = instr [15:13];
-   let imm_at_12_5 = instr [12: 5];
-   let rd          = {2'b01, instr [4:2]};
-   let op          = instr [ 1: 0];
-   return tuple4 (funct3, imm_at_12_5, rd, op);
-endfunction
-
-function Tuple6 #(Bit#(3), Bit#(3), RegIdx, Bit#(2), RegIdx, Bit#(2))  fv_ifields_CL_type (InstrCBits  instr);
-   let funct3       = instr [15:13];
-   let imm_at_12_10 = instr [12:10];
-   let rs1          = {2'b01, instr [9:7]};
-   let imm_at_6_5   = instr [ 6: 5];
-   let rd           = {2'b01, instr [4:2]};
-   let op           = instr [ 1: 0];
-   return tuple6 (funct3, imm_at_12_10, rs1, imm_at_6_5, rd, op);
-endfunction
-
-function Tuple6 #(Bit#(3), Bit#(3), RegIdx, Bit#(2), RegIdx, Bit#(2))  fv_ifields_CS_type (InstrCBits  instr);
-   let funct3       = instr [15:13];
-   let imm_at_12_10 = instr [12:10];
-   let rs1          = {2'b01, instr [9:7]};
-   let imm_at_6_5   = instr [ 6: 5];
-   let rs2          = {2'b01, instr [4:2]};
-   let op           = instr [ 1: 0];
-   return tuple6 (funct3, imm_at_12_10, rs1, imm_at_6_5, rs2, op);
-endfunction
-
-function Tuple5 #(Bit#(6), RegIdx, Bit#(2), RegIdx, Bit#(2))  fv_ifields_CA_type (InstrCBits  instr);
-   let funct6       = instr [15:10];
-   let rd_rs1       = {2'b01, instr [9:7]};
-   let funct2       = instr [ 6: 5];
-   let rs2          = {2'b01, instr [4:2]};
-   let op           = instr [ 1: 0];
-   return tuple5 (funct6, rd_rs1, funct2, rs2, op);
-endfunction
-
-function Tuple5 #(Bit#(3), Bit#(3), RegIdx, Bit#(5), Bit#(2))  fv_ifields_CB_type (InstrCBits  instr);
-   let funct3       = instr [15:13];
-   let imm_at_12_10 = instr [12:10];
-   let rs1          = {2'b01, instr [9:7]};
-   let imm_at_6_2   = instr [ 6: 2];
-   let op           = instr [ 1: 0];
-   return tuple5 (funct3, imm_at_12_10, rs1, imm_at_6_2, op);
-endfunction
-
-function Tuple3 #(Bit#(3), Bit#(11), Bit#(2))  fv_ifields_CJ_type (InstrCBits  instr);
-   let funct3       = instr [15:13];
-   let imm_at_12_2  = instr [12: 2];
-   let op           = instr [ 1: 0];
-   return tuple3 (funct3, imm_at_12_2, op);
-endfunction
-
-// ================================================================

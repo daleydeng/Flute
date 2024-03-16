@@ -19,7 +19,7 @@ import Cur_Cycle :: *;
 
 import isa_decls        :: *;
 `ifdef ISA_C
-import isa_decode_cext     :: *;
+import convert_instr_c     :: *;
 `endif
 
 import CPU_Globals      :: *;
@@ -65,7 +65,7 @@ module mkCPU_StageD #(Bit#(4)  verbosity, MISA misa)
 `ifdef ISA_C
    InstrCBits instr_C = instr [15:0];
    if (! rg_data.is_i32_not_i16)
-      instr = decode_instr_C (misa, xl, instr_C);
+      instr = convert_instr_C (misa, xl, instr_C);
 `endif
 
    // ----------------------------------------------------------------
