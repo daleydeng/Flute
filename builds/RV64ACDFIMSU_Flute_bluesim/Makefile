@@ -35,8 +35,8 @@ BSC_COMPILATION_FLAGS += \
 # Default ISA test
 
 # TEST ?= rv64ui-p-add
-TEST ?= rv64uc-p-rvc
-# TEST ?= rv64uc-v-rvc
+# TEST ?= rv64uc-p-rvc
+TEST ?= rv64uc-v-rvc
 
 #================================================================
 # Common boilerplate rules

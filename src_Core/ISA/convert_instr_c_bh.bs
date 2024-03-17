@@ -12,4 +12,4 @@ decode_C_LWSP1 instr_C =
 
         instr = encode_instr_I (zeroExtend offset) reg_sp f3_LW i.rd_rs1 op_LOAD 
 
-    in (is_legal, instr)
+    in if is_legal then Just instr else Nothing
