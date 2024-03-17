@@ -11,7 +11,7 @@ import ClientServer :: *;
 // ================================================================
 // Project imports
 
-import isa_decls :: *;
+import isa_base :: *;
 
 import AXI4_Types   :: *;
 import AXI_Widths   :: *;    // For Wd_Id/Addr/Data/User_Dma
@@ -27,7 +27,7 @@ import DM_CPU_Req_Rsp :: *;
 `endif
 
 `ifdef INCLUDE_PC_TRACE
-import PC_Trace :: *;
+import PCTrace :: *;
 `endif
 
 `ifdef INCLUDE_TANDEM_VERIF
@@ -97,7 +97,7 @@ interface CPU_IFC;
    // Outputs a stream of 2-tuples: (cycle_count, pc)
 
 `ifdef INCLUDE_PC_TRACE
-   interface Get #(PC_Trace)  g_pc_trace;
+   interface Get #(PCTrace)  g_pc_trace;
 `endif
 
    // ----------------

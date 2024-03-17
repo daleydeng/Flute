@@ -13,7 +13,7 @@ import GetPut_Aux :: *;
 
 import Cur_Cycle  :: *;
 
-import isa_decls     :: *;
+import isa_priv_S :: *;
 import tv_buffer       :: *;
 import tv_trace_data :: *;
 
@@ -210,7 +210,7 @@ module mkTV_Encode (TV_Encode_IFC);
       match { .n1, .vb1 } = encode_pc (td.pc, td.next_pc);
       match { .n2, .vb2 } = encode_instr (td.instr_sz, td.instr);
       match { .n3, .vb3 } = encode_reg (fv_gpr_regnum (td.rd), td.word1);
-      match { .n4, .vb4 } = encode_reg (fv_csr_regnum (csr_addr_fflags), td.word2);
+      match { .n4, .vb4 } = encode_reg (fv_csr_regnum (csr_fflags), td.word2);
       match { .n5, .vb5 } = encode_reg (fv_csr_regnum (csr_addr_mstatus), td.word4);
       match { .nN, .vbN } = encode_byte (te_op_end_group);
 
@@ -236,7 +236,7 @@ module mkTV_Encode (TV_Encode_IFC);
       match { .n1, .vb1 } = encode_pc (td.pc, td.next_pc);
       match { .n2, .vb2 } = encode_instr (td.instr_sz, td.instr);
       match { .n3, .vb3 } = encode_fpr (fv_fpr_regnum (td.rd), td.word5);
-      match { .n4, .vb4 } = encode_reg (fv_csr_regnum (csr_addr_fflags), td.word2);
+      match { .n4, .vb4 } = encode_reg (fv_csr_regnum (csr_fflags), td.word2);
       match { .n5, .vb5 } = encode_reg (fv_csr_regnum (csr_addr_mstatus), td.word4);
       match { .nN, .vbN } = encode_byte (te_op_end_group);
 
@@ -427,17 +427,17 @@ module mkTV_Encode (TV_Encode_IFC);
       CSRAddr  csr_addr_cause  = csr_addr_mcause;
       CSRAddr  csr_addr_epc    = csr_addr_mepc;
       CSRAddr  csr_addr_tval   = csr_addr_mtval;
-      if (priv == s_Priv_Mode) begin
+      if (priv == priv_S) begin
 	 csr_addr_status = csr_addr_sstatus;
 	 csr_addr_cause  = csr_addr_scause;
 	 csr_addr_epc    = csr_addr_sepc;
 	 csr_addr_tval   = csr_addr_stval;
       end
-      else if (priv == u_Priv_Mode) begin
-	 csr_addr_status = csr_addr_ustatus;
-	 csr_addr_cause  = csr_addr_ucause;
-	 csr_addr_epc    = csr_addr_uepc;
-	 csr_addr_tval   = csr_addr_utval;
+      else if (priv == priv_U) begin
+	 csr_addr_status = csr_ustatus;
+	 csr_addr_cause  = csr_ucause;
+	 csr_addr_epc    = csr_uepc;
+	 csr_addr_tval   = csr_utval;
       end
 
       // Omit the instruction if cause is instruction fault since the instruction is then bogus
@@ -480,17 +480,17 @@ module mkTV_Encode (TV_Encode_IFC);
       CSRAddr  csr_addr_cause  = csr_addr_mcause;
       CSRAddr  csr_addr_epc    = csr_addr_mepc;
       CSRAddr  csr_addr_tval   = csr_addr_mtval;
-      if (priv == s_Priv_Mode) begin
+      if (priv == priv_S) begin
 	 csr_addr_status = csr_addr_sstatus;
 	 csr_addr_cause  = csr_addr_scause;
 	 csr_addr_epc    = csr_addr_sepc;
 	 csr_addr_tval   = csr_addr_stval;
       end
-      else if (priv == u_Priv_Mode) begin
-	 csr_addr_status = csr_addr_ustatus;
-	 csr_addr_cause  = csr_addr_ucause;
-	 csr_addr_epc    = csr_addr_uepc;
-	 csr_addr_tval   = csr_addr_utval;
+      else if (priv == priv_U) begin
+	 csr_addr_status = csr_ustatus;
+	 csr_addr_cause  = csr_ucause;
+	 csr_addr_epc    = csr_uepc;
+	 csr_addr_tval   = csr_utval;
       end
 
       // Encode components of td into byte vecs

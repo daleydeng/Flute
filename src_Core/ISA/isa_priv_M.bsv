@@ -1,11 +1,15 @@
-// Copyright (c) 2013-2019 Bluespec, Inc. All Rights Reserved
+package isa_priv_M;
 
 // ================================================================
-// This is an 'include' file, not a separate BSV package
 //
 // Contains RISC-V Machine-Level ISA defs
 //
 // ================================================================
+
+
+export isa_base :: *, isa_priv_M :: *;
+import isa_base :: *;
+
 
 // ================================================================
 // Utility functions
@@ -372,11 +376,11 @@ function PrivMode fv_new_priv_on_exception (MISA       misa,
 					     Bit#(12)  mideleg,
 					     Bit#(16)  sedeleg,
 					     Bit#(12)  sideleg);
-   PrivMode to_priv = m_Priv_Mode;
+   PrivMode to_priv = priv_M;
    Bit#(1) deleg_bit = 1'b0;
 
    // If the current priv mode is M, it cannot be delegated.
-   if (from_priv < m_Priv_Mode) begin
+   if (from_priv < priv_M) begin
       // If S is supported
       if (misa.s == 1'b1) begin
 	 // Look in medeleg/mideleg for the cause bit; if set, delegate.
@@ -386,16 +390,16 @@ function PrivMode fv_new_priv_on_exception (MISA       misa,
 	    deleg_bit = medeleg [exc_code];
 	 if (deleg_bit == 1'b1) begin
 	    // If the current priv mode is S, then delegate to S.
-	    to_priv = s_Priv_Mode;
+	    to_priv = priv_S;
 	    // If the current priv mode is U, and user mode traps are supported,
 	    // then consult sedeleg/sideleg to determine if delegated to U mode.
-	    if ((from_priv == u_Priv_Mode) && (misa.n == 1'b1)) begin
+	    if ((from_priv == priv_U) && (misa.n == 1'b1)) begin
 	       if (interrupt)
 		  deleg_bit = sideleg [exc_code];
 	       else
 		  deleg_bit = sedeleg [exc_code];
 	       if (deleg_bit == 1'b1)
-	          to_priv = u_Priv_Mode;
+	          to_priv = priv_U;
 	    end
 	 end
       end
@@ -410,7 +414,7 @@ function PrivMode fv_new_priv_on_exception (MISA       misa,
 	    else
 	       deleg_bit = medeleg [exc_code];
 	    if (deleg_bit == 1'b1)
-	       to_priv = u_Priv_Mode;
+	       to_priv = priv_U;
 	 end
       end
    end
@@ -426,8 +430,8 @@ function WordXL fv_new_mstatus_on_exception (WordXL mstatus, PrivMode from_y, Pr
    // xIE = 0
    mstatus = fv_assign_bit (mstatus, ie_to_x, 1'b0);
 
-   // xPP = y        Assert: (to_x == m_Priv_Mode) || (to_x == s_Priv_Mode)
-   mstatus = (  (to_x == m_Priv_Mode)
+   // xPP = y        Assert: (to_x == priv_M) || (to_x == priv_S)
+   mstatus = (  (to_x == priv_M)
 	      ? fv_assign_bits (mstatus, fromInteger (mstatus_mpp_bitpos), from_y)
 	      : fv_assign_bit (mstatus, fromInteger (mstatus_spp_bitpos), from_y [0]));
    return mstatus;
@@ -451,12 +455,12 @@ function Tuple2 #(WordXL, PrivMode) fv_new_mstatus_on_ret (MISA       misa,
    // which empties the one-element stack, revealing the default value
    // (set xPP to U -- or M if U is not supported)
    PrivMode to_y;
-   PrivMode default_pp = ((misa.u == 1'b1) ? u_Priv_Mode : m_Priv_Mode);
-   if (from_x == m_Priv_Mode) begin
+   PrivMode default_pp = ((misa.u == 1'b1) ? priv_U : priv_M);
+   if (from_x == priv_M) begin
       to_y = fv_get_bits (mstatus, fromInteger (mstatus_mpp_bitpos));
       mstatus = fv_assign_bits (mstatus, fromInteger (mstatus_mpp_bitpos), default_pp);
    end
-   else begin //if (from_x == s_Priv_Mode)
+   else begin //if (from_x == priv_S)
       to_y = {1'b0, mstatus [mstatus_spp_bitpos]};
       mstatus = fv_assign_bit (mstatus, fromInteger (mstatus_spp_bitpos), default_pp [0]);
    end
@@ -670,34 +674,34 @@ function Maybe #(Exc_Code) fv_interrupt_pending (MISA       misa,
 	       if (sideleg [i] == 1)
 		  if (misa.n == 1)
 		     // M->S->U delegation
-		     handler_priv = u_Priv_Mode;
+		     handler_priv = priv_U;
 		  else
 		     // Error: SIDELEG [i] should not be 1 if MISA.N is 0
-		     handler_priv = m_Priv_Mode;
+		     handler_priv = priv_M;
 	       else
                   // M->S delegation
-		  handler_priv = s_Priv_Mode;
+		  handler_priv = priv_S;
 	    else
 	       // System with M, U
 	       if (misa.n == 1)
 		  // M->U delegation
-		  handler_priv = u_Priv_Mode;
+		  handler_priv = priv_U;
 	       else
 		  // Error: MIDELEG [i] should not be 1 if MISA.N is 0
-		  handler_priv = m_Priv_Mode;
+		  handler_priv = priv_M;
 	 else
 	    // Error: System with M only; MIDELEG [i] should not be 1
-	    handler_priv = m_Priv_Mode;
+	    handler_priv = priv_M;
       else
 	 // no delegation
-	 handler_priv = m_Priv_Mode;
+	 handler_priv = priv_M;
 
       Bool xie;
-      if (cur_priv == u_Priv_Mode)
+      if (cur_priv == priv_U)
          xie = (mstatus [mstatus_uie_bitpos] == 1);
-      else if (cur_priv == s_Priv_Mode)
+      else if (cur_priv == priv_S)
          xie = (mstatus [mstatus_sie_bitpos] == 1);
-      else if (cur_priv == m_Priv_Mode)
+      else if (cur_priv == priv_M)
          xie = (mstatus [mstatus_mie_bitpos] == 1);
       else
          // Error: unexpected mode
@@ -735,3 +739,4 @@ function Maybe #(Exc_Code) fv_interrupt_pending (MISA       misa,
 endfunction
 
 // ================================================================
+endpackage

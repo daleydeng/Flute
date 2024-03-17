@@ -36,7 +36,7 @@ import Semi_FIFOF :: *;
 // ================================================================
 // Project imports
 
-import isa_decls        :: *;
+import isa        :: *;
 import Near_Mem_IFC     :: *;
 import Cache_Decls      :: *;
 import MMU_Cache_Common :: *;

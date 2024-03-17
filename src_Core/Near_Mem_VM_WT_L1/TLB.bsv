@@ -22,7 +22,7 @@ import Cur_Cycle  :: *;
 // ================================================================
 // Project imports
 
-import isa_decls :: *;
+import isa_priv_S :: *;
 
 // ================================================================
 
@@ -368,14 +368,14 @@ function ActionValue #(VM_Xlate_Result)  fav_vm_xlate (WordXL             addr,
 						       Bit#(1)           sstatus_SUM,
 						       Bit#(1)           mstatus_MXR);
    actionvalue
-      // Translate if in VM mode (sv32, sv39), and priv <= s_Priv_Mode
+      // Translate if in VM mode (sv32, sv39), and priv <= priv_S
       // Default PA (no translation) = addr
 
 `ifdef RV32
-      Bool xlate = ((priv <= s_Priv_Mode) && (fn_satp_to_VM_Mode (satp) == satp_mode_RV32_sv32));
+      Bool xlate = ((priv <= priv_S) && (fn_satp_to_VM_Mode (satp) == satp_mode_RV32_sv32));
       PA   pa    = zeroExtend (addr);
 `elsif SV39
-      Bool xlate = ((priv <= s_Priv_Mode) && (fn_satp_to_VM_Mode (satp) == satp_mode_RV64_sv39));
+      Bool xlate = ((priv <= priv_S) && (fn_satp_to_VM_Mode (satp) == satp_mode_RV64_sv39));
       PA   pa    = truncate (addr);
 `endif
 

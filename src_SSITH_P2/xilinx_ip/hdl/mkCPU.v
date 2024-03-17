@@ -9046,7 +9046,7 @@ module mkCPU(CLK,
     if (RST_N != `BSV_RESET_VALUE)
       if (WILL_FIRE_RL_rl_show_pipe &&
 	  IF_stage2_rg_full_17_THEN_IF_stage2_rg_stage2__ETC___d153 == 2'd3)
-	$write("Trap_Info { ", "epc: ");
+	$write("TrapInfo { ", "epc: ");
     if (RST_N != `BSV_RESET_VALUE)
       if (WILL_FIRE_RL_rl_show_pipe &&
 	  IF_stage2_rg_full_17_THEN_IF_stage2_rg_stage2__ETC___d153 != 2'd0 &&
@@ -9172,7 +9172,7 @@ module mkCPU(CLK,
     if (RST_N != `BSV_RESET_VALUE)
       if (WILL_FIRE_RL_rl_show_pipe &&
 	  IF_stage2_rg_full_17_THEN_IF_stage2_rg_stage2__ETC___d153 == 2'd3)
-	$write("Trap_Info { ", "epc: ");
+	$write("TrapInfo { ", "epc: ");
     if (RST_N != `BSV_RESET_VALUE)
       if (WILL_FIRE_RL_rl_show_pipe &&
 	  IF_stage2_rg_full_17_THEN_IF_stage2_rg_stage2__ETC___d153 != 2'd0 &&
@@ -9928,7 +9928,7 @@ module mkCPU(CLK,
       if (WILL_FIRE_RL_rl_show_pipe && stage1_rg_full &&
 	  stage1_rg_stage_input_17_BITS_335_TO_334_18_EQ_ETC___d319 &&
 	  NOT_IF_stage2_rg_full_17_THEN_IF_stage2_rg_sta_ETC___d739)
-	$write("Trap_Info { ", "epc: ");
+	$write("TrapInfo { ", "epc: ");
     if (RST_N != `BSV_RESET_VALUE)
       if (WILL_FIRE_RL_rl_show_pipe &&
 	  stage1_rg_full_16_AND_NOT_stage1_rg_stage_inpu_ETC___d926)

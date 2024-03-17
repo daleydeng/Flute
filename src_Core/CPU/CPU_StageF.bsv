@@ -27,7 +27,7 @@ import Cur_Cycle :: *;
 // ================================================================
 // Project imports
 
-import isa_decls         :: *;
+import isa_base         :: *;
 import CPU_Globals       :: *;
 import Near_Mem_IFC      :: *;
 import Branch_Predictor  :: *;

@@ -22,7 +22,7 @@ import Cur_Cycle  :: *;
 // ================================================================
 // Project imports
 
-import isa_decls        :: *;
+import isa_priv_S        :: *;
 import MMU_Cache_Common :: *;
 
 // ================================================================
@@ -90,14 +90,14 @@ function VM_Xlate_Result  fv_vm_xlate (WordXL             va,
 				       Bit#(1)           sstatus_SUM,
 				       Bit#(1)           mstatus_MXR,
 				       TLB_Lookup_Result  tlb_result);
-      // Translate if in VM mode (sv32, sv39), and priv <= s_Priv_Mode
+      // Translate if in VM mode (sv32, sv39), and priv <= priv_S
       // Default PA (no translation) = va
 
 `ifdef RV32
-      Bool xlate = ((priv <= s_Priv_Mode) && (fn_satp_to_VM_Mode (satp) == satp_mode_RV32_sv32));
+      Bool xlate = ((priv <= priv_S) && (fn_satp_to_VM_Mode (satp) == satp_mode_RV32_sv32));
       PA   pa    = zeroExtend (va);
 `elsif SV39
-      Bool xlate = ((priv <= s_Priv_Mode) && (fn_satp_to_VM_Mode (satp) == satp_mode_RV64_sv39));
+      Bool xlate = ((priv <= priv_S) && (fn_satp_to_VM_Mode (satp) == satp_mode_RV64_sv39));
       PA   pa    = truncate (va);
 `endif
 

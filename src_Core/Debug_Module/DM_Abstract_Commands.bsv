@@ -22,7 +22,7 @@ import Cur_Cycle  :: *;
 
 // ================================================================
 
-import isa_decls      :: *;
+import isa      :: *;
 import DM_Common      :: *;
 import DM_CPU_Req_Rsp :: *;
 

@@ -51,8 +51,8 @@ import Cur_Cycle  :: *;
 // ================================================================
 // Project imports
 
-import isa_decls     :: *;
-
+import isa_priv_M     :: *;
+import isa_fdext     :: *;
 import tv_trace_data :: *;
 
 import CPU_Globals      :: *;
@@ -163,13 +163,13 @@ module mkCPU_Stage2 #(Bit#(4)         verbosity,
 `endif
 						    };
 
-   let  trap_info_dmem = Trap_Info {epc:      rg_stage2.pc,
+   let  trap_info_dmem = TrapInfo {epc:      rg_stage2.pc,
 				    exc_code: dcache.exc_code,
 				    tval:     rg_stage2.addr };
 
 `ifdef ISA_F
    // The FBox can only generate ILLEGAL Instruction exceptions
-   let  trap_info_fbox = Trap_Info {epc:      rg_stage2.pc,
+   let  trap_info_fbox = TrapInfo {epc:      rg_stage2.pc,
 				    exc_code: exc_code_ILLEGAL_INSTRUCTION,
 				    tval:     0 };
 `endif

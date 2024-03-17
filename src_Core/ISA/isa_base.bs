@@ -1,0 +1,536 @@
+package isa_base(
+    package isa_types
+    ,package isa_base
+) where
+
+import isa_types
+
+type NumRegs = 32
+num_regs:: Integer
+num_regs = valueOf NumRegs
+
+illegal_instr:: InstrBits
+illegal_instr = 32'h0000_0000
+
+instr_opcode:: InstrBits -> Opcode
+instr_opcode x = x[6:0]
+
+instr_funct2:: InstrBits -> Bit 2
+instr_funct2 x = x[26:25]
+instr_funct3:: InstrBits -> Bit 3
+instr_funct3 x = x[14:12]
+instr_funct5:: InstrBits -> Bit 5
+instr_funct5 x = x[31:27]
+instr_funct7:: InstrBits -> Bit 7
+instr_funct7 x = x[31:25]
+instr_funct10:: InstrBits -> Bit 10
+instr_funct10 x = x[31:25] ++ x[14:12]
+instr_fmt:: InstrBits -> Bit 2
+instr_fmt x = x[26:25]
+
+instr_rd:: InstrBits -> RegIdx
+instr_rd x = x[11:7]
+instr_rs1:: InstrBits -> RegIdx
+instr_rs1 x = x[19:15]
+instr_rs2:: InstrBits -> RegIdx
+instr_rs2 x = x[24:20]
+instr_rs3:: InstrBits -> RegIdx
+instr_rs3 x =  x[31:27]
+instr_csr:: InstrBits -> CSRAddr
+instr_csr x = x[31:20]
+instr_I_imm12:: InstrBits -> Bit 12
+instr_I_imm12 x = x[31:20]
+instr_S_imm12:: InstrBits -> Bit 12
+instr_S_imm12 x = x[31:25] ++ x[11:7]
+instr_U_imm20:: InstrBits -> Bit 20
+instr_U_imm20 x = x[31:12]
+
+instr_B_imm13:: InstrBits -> Bit 13
+instr_B_imm13 x = x[31:31] ++ x[7:7] ++ x[30:25] ++ x[11:8] ++ 1'b0
+
+instr_J_imm21:: InstrBits -> Bit 21
+instr_J_imm21 x = x[31:31] ++ x[19:12] ++ x [20:20] ++ x[30:21] ++ 1'b0
+
+-- For FENCE decode
+instr_pred:: InstrBits -> Bit 4
+instr_pred x = x[27:24]
+instr_succ:: InstrBits -> Bit 4
+instr_succ x = x[23:20]
+
+-- For AMO decode
+instr_aqrl:: InstrBits -> Bit 2
+instr_aqrl x = x[26:25]
+
+-- difference with haskell, `struct` keyword is used for record type instead of data
+-- difference with haskell, semicolon ; is used to seperation
+data Instruction = Instr_R {
+    funct7:: (Bit 7);
+    rs2:: RegIdx;
+    rs1:: RegIdx;
+    funct3:: Bit 3;
+    rd:: RegIdx;
+    opcode:: Opcode;
+} | Instr_I {
+    imm12:: Bit 12;
+    rs1:: RegIdx;
+    funct3:: Bit 3;
+    rd:: RegIdx;
+    opcode:: Opcode;
+} deriving (Bits, FShow)
+
+decode_instruction:: InstrBits -> Instruction
+decode_instruction x = case x[6:0] of {
+    7'b0110011 -> Instr_R (unpack x);
+    7'b0010011 -> Instr_I (unpack x);
+}
+
+encode_instr_R:: Bit 7 -> RegIdx -> RegIdx -> Bit 3 -> RegIdx -> Bit 7 -> InstrBits
+encode_instr_R funct7 rs2 rs1 funct3 rd opcode = 
+    funct7 ++ rs2 ++ rs1 ++ funct3 ++ rd ++ opcode
+
+encode_instr_I:: Bit 12 -> RegIdx -> Bit 3 -> RegIdx -> Opcode -> InstrBits
+encode_instr_I imm12 rs1 funct3 rd opcode = 
+    imm12 ++ rs1 ++ funct3 ++ rd ++ opcode
+
+encode_instr_S:: Bit 12 -> RegIdx -> RegIdx -> Bit 3 -> Opcode -> InstrBits
+encode_instr_S imm12 rs2 rs1 funct3 opcode = 
+    imm12[11:5] ++ rs2 ++ rs1 ++ funct3 ++ imm12[4:0] ++ opcode
+
+encode_instr_B:: Bit 13 -> RegIdx -> RegIdx -> Bit 3 -> Opcode -> InstrBits
+encode_instr_B imm13 rs2 rs1 funct3 opcode = 
+    imm13[12:12] ++ imm13[10:5] ++ rs2 ++ rs1 ++ funct3 ++ imm13[4:1] ++ imm13[11:11] ++ opcode
+
+encode_instr_U:: Bit 20 -> RegIdx -> Opcode -> InstrBits
+encode_instr_U imm20 rd opcode = imm20 ++ rd ++ opcode
+
+encode_instr_J:: Bit 21 -> RegIdx -> Opcode -> InstrBits
+encode_instr_J imm21 rd opcode = 
+    imm21[20:20] ++ imm21[10:1] ++ imm21[11:11] ++ imm21[19:12] ++ rd ++ opcode
+
+x0:: RegIdx; x0  =  0
+x1 ::RegIdx; x1  =  1    
+x2 ::RegIdx; x2  =  2    
+x3 ::RegIdx; x3  =  3
+x4 ::RegIdx; x4  =  4    
+x5 ::RegIdx; x5  =  5    
+x6 ::RegIdx; x6  =  6    
+x7 ::RegIdx; x7  =  7
+x8 ::RegIdx; x8  =  8    
+x9 ::RegIdx; x9  =  9    
+x10::RegIdx; x10 = 10    
+x11::RegIdx; x11 = 11
+x12::RegIdx; x12 = 12    
+x13::RegIdx; x13 = 13    
+x14::RegIdx; x14 = 14    
+x15::RegIdx; x15 = 15
+x16::RegIdx; x16 = 16    
+x17::RegIdx; x17 = 17    
+x18::RegIdx; x18 = 18    
+x19::RegIdx; x19 = 19
+x20::RegIdx; x20 = 20    
+x21::RegIdx; x21 = 21    
+x22::RegIdx; x22 = 22    
+x23::RegIdx; x23 = 23
+x24::RegIdx; x24 = 24    
+x25::RegIdx; x25 = 25    
+x26::RegIdx; x26 = 26    
+x27::RegIdx; x27 = 27
+x28::RegIdx; x28 = 28    
+x29::RegIdx; x29 = 29    
+x30::RegIdx; x30 = 30    
+x31::RegIdx; x31 = 31
+
+-- -- Register names used in calling convention
+reg_zero::RegIdx; reg_zero =  0
+reg_ra  ::RegIdx; reg_ra   =  1
+reg_sp  ::RegIdx; reg_sp   =  2
+reg_gp  ::RegIdx; reg_gp   =  3
+reg_tp  ::RegIdx; reg_tp   =  4
+
+reg_t0  ::RegIdx; reg_t0  =  5 
+reg_t1  ::RegIdx; reg_t1  =  6 
+reg_t2  ::RegIdx; reg_t2  =  7
+reg_fp  ::RegIdx; reg_fp  =  8
+reg_s0  ::RegIdx; reg_s0  =  8 
+reg_s1  ::RegIdx; reg_s1  =  9
+
+reg_a0  ::RegIdx; reg_a0  = 10 
+reg_a1  ::RegIdx; reg_a1  = 11
+reg_v0  ::RegIdx; reg_v0  = 10 
+reg_v1  ::RegIdx; reg_v1  = 11
+
+reg_a2  ::RegIdx; reg_a2  = 12 
+reg_a3  ::RegIdx; reg_a3  = 13 
+reg_a4  ::RegIdx; reg_a4  = 14 
+reg_a5  ::RegIdx; reg_a5  = 15
+reg_a6  ::RegIdx; reg_a6  = 16 
+reg_a7  ::RegIdx; reg_a7  = 17
+
+reg_s2  ::RegIdx; reg_s2  = 18 
+reg_s3  ::RegIdx; reg_s3  = 19 
+reg_s4  ::RegIdx; reg_s4  = 20 
+reg_s5  ::RegIdx; reg_s5  = 21
+reg_s6  ::RegIdx; reg_s6  = 22 
+reg_s7  ::RegIdx; reg_s7  = 23 
+reg_s8  ::RegIdx; reg_s8  = 24 
+reg_s9  ::RegIdx; reg_s9  = 25
+reg_s10 ::RegIdx; reg_s10 = 26 
+reg_s11 ::RegIdx; reg_s11 = 27
+
+reg_t3  ::RegIdx; reg_t3  = 28 
+reg_t4  ::RegIdx; reg_t4  = 29 
+reg_t5  ::RegIdx; reg_t5  = 30 
+reg_t6  ::RegIdx; reg_t6  = 31
+
+-- Is 'r' a standard register for PC save/restore on call/return?
+-- This function is used in branch-predictors for managing the return-address stack.
+is_reg_link :: RegIdx -> Bool
+is_reg_link r = r == reg_ra || r == reg_t0
+
+type MemReqSize = Bit 2
+
+f3_SIZE_B:: MemReqSize; f3_SIZE_B = 2'b00
+f3_SIZE_H:: MemReqSize; f3_SIZE_H = 2'b01
+f3_SIZE_W:: MemReqSize; f3_SIZE_W = 2'b10
+f3_SIZE_D:: MemReqSize; f3_SIZE_D = 2'b11
+
+-- ================================================================
+-- Integer Register-Register Instructions
+
+op_OP:: Opcode; op_OP = 7'b0110011
+
+f7_ADD ::Bit 7; f7_ADD  = 7'b000_0000
+f7_SUB ::Bit 7; f7_SUB  = 7'b010_0000   
+f7_XOR ::Bit 7; f7_XOR  = 7'b000_0000    
+f7_OR  ::Bit 7; f7_OR   = 7'b000_0000    
+f7_AND ::Bit 7; f7_AND  = 7'b000_0000
+f7_SLT ::Bit 7; f7_SLT  = 7'b000_0000 
+f7_SLTU::Bit 7; f7_SLTU = 7'b000_0000
+
+f3_ADD ::Bit 3; f3_ADD  = 3'b000
+f3_SUB ::Bit 3; f3_SUB  = 3'b000
+f3_XOR ::Bit 3; f3_XOR  = 3'b100
+f3_OR  ::Bit 3; f3_OR   = 3'b110
+f3_AND ::Bit 3; f3_AND  = 3'b111
+f3_SLT ::Bit 3; f3_SLT  = 3'b010
+f3_SLTU::Bit 3; f3_SLTU = 3'b011
+
+-- ================================================================
+-- Integer Register-Immediate Instructions
+
+op_OP_IMM:: Opcode; op_OP_IMM = 7'b00_100_11
+
+f3_ADDI :: Bit 3; f3_ADDI  = 3'b000
+f3_SLLI :: Bit 3; f3_SLLI  = 3'b001
+f3_SLTI :: Bit 3; f3_SLTI  = 3'b010
+f3_SLTIU:: Bit 3; f3_SLTIU = 3'b011
+f3_XORI :: Bit 3; f3_XORI  = 3'b100
+f3_SRxI :: Bit 3; f3_SRxI  = 3'b101 
+f3_SRLI :: Bit 3; f3_SRLI  = 3'b101 
+f3_SRAI :: Bit 3; f3_SRAI  = 3'b101
+f3_ORI  :: Bit 3; f3_ORI   = 3'b110
+f3_ANDI :: Bit 3; f3_ANDI  = 3'b111
+
+-- ================================================================
+-- Integer Register-Immediate 32b Instructions for RV64
+
+op_OP_IMM_32:: Opcode; op_OP_IMM_32 = 7'b00_110_11
+
+f3_ADDIW:: Bit 3; f3_ADDIW = 3'b000
+f3_SLLIW:: Bit 3; f3_SLLIW = 3'b001
+f3_SRxIW:: Bit 3; f3_SRxIW = 3'b101 
+f3_SRLIW:: Bit 3; f3_SRLIW = 3'b101 
+f3_SRAIW:: Bit 3; f3_SRAIW = 3'b101
+
+-- OP_IMM.SLLI/SRLI/SRAI for RV32
+msbs7_SLLI:: Bit 7;  msbs7_SLLI = 7'b000_0000
+msbs7_SRLI:: Bit 7;  msbs7_SRLI = 7'b000_0000
+msbs7_SRAI:: Bit 7;  msbs7_SRAI = 7'b010_0000
+
+-- OP_IMM.SLLI/SRLI/SRAI for RV64
+msbs6_SLLI:: Bit 6;  msbs6_SLLI = 6'b00_0000
+msbs6_SRLI:: Bit 6;  msbs6_SRLI = 6'b00_0000
+msbs6_SRAI:: Bit 6;  msbs6_SRAI = 6'b01_0000
+
+op_LOAD:: Opcode; op_LOAD = 7'b00_000_11
+f3_LB :: Bit 3; f3_LB  = 3'b000
+f3_LH :: Bit 3; f3_LH  = 3'b001
+f3_LW :: Bit 3; f3_LW  = 3'b010
+f3_LD :: Bit 3; f3_LD  = 3'b011
+f3_LBU:: Bit 3; f3_LBU = 3'b100
+f3_LHU:: Bit 3; f3_LHU = 3'b101
+f3_LWU:: Bit 3; f3_LWU = 3'b110
+
+op_STORE:: Opcode; op_STORE = 7'b01_000_11
+f3_SB:: Bit 3; f3_SB  = 3'b000
+f3_SH:: Bit 3; f3_SH  = 3'b001
+f3_SW:: Bit 3; f3_SW  = 3'b010
+f3_SD:: Bit 3; f3_SD  = 3'b011
+
+-- ================================================================
+-- LUI, AUIPC
+
+op_LUI:: Opcode; op_LUI   = 7'b01_101_11
+op_AUIPC:: Opcode; op_AUIPC = 7'b00_101_11
+
+-- ================================================================
+-- Control transfer
+
+op_BRANCH:: Opcode;  op_BRANCH = 7'b11_000_11
+
+f3_BEQ :: Bit 3; f3_BEQ   = 3'b000
+f3_BNE :: Bit 3; f3_BNE   = 3'b001
+f3_BLT :: Bit 3; f3_BLT   = 3'b100
+f3_BGE :: Bit 3; f3_BGE   = 3'b101
+f3_BLTU:: Bit 3; f3_BLTU  = 3'b110
+f3_BGEU:: Bit 3; f3_BGEU  = 3'b111
+
+op_JAL:: Opcode; op_JAL  = 7'b11_011_11
+op_JALR:: Opcode; op_JALR = 7'b11_001_11
+f3_JALR:: Bit 3; f3_JALR = 3'b000
+
+op_MISC_MEM:: Opcode; op_MISC_MEM = 7'b00_011_11
+f3_FENCE  :: Bit 3; f3_FENCE   = 3'b000
+f3_FENCE_I:: Bit 3; f3_FENCE_I = 3'b001
+
+struct FenceOrdering = {
+   -- Predecessors
+   pi:: Bool;    -- IO reads
+   po:: Bool;    -- IO writes
+   pr:: Bool;    -- Mem reads
+   pw:: Bool;    -- Mem writes
+   -- Successors
+   si:: Bool;
+   so:: Bool;
+   sr:: Bool;
+   sw:: Bool;
+ } deriving (Bits, FShow);
+
+instr_fence_fm:: InstrBits -> Bit 4
+instr_fence_fm x = x[31:28]
+
+fence_fm_none:: Bit 4; fence_fm_none = 4'b0000
+fence_fm_TSO :: Bit 4; fence_fm_TSO  = 4'b1000
+
+-- ================================================================
+-- Atomic Memory Operation Instructions
+
+op_AMO:: Opcode; op_AMO = 7'b01_011_11
+
+-- NOTE: bit [4] for aq, and [3] for rl, are here set to zero
+f3_AMO_W   :: Bit 3; f3_AMO_W      =   3'b010
+f3_AMO_D   :: Bit 3; f3_AMO_D      =   3'b011
+f5_AMO_LR  :: Bit 5; f5_AMO_LR     = 5'b00010
+f5_AMO_SC  :: Bit 5; f5_AMO_SC     = 5'b00011
+f5_AMO_ADD :: Bit 5; f5_AMO_ADD    = 5'b00000
+f5_AMO_SWAP:: Bit 5; f5_AMO_SWAP   = 5'b00001
+f5_AMO_XOR :: Bit 5; f5_AMO_XOR    = 5'b00100
+f5_AMO_AND :: Bit 5; f5_AMO_AND    = 5'b01100
+f5_AMO_OR  :: Bit 5; f5_AMO_OR     = 5'b01000
+f5_AMO_MIN :: Bit 5; f5_AMO_MIN    = 5'b10000
+f5_AMO_MAX :: Bit 5; f5_AMO_MAX    = 5'b10100
+f5_AMO_MINU:: Bit 5; f5_AMO_MINU   = 5'b11000
+f5_AMO_MAXU:: Bit 5; f5_AMO_MAXU   = 5'b11100
+
+f10_LR_W     :: Bit 10; f10_LR_W       = 10'b00010_00_010
+f10_SC_W     :: Bit 10; f10_SC_W       = 10'b00011_00_010
+f10_AMOADD_W :: Bit 10; f10_AMOADD_W   = 10'b00000_00_010
+f10_AMOSWAP_W:: Bit 10; f10_AMOSWAP_W  = 10'b00001_00_010
+f10_AMOXOR_W :: Bit 10; f10_AMOXOR_W   = 10'b00100_00_010
+f10_AMOAND_W :: Bit 10; f10_AMOAND_W   = 10'b01100_00_010
+f10_AMOOR_W  :: Bit 10; f10_AMOOR_W    = 10'b01000_00_010
+f10_AMOMIN_W :: Bit 10; f10_AMOMIN_W   = 10'b10000_00_010
+f10_AMOMAX_W :: Bit 10; f10_AMOMAX_W   = 10'b10100_00_010
+f10_AMOMINU_W:: Bit 10; f10_AMOMINU_W  = 10'b11000_00_010
+f10_AMOMAXU_W:: Bit 10; f10_AMOMAXU_W  = 10'b11100_00_010
+
+f10_LR_D     :: Bit 10; f10_LR_D       = 10'b00010_00_011
+f10_SC_D     :: Bit 10; f10_SC_D       = 10'b00011_00_011
+f10_AMOADD_D :: Bit 10; f10_AMOADD_D   = 10'b00000_00_011
+f10_AMOSWAP_D:: Bit 10; f10_AMOSWAP_D  = 10'b00001_00_011
+f10_AMOXOR_D :: Bit 10; f10_AMOXOR_D   = 10'b00100_00_011
+f10_AMOAND_D :: Bit 10; f10_AMOAND_D   = 10'b01100_00_011
+f10_AMOOR_D  :: Bit 10; f10_AMOOR_D    = 10'b01000_00_011
+f10_AMOMIN_D :: Bit 10; f10_AMOMIN_D   = 10'b10000_00_011
+f10_AMOMAX_D :: Bit 10; f10_AMOMAX_D   = 10'b10100_00_011
+f10_AMOMINU_D:: Bit 10; f10_AMOMINU_D  = 10'b11000_00_011
+f10_AMOMAXU_D:: Bit 10; f10_AMOMAXU_D  = 10'b11100_00_011
+
+-- ----------------
+-- MUL/DIV/REM family
+
+f7_MUL_DIV_REM:: Bit 7; f7_MUL_DIV_REM = 7'b000_0001
+
+f3_MUL   :: Bit 3; f3_MUL    = 3'b000
+f3_MULH  :: Bit 3; f3_MULH   = 3'b001
+f3_MULHSU:: Bit 3; f3_MULHSU = 3'b010
+f3_MULHU :: Bit 3; f3_MULHU  = 3'b011
+f3_DIV   :: Bit 3; f3_DIV    = 3'b100
+f3_DIVU  :: Bit 3; f3_DIVU   = 3'b101
+f3_REM   :: Bit 3; f3_REM    = 3'b110
+f3_REMU  :: Bit 3; f3_REMU   = 3'b111
+
+f10_MUL   :: Bit 10; f10_MUL    = 10'b000_0001_000
+f10_MULH  :: Bit 10; f10_MULH   = 10'b000_0001_001
+f10_MULHSU:: Bit 10; f10_MULHSU = 10'b000_0001_010
+f10_MULHU :: Bit 10; f10_MULHU  = 10'b000_0001_011
+f10_DIV   :: Bit 10; f10_DIV    = 10'b000_0001_100
+f10_DIVU  :: Bit 10; f10_DIVU   = 10'b000_0001_101
+f10_REM   :: Bit 10; f10_REM    = 10'b000_0001_110
+f10_REMU  :: Bit 10; f10_REMU   = 10'b000_0001_111
+
+-- ================================================================
+-- Integer Register-Register 32b Instructions for RV64
+
+op_OP_32:: Opcode; op_OP_32 = 7'b01_110_11;
+
+f10_ADDW :: Bit 10; f10_ADDW   = 10'b000_0000_000
+f10_SUBW :: Bit 10; f10_SUBW   = 10'b010_0000_000
+f10_SLLW :: Bit 10; f10_SLLW   = 10'b000_0000_001
+f10_SRLW :: Bit 10; f10_SRLW   = 10'b000_0000_101
+f10_SRAW :: Bit 10; f10_SRAW   = 10'b010_0000_101
+   
+f3_ADDW:: Bit 3; f3_ADDW  = 3'b000
+f3_SUBW:: Bit 3; f3_SUBW  = 3'b000
+f7_ADDW:: Bit 7; f7_ADDW  = 7'b000_0000
+f7_SUBW:: Bit 7; f7_SUBW  = 7'b010_0000    
+
+f10_MULW :: Bit 10; f10_MULW   = 10'b000_0001_000
+f10_DIVW :: Bit 10; f10_DIVW   = 10'b000_0001_100
+f10_DIVUW:: Bit 10; f10_DIVUW  = 10'b000_0001_101
+f10_REMW :: Bit 10; f10_REMW   = 10'b000_0001_110
+f10_REMUW:: Bit 10; f10_REMUW  = 10'b000_0001_111
+
+-- ================================================================
+-- System Instructions
+op_SYSTEM:: Opcode; op_SYSTEM = 7'b11_100_11;
+
+-- sub-opcodes: (in funct3 field)
+f3_PRIV          :: Bit 3; f3_PRIV           = 3'b000
+f3_CSRRW         :: Bit 3; f3_CSRRW          = 3'b001
+f3_CSRRS         :: Bit 3; f3_CSRRS          = 3'b010
+f3_CSRRC         :: Bit 3; f3_CSRRC          = 3'b011
+f3_SYSTEM_ILLEGAL:: Bit 3; f3_SYSTEM_ILLEGAL = 3'b100
+f3_CSRRWI        :: Bit 3; f3_CSRRWI         = 3'b101
+f3_CSRRSI        :: Bit 3; f3_CSRRSI         = 3'b110
+f3_CSRRCI        :: Bit 3; f3_CSRRCI         = 3'b111
+
+-- sub-sub-opcodes for f3_PRIV
+f12_ECALL :: Bit 12; f12_ECALL     = 12'b0000_0000_0000
+f12_EBREAK:: Bit 12; f12_EBREAK    = 12'b0000_0000_0001
+
+f12_URET  :: Bit 12; f12_URET      = 12'b0000_0000_0010
+f12_SRET  :: Bit 12; f12_SRET      = 12'b0001_0000_0010
+f12_HRET  :: Bit 12; f12_HRET      = 12'b0010_0000_0010
+f12_MRET  :: Bit 12; f12_MRET      = 12'b0011_0000_0010
+f12_WFI   :: Bit 12; f12_WFI       = 12'b0001_0000_0101
+
+-- v1.10 sub-sub-opcode for SFENCE_VMA
+f7_SFENCE_VMA:: Bit 7;  f7_SFENCE_VMA = 7'b0001_001
+
+break_instr:: InstrBits; break_instr = f12_EBREAK ++ 5'b00000 ++ 3'b000 ++ 5'b00000 ++ op_SYSTEM
+
+is_instr_csrrx:: InstrBits -> Bool
+is_instr_csrrx instr = instr_opcode instr == op_SYSTEM && f3_is_CSRR_any (instr_funct3 instr)
+
+f3_is_CSRR_any:: Bit 3 -> Bool
+f3_is_CSRR_any f3 = f3_is_CSRR_W f3 || f3_is_CSRR_S_or_C f3
+
+f3_is_CSRR_W:: Bit 3 -> Bool
+f3_is_CSRR_W f3 = f3 == f3_CSRRW || f3 == f3_CSRRWI
+
+f3_is_CSRR_S_or_C:: Bit 3 -> Bool
+f3_is_CSRR_S_or_C f3 = f3 == f3_CSRRS || f3 == f3_CSRRSI || f3 == f3_CSRRC || f3 == f3_CSRRCI
+
+-- ================================================================
+-- Control/Status registers
+can_csr_write:: CSRAddr -> Bool
+can_csr_write csr = csr[11:10] /= 2'b11
+
+is_csr_priv_ok:: CSRAddr -> PrivMode -> Bool
+is_csr_priv_ok csr priv = priv >= csr[9:8]
+
+-- ----------------
+-- User-level CSR addresses
+
+csr_ustatus      :: CSRAddr;  csr_ustatus        = 12'h000    -- User status
+csr_uie          :: CSRAddr;  csr_uie            = 12'h004    -- User interrupt-enable
+csr_utvec        :: CSRAddr;  csr_utvec          = 12'h005    -- User trap handler base address
+
+csr_uscratch     :: CSRAddr;  csr_uscratch       = 12'h040    -- Scratch register for trap handlers
+csr_uepc         :: CSRAddr;  csr_uepc           = 12'h041    -- User exception program counter
+csr_ucause       :: CSRAddr;  csr_ucause         = 12'h042    -- User trap cause
+csr_utval        :: CSRAddr;  csr_utval          = 12'h043    -- User bad address or instruction
+csr_uip          :: CSRAddr;  csr_uip            = 12'h044    -- User interrupt pending
+
+csr_fflags       :: CSRAddr;  csr_fflags         = 12'h001    -- Floating-point accrued exceptions
+csr_frm          :: CSRAddr;  csr_frm            = 12'h002    -- Floating-point Dynamic Rounding Mode
+csr_fcsr         :: CSRAddr;  csr_fcsr           = 12'h003    -- Floating-point Control and Status Register (frm + fflags)
+
+csr_cycle        :: CSRAddr;  csr_cycle          = 12'hC00    -- Cycle counter for RDCYCLE
+csr_time         :: CSRAddr;  csr_time           = 12'hC01    -- Timer for RDTIME
+csr_instret      :: CSRAddr;  csr_instret        = 12'hC02    -- Instructions retired counter for RDINSTRET
+
+csr_hpmcounter3  :: CSRAddr;  csr_hpmcounter3    = 12'hC03    -- Performance-monitoring counter
+csr_hpmcounter4  :: CSRAddr;  csr_hpmcounter4    = 12'hC04    
+csr_hpmcounter5  :: CSRAddr;  csr_hpmcounter5    = 12'hC05    
+csr_hpmcounter6  :: CSRAddr;  csr_hpmcounter6    = 12'hC06    
+csr_hpmcounter7  :: CSRAddr;  csr_hpmcounter7    = 12'hC07    
+csr_hpmcounter8  :: CSRAddr;  csr_hpmcounter8    = 12'hC08    
+csr_hpmcounter9  :: CSRAddr;  csr_hpmcounter9    = 12'hC09    
+csr_hpmcounter10 :: CSRAddr;  csr_hpmcounter10   = 12'hC0A    
+csr_hpmcounter11 :: CSRAddr;  csr_hpmcounter11   = 12'hC0B    
+csr_hpmcounter12 :: CSRAddr;  csr_hpmcounter12   = 12'hC0C    
+csr_hpmcounter13 :: CSRAddr;  csr_hpmcounter13   = 12'hC0D    
+csr_hpmcounter14 :: CSRAddr;  csr_hpmcounter14   = 12'hC0E    
+csr_hpmcounter15 :: CSRAddr;  csr_hpmcounter15   = 12'hC0F    
+csr_hpmcounter16 :: CSRAddr;  csr_hpmcounter16   = 12'hC10    
+csr_hpmcounter17 :: CSRAddr;  csr_hpmcounter17   = 12'hC11    
+csr_hpmcounter18 :: CSRAddr;  csr_hpmcounter18   = 12'hC12    
+csr_hpmcounter19 :: CSRAddr;  csr_hpmcounter19   = 12'hC13    
+csr_hpmcounter20 :: CSRAddr;  csr_hpmcounter20   = 12'hC14    
+csr_hpmcounter21 :: CSRAddr;  csr_hpmcounter21   = 12'hC15    
+csr_hpmcounter22 :: CSRAddr;  csr_hpmcounter22   = 12'hC16    
+csr_hpmcounter23 :: CSRAddr;  csr_hpmcounter23   = 12'hC17    
+csr_hpmcounter24 :: CSRAddr;  csr_hpmcounter24   = 12'hC18    
+csr_hpmcounter25 :: CSRAddr;  csr_hpmcounter25   = 12'hC19    
+csr_hpmcounter26 :: CSRAddr;  csr_hpmcounter26   = 12'hC1A    
+csr_hpmcounter27 :: CSRAddr;  csr_hpmcounter27   = 12'hC1B    
+csr_hpmcounter28 :: CSRAddr;  csr_hpmcounter28   = 12'hC1C    
+csr_hpmcounter29 :: CSRAddr;  csr_hpmcounter29   = 12'hC1D    
+csr_hpmcounter30 :: CSRAddr;  csr_hpmcounter30   = 12'hC1E    
+csr_hpmcounter31 :: CSRAddr;  csr_hpmcounter31   = 12'hC1F    
+
+csr_cycleh       :: CSRAddr;  csr_cycleh         = 12'hC80    -- Upper 32 bits of csr_cycle (RV32I only)
+csr_timeh        :: CSRAddr;  csr_timeh          = 12'hC81    -- Upper 32 bits of csr_time (RV32I only)
+csr_instreth     :: CSRAddr;  csr_instreth       = 12'hC82    -- Upper 32 bits of csr_instret (RV32I only)
+
+csr_hpmcounter3h :: CSRAddr;  csr_hpmcounter3h   = 12'hC83    -- Upper 32 bits of performance-monitoring counter
+csr_hpmcounter4h :: CSRAddr;  csr_hpmcounter4h   = 12'hC84    
+csr_hpmcounter5h :: CSRAddr;  csr_hpmcounter5h   = 12'hC85    
+csr_hpmcounter6h :: CSRAddr;  csr_hpmcounter6h   = 12'hC86    
+csr_hpmcounter7h :: CSRAddr;  csr_hpmcounter7h   = 12'hC87    
+csr_hpmcounter8h :: CSRAddr;  csr_hpmcounter8h   = 12'hC88    
+csr_hpmcounter9h :: CSRAddr;  csr_hpmcounter9h   = 12'hC89    
+csr_hpmcounter10h:: CSRAddr;  csr_hpmcounter10h  = 12'hC8A    
+csr_hpmcounter11h:: CSRAddr;  csr_hpmcounter11h  = 12'hC8B    
+csr_hpmcounter12h:: CSRAddr;  csr_hpmcounter12h  = 12'hC8C    
+csr_hpmcounter13h:: CSRAddr;  csr_hpmcounter13h  = 12'hC8D    
+csr_hpmcounter14h:: CSRAddr;  csr_hpmcounter14h  = 12'hC8E    
+csr_hpmcounter15h:: CSRAddr;  csr_hpmcounter15h  = 12'hC8F    
+csr_hpmcounter16h:: CSRAddr;  csr_hpmcounter16h  = 12'hC90    
+csr_hpmcounter17h:: CSRAddr;  csr_hpmcounter17h  = 12'hC91    
+csr_hpmcounter18h:: CSRAddr;  csr_hpmcounter18h  = 12'hC92    
+csr_hpmcounter19h:: CSRAddr;  csr_hpmcounter19h  = 12'hC93    
+csr_hpmcounter20h:: CSRAddr;  csr_hpmcounter20h  = 12'hC94    
+csr_hpmcounter21h:: CSRAddr;  csr_hpmcounter21h  = 12'hC95    
+csr_hpmcounter22h:: CSRAddr;  csr_hpmcounter22h  = 12'hC96    
+csr_hpmcounter23h:: CSRAddr;  csr_hpmcounter23h  = 12'hC97    
+csr_hpmcounter24h:: CSRAddr;  csr_hpmcounter24h  = 12'hC98    
+csr_hpmcounter25h:: CSRAddr;  csr_hpmcounter25h  = 12'hC99    
+csr_hpmcounter26h:: CSRAddr;  csr_hpmcounter26h  = 12'hC9A    
+csr_hpmcounter27h:: CSRAddr;  csr_hpmcounter27h  = 12'hC9B    
+csr_hpmcounter28h:: CSRAddr;  csr_hpmcounter28h  = 12'hC9C    
+csr_hpmcounter29h:: CSRAddr;  csr_hpmcounter29h  = 12'hC9D    
+csr_hpmcounter30h:: CSRAddr;  csr_hpmcounter30h  = 12'hC9E    
+csr_hpmcounter31h:: CSRAddr;  csr_hpmcounter31h  = 12'hC9F    

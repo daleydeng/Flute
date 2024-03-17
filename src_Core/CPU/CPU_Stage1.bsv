@@ -21,7 +21,7 @@ import ConfigReg    :: *;
 
 import Cur_Cycle :: *;
 
-import isa_decls        :: *;
+import isa_priv_M        :: *;
 `ifdef ISA_C
 import convert_instr_c     :: *;
 `endif
@@ -244,7 +244,7 @@ module mkCPU_Stage1 #(Bit#(4)         verbosity,
       else if (rg_stage_input.exc) begin
 	 output_stage1.ostatus   = OSTATUS_NONPIPE;
 	 output_stage1.control   = CONTROL_TRAP;
-	 output_stage1.trap_info = Trap_Info {epc:      rg_stage_input.pc,
+	 output_stage1.trap_info = TrapInfo {epc:      rg_stage_input.pc,
 					      exc_code: rg_stage_input.exc_code,
 					      tval:     rg_stage_input.tval};
 	 output_stage1.data_to_stage2 = data_to_stage2;
@@ -275,7 +275,7 @@ module mkCPU_Stage1 #(Bit#(4)         verbosity,
 	 else if (alu_outputs.exc_code == exc_code_BREAKPOINT)
 	    tval = rg_stage_input.pc;                          // The faulting virtual address
 
-	 let trap_info = Trap_Info {epc:      rg_stage_input.pc,
+	 let trap_info = TrapInfo {epc:      rg_stage_input.pc,
 				    exc_code: alu_outputs.exc_code,
 				    tval:     tval};
 

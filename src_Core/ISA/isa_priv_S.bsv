@@ -1,5 +1,4 @@
-// Copyright (c) 2013-2021 Bluespec, Inc. All Rights Reserved
-
+package isa_priv_S;
 // ================================================================
 // WARNING: this is an 'include' file, not a separate BSV package!
 //
@@ -11,6 +10,9 @@
 //     May 7, 2017
 //
 // ================================================================
+
+export isa_priv_M:: *, isa_priv_S::*;
+import isa_priv_M :: *;
 
 // Invariants on ifdefs:
 // - If RV32 is defined, we assume Sv32 for the VM system
@@ -361,8 +363,8 @@ function Bool is_pte_denial (Bool       dmem_not_imem,        // load-store or f
    let pte_w = fn_PTE_to_W (pte);
    let pte_r = fn_PTE_to_R (pte);
 
-   Bool priv_deny = (   ((priv == u_Priv_Mode) && (pte_u == 1'b0))
-		     || ((priv == s_Priv_Mode) && (pte_u == 1'b1) && (sstatus_SUM == 1'b0)));
+   Bool priv_deny = (   ((priv == priv_U) && (pte_u == 1'b0))
+		     || ((priv == priv_S) && (pte_u == 1'b1) && (sstatus_SUM == 1'b0)));
 
    Bool access_fetch = ((! dmem_not_imem) && read_not_write);
    Bool access_load  = (dmem_not_imem && read_not_write);
@@ -420,3 +422,4 @@ function Exc_Code  fn_access_exc_code (Bool dmem_not_imem, Bool read_not_write);
 endfunction
 
 // ================================================================
+endpackage

@@ -30,7 +30,8 @@ import Cur_Cycle  :: *;
 // ================================================================
 // Project imports
 
-import isa_decls   :: *;
+import isa_base   :: *;
+import isa_cext   :: *;
 import CPU_Globals :: *;
 
 // ================================================================

@@ -35,7 +35,7 @@ import Cur_Cycle :: *;
 // ================================================================
 // Project imports
 
-import isa_decls   :: *;
+import isa_priv_M   :: *;
 import GPR_RegFile :: *;
 `ifdef ISA_F
 import FPR_RegFile :: *;

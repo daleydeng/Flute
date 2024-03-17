@@ -27,7 +27,8 @@ import GetPut_Aux :: *;
 // ================================================================
 // Project imports
 
-import isa_decls :: *;
+import isa_base :: *;
+import isa_fdext :: *;
 import FPU       :: *;
 
 // ================================================================

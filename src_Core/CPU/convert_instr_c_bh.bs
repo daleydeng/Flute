@@ -1,6 +1,7 @@
 package convert_instr_c_bh where
 
-import isa_decls
+import isa_priv_M
+import isa_cext
 
 {-
 // ================================================================

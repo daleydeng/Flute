@@ -20,7 +20,7 @@ import GetPut_Aux  :: *;
 import ClientServer  :: *;
 import Connectable   :: *;
 
-import isa_decls      :: *;
+import isa      :: *;
 import tv_trace_data  :: *;
 import DM_CPU_Req_Rsp :: *;
 import AXI4_Types   :: *;

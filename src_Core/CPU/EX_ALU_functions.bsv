@@ -29,7 +29,9 @@ import Vector :: *;
 // ================================================================
 // Project imports
 
-import isa_decls     :: *;
+import isa_priv_M     :: *;
+import isa_cext     :: *;
+import isa_fdext    :: *;
 import CPU_Globals   :: *;
 import tv_trace_data :: *;
 
@@ -928,7 +930,7 @@ function ALU_Outputs fv_MISC_MEM (ALU_Inputs inputs);
 		      && (instr_rs1(inputs.instr)     == 0)
 		      && (instr_I_imm12(inputs.instr) == 0));
 
-   Bit#(4) fence_fm = instr_to_fence_fm (inputs.instr);
+   Bit#(4) fence_fm = instr_fence_fm (inputs.instr);
    Bool is_FENCE   = (   (instr_funct3(inputs.instr)  == f3_FENCE)
 		      && (instr_rd(inputs.instr)      == 0)
 		      && (instr_rs1(inputs.instr)     == 0)
@@ -973,8 +975,8 @@ function ALU_Outputs fv_SYSTEM (ALU_Inputs inputs);
 `ifdef ISA_PRIV_S
       // SFENCE.VMA instruction
       if (   (instr_rd(inputs.instr)  == 0)
-	  && (   (inputs.cur_priv == m_Priv_Mode)
-	      || (   (inputs.cur_priv == s_Priv_Mode)
+	  && (   (inputs.cur_priv == priv_M)
+	      || (   (inputs.cur_priv == priv_S)
 		  && (inputs.mstatus [mstatus_tvm_bitpos] == 0)))
 	  && (instr_funct7(inputs.instr) == f7_SFENCE_VMA))
 	 begin
@@ -988,9 +990,9 @@ function ALU_Outputs fv_SYSTEM (ALU_Inputs inputs);
 	    // ECALL instructions
 	    if (instr_I_imm12(inputs.instr) == f12_ECALL) begin
 	       alu_outputs.control  = CONTROL_TRAP;
-	       alu_outputs.exc_code = ((inputs.cur_priv == u_Priv_Mode)
+	       alu_outputs.exc_code = ((inputs.cur_priv == priv_U)
 				       ? exc_code_ECALL_FROM_U
-				       : ((inputs.cur_priv == s_Priv_Mode)
+				       : ((inputs.cur_priv == priv_S)
 					  ? exc_code_ECALL_FROM_S
 					  : exc_code_ECALL_FROM_M));
 	    end
@@ -1002,7 +1004,7 @@ function ALU_Outputs fv_SYSTEM (ALU_Inputs inputs);
 	    end
 
 	    // MRET instruction
-	    else if (   (inputs.cur_priv >= m_Priv_Mode)
+	    else if (   (inputs.cur_priv >= priv_M)
 		     && (instr_I_imm12(inputs.instr) == f12_MRET))
 	       begin
 		  alu_outputs.control = CONTROL_MRET;
@@ -1010,8 +1012,8 @@ function ALU_Outputs fv_SYSTEM (ALU_Inputs inputs);
 
 `ifdef ISA_PRIV_S
 	    // SRET instruction
-	    else if (   (   (inputs.cur_priv == m_Priv_Mode)
-			 || (   (inputs.cur_priv == s_Priv_Mode)
+	    else if (   (   (inputs.cur_priv == priv_M)
+			 || (   (inputs.cur_priv == priv_S)
 			     && (inputs.mstatus [mstatus_tsr_bitpos] == 0)))
 		     && (instr_I_imm12(inputs.instr) == f12_SRET))
 	       begin
@@ -1021,7 +1023,7 @@ function ALU_Outputs fv_SYSTEM (ALU_Inputs inputs);
 
 	    /*
 	    // URET instruction (future: support 'N' extension)
-	    else if (   (inputs.cur_priv >= u_Priv_Mode)
+	    else if (   (inputs.cur_priv >= priv_U)
 		     && (instr_I_imm12(inputs.instr) == f12_URET))
 	       begin
 		  alu_outputs.control = CONTROL_URET;
@@ -1029,10 +1031,10 @@ function ALU_Outputs fv_SYSTEM (ALU_Inputs inputs);
 	    */
 
 	    // WFI instruction
-	    else if (   (   (inputs.cur_priv == m_Priv_Mode)
-			 || (   (inputs.cur_priv == s_Priv_Mode)
+	    else if (   (   (inputs.cur_priv == priv_M)
+			 || (   (inputs.cur_priv == priv_S)
 			     && (inputs.mstatus [mstatus_tw_bitpos] == 0))
-			 || (   (inputs.cur_priv == u_Priv_Mode)
+			 || (   (inputs.cur_priv == priv_U)
 			     && (inputs.misa.n == 1)))
 		     && (instr_I_imm12(inputs.instr) == f12_WFI))
 	       begin
@@ -1214,7 +1216,7 @@ function ALU_Outputs fv_ALU (ALU_Inputs inputs);
 `ifdef ISA_M
    // OP 'M' ops MUL/ MULH/ MULHSU/ MULHU/ DIV/ DIVU/ REM/ REMU
    else if (   (instr_opcode(inputs.instr) == op_OP)
-	    && f7_is_OP_MUL_DIV_REM (instr_funct7(inputs.instr)))
+	    && instr_funct7(inputs.instr) == f7_MUL_DIV_REM)
       begin
 	 // Will be executed in MBox in next stage
 	 alu_outputs.op_stage2 = OP_Stage2_M;
@@ -1237,7 +1239,7 @@ function ALU_Outputs fv_ALU (ALU_Inputs inputs);
 `ifdef RV64
    // OP 'M' ops MULW/ DIVW/ DIVUW/ REMW/ REMUW
    else if (   (instr_opcode(inputs.instr) == op_OP_32)
-	    && f7_is_OP_MUL_DIV_REM (instr_funct7(inputs.instr))
+	    && instr_funct7(inputs.instr) == f7_MUL_DIV_REM
 	    && (instr_funct3(inputs.instr) != 3'b001)
 	    && (instr_funct3(inputs.instr) != 3'b010)
 	    && (instr_funct3(inputs.instr) != 3'b011))

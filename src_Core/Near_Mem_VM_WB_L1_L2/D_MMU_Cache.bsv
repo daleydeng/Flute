@@ -73,7 +73,7 @@ import Semi_FIFOF :: *;
 // ================================================================
 // Project imports
 
-import isa_decls    :: *;
+import isa_base :: *;
 import Near_Mem_IFC :: *;
 
 import SoC_Map :: *;
@@ -701,7 +701,7 @@ module mkD_MMU_Cache (D_MMU_Cache_IFC);
 			       va:          truncate (rg_ptw_mem_req.pte_pa),
 			       st_value:    ?,
 			       amo_funct7:  0,
-			       priv:        m_Priv_Mode,
+			       priv:        priv_M,
 			       sstatus_SUM: 0,
 			       mstatus_MXR: 0,
 			       satp:        0};
@@ -796,7 +796,7 @@ module mkD_MMU_Cache (D_MMU_Cache_IFC);
 			       va:          truncate (pte_writeback_pa),
 			       st_value:    zeroExtend (pte_writeback_pte),
 			       amo_funct7:  0,
-			       priv:        m_Priv_Mode,
+			       priv:        priv_M,
 			       sstatus_SUM: 0,
 			       mstatus_MXR: 0,
 			       satp:        0};

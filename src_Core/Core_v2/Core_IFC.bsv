@@ -37,7 +37,7 @@ import AXI4_Lite_Types :: *;
 import PLIC  :: *;
 
 `ifdef INCLUDE_PC_TRACE
-import PC_Trace  :: *;
+import PCTrace  :: *;
 `endif
 
 `ifdef INCLUDE_TANDEM_VERIF
@@ -95,7 +95,7 @@ interface Core_IFC #(numeric type t_n_interrupt_sources);
    // Optional PC Trace output
 
 `ifdef INCLUDE_PC_TRACE
-   interface Get #(PC_Trace)  g_pc_trace;
+   interface Get #(PCTrace)  g_pc_trace;
 `endif
 
    // ----------------------------------------------------------------

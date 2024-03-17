@@ -17,7 +17,7 @@ import ClientServer :: *;
 import ConfigReg    :: *;
 import Cur_Cycle :: *;
 
-import isa_decls        :: *;
+import isa_priv_M        :: *;
 `ifdef ISA_C
 import convert_instr_c     :: *;
 `endif

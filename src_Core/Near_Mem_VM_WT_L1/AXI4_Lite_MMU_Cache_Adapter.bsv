@@ -26,7 +26,7 @@ import Semi_FIFOF :: *;
 // ================================================================
 // Project imports
 
-import isa_decls       :: *;
+import isa       :: *;
 import Near_Mem_IFC    :: *;
 import MMU_Cache       :: *;
 import Fabric_Defs     :: *;
@@ -107,7 +107,7 @@ module mkAXI4_Lite_MMU_Cache_Adapter #(MMU_Cache_IFC cache)
 `endif
 		    truncate (addr64),
 		    st_value,
-		    m_Priv_Mode,
+		    priv_M,
 		    ?,
 		    ?,
 		    ?);
@@ -172,7 +172,7 @@ module mkAXI4_Lite_MMU_Cache_Adapter #(MMU_Cache_IFC cache)
 `endif
 		       truncate (addr64),
 		       st_value,
-		       m_Priv_Mode,
+		       priv_M,
 		       ?,
 		       ?,
 		       ?);
@@ -201,7 +201,7 @@ module mkAXI4_Lite_MMU_Cache_Adapter #(MMU_Cache_IFC cache)
 `endif
 		 truncate (addr64),
 		 ?,
-		 m_Priv_Mode,
+		 priv_M,
 		 ?,
 		 ?,
 		 ?);

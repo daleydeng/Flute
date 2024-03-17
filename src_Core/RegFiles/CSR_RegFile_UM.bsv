@@ -29,7 +29,7 @@ import GetPut_Aux :: *;
 // ================================================================
 // Project imports
 
-import isa_decls :: *;
+import isa_base :: *;
 import SoC_Map   :: *;
 
 `ifdef INCLUDE_GDB_CONTROL
@@ -83,7 +83,7 @@ interface CSR_RegFile_IFC;
    method WordXL read_satp;
 
    // CSR trap actions
-   method ActionValue #(Trap_Info)
+   method ActionValue #(TrapInfo)
           csr_trap_actions (PrivMode  from_priv,
 			    Word       pc,
 			    Bool       interrupt,
@@ -294,12 +294,12 @@ module mkCSR_RegFile (CSR_RegFile_IFC);
    // Vector #(16, Reg #(WordXL))  vrg_pmpaddr <- replicateM (mkRegU);
 
    // mcycle is needed even for user-mode RDCYCLE instruction
-   // It can be updated by a CSR instruction (in Priv_M), and by the clock
+   // It can be updated by a CSR instruction (in priv_M), and by the clock
    Reg #(Bit#(64))   rg_mcycle <- mkReg (0);
    RWire #(Bit#(64)) rw_mcycle <- mkRWire;    // Driven on CSRRx write to mcycle
 
    // minstret is needed even for user-mode RDINSTRET instructions
-   // It can be updated by a CSR instruction (in Priv_M), and by retirement of any other instruction
+   // It can be updated by a CSR instruction (in priv_M), and by retirement of any other instruction
    Reg #(Bit#(64))   rg_minstret      <- mkReg (0);    // Needed even for user-mode instrs
    RWire #(Bit#(64)) rw_minstret      <- mkRWire;      // Driven on CSRRx write to minstret
    PulseWire          pw_minstret_incr <- mkPulseWire;
@@ -688,7 +688,7 @@ module mkCSR_RegFile (CSR_RegFile_IFC);
       // Set or clear mip.mtip
       let old_mip = rg_mip;
       let new_mip = old_mip;
-      new_mip.eips [m_Priv_Mode] = (ei_req ? 1'b1 : 1'b0);
+      new_mip.eips [priv_M] = (ei_req ? 1'b1 : 1'b0);
       rg_mip <= new_mip;
 
       WordXL old_mip_w = mip_to_word (old_mip);
@@ -709,7 +709,7 @@ module mkCSR_RegFile (CSR_RegFile_IFC);
       // Set or clear mip.mtip
       let old_mip = rg_mip;
       let new_mip = old_mip;
-      new_mip.tips [m_Priv_Mode] = (ti_req ? 1'b1 : 1'b0);
+      new_mip.tips [priv_M] = (ti_req ? 1'b1 : 1'b0);
       rg_mip <= new_mip;
 
       WordXL old_mip_w = mip_to_word (old_mip);
@@ -730,7 +730,7 @@ module mkCSR_RegFile (CSR_RegFile_IFC);
       // Set or clear mip.msip
       let old_mip = rg_mip;
       let new_mip = old_mip;
-      new_mip.sips [m_Priv_Mode] = (si_req ? 1'b1 : 1'b0);
+      new_mip.sips [priv_M] = (si_req ? 1'b1 : 1'b0);
       rg_mip <= new_mip;
 
       WordXL old_mip_w = mip_to_word (old_mip);
@@ -848,7 +848,7 @@ module mkCSR_RegFile (CSR_RegFile_IFC);
    endmethod
 
    // CSR Trap actions
-   method ActionValue #(Trap_Info)
+   method ActionValue #(TrapInfo)
           csr_trap_actions (PrivMode  from_priv,
 			    Word       pc,
 			    Bool       interrupt,
@@ -860,11 +860,11 @@ module mkCSR_RegFile (CSR_RegFile_IFC);
 	 $display ("    from priv %0d  pc 0x%0h  interrupt %0d  exc_code %0d  xtval 0x%0h",
 		   from_priv, pc, pack (interrupt), exc_code, xtval);
 `ifdef ISA_PRIV_S
-	 fa_show_trap_csrs (s_Priv_Mode, rg_mip, rg_mie, 0, 0, rg_scause,
+	 fa_show_trap_csrs (priv_S, rg_mip, rg_mie, 0, 0, rg_scause,
 			    word_to_mstatus (misa,  fn_read_sstatus (rg_mstatus)),
 			    rg_stvec, rg_sepc, rg_stval);
 `endif
-	 fa_show_trap_csrs (m_Priv_Mode, rg_mip, rg_mie, rg_medeleg, rg_mideleg, rg_mcause,
+	 fa_show_trap_csrs (priv_M, rg_mip, rg_mie, rg_medeleg, rg_mideleg, rg_mcause,
 			    rg_mstatus,
 			    rg_mtvec, rg_mepc, rg_mtval);
       end
@@ -884,7 +884,7 @@ module mkCSR_RegFile (CSR_RegFile_IFC);
       Reg #(Word)   rg_xtval  = rg_mtval;
       Reg #(MTVec)  rg_xtvec  = rg_mtvec;
 `ifdef ISA_PRIV_S
-      if (new_priv != m_Priv_Mode) begin
+      if (new_priv != priv_M) begin
          rg_xepc   = rg_sepc;
          rg_xcause = rg_scause;
          rg_xtval  = rg_stval;
@@ -911,7 +911,7 @@ module mkCSR_RegFile (CSR_RegFile_IFC);
 	 $display ("");
       end
 
-      return (Trap_Info {pc       : exc_pc,                        // New PC
+      return (TrapInfo {pc       : exc_pc,                        // New PC
 			 mstatus  : mstatus_to_word (new_mstatus), // New mstatus
 			 mcause   : mcause_to_word  (xcause),      // New mcause
 			 priv     : new_priv});                    // New priv
@@ -923,7 +923,7 @@ module mkCSR_RegFile (CSR_RegFile_IFC);
       rg_mstatus  <= new_mstatus;
       Word next_pc = rg_mepc;
 `ifdef ISA_PRIV_S
-      if (from_priv != m_Priv_Mode)
+      if (from_priv != priv_M)
 	 next_pc = rg_sepc;
 `endif
       return tuple3 (next_pc, to_priv, mstatus_to_word (new_mstatus));
@@ -952,7 +952,7 @@ module mkCSR_RegFile (CSR_RegFile_IFC);
 
    // Fault on reading counters?
    method Bool csr_counter_read_fault (PrivMode  priv, CSRAddr  csr_addr);
-      return (   ((priv == s_Priv_Mode) || (priv == u_Priv_Mode))
+      return (   ((priv == priv_S) || (priv == priv_U))
 	      && (   ((csr_addr == csr_cycle)   && (rg_mcounteren.cy == 0))
 		  || ((csr_addr == csr_time)    && (rg_mcounteren.tm == 0))
 		  || ((csr_addr == csr_instret) && (rg_mcounteren.ir == 0))
@@ -1021,9 +1021,9 @@ module mkCSR_RegFile (CSR_RegFile_IFC);
    // Break should enter Debug Mode
    method Bool dcsr_break_enters_debug (PrivMode cur_priv);
       return case (cur_priv)
-		m_Priv_Mode: (rg_dcsr [15] == 1'b1);
-		s_Priv_Mode: (rg_dcsr [13] == 1'b1);
-		u_Priv_Mode: (rg_dcsr [12] == 1'b1);
+		priv_M: (rg_dcsr [15] == 1'b1);
+		priv_S: (rg_dcsr [13] == 1'b1);
+		priv_U: (rg_dcsr [12] == 1'b1);
 	     endcase;
    endmethod
 

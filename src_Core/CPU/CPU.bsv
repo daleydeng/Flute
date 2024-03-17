@@ -42,7 +42,7 @@ import AXI4_Types :: *;
 import AXI4_Lite_Types :: *;
 `endif
 
-import isa_decls :: *;
+import isa_priv_M :: *;
 
 import tv_trace_data :: *;
 
@@ -176,11 +176,11 @@ module mkCPU (CPU_IFC);
    // ----------------
    // Major CPU states
    Reg #(CPU_State)  rg_state    <- mkReg (CPU_RESET1);
-   Reg #(PrivMode)  rg_cur_priv <- mkReg (m_Priv_Mode);
+   Reg #(PrivMode)  rg_cur_priv <- mkReg (priv_M);
    Reg #(Epoch)      rg_epoch    <- mkRegU;
 
    // These regs save info on a trap in Stage1 or Stage2
-   Reg #(Trap_Info)  rg_trap_info       <- mkRegU;
+   Reg #(TrapInfo)  rg_trap_info       <- mkRegU;
    Reg #(Bool)       rg_trap_interrupt  <- mkRegU;
    Reg #(InstrBits)      rg_trap_instr      <- mkRegU;
 `ifdef INCLUDE_TANDEM_VERIF
@@ -276,7 +276,7 @@ module mkCPU (CPU_IFC);
    // PC trace output
 
 `ifdef INCLUDE_PC_TRACE
-   FIFOF #(PC_Trace) f_pc_trace  <- mkFIFOF;
+   FIFOF #(PCTrace) f_pc_trace  <- mkFIFOF;
 `endif
 
    // ----------------
@@ -323,7 +323,7 @@ module mkCPU (CPU_IFC);
 	 rg_pc_reported      <= pc;
 
 `ifdef INCLUDE_PC_TRACE
-	 let pc_trace = PC_Trace {cycle:   mcycle,
+	 let pc_trace = PCTrace {cycle:   mcycle,
 				  instret: instret,
 				  pc:      zeroExtend (pc)};
 	 f_pc_trace.enq (pc_trace);
@@ -474,7 +474,7 @@ module mkCPU (CPU_IFC);
       stage2.server_reset.request.put (?);
       stage3.server_reset.request.put (?);
 
-      rg_cur_priv <= m_Priv_Mode;
+      rg_cur_priv <= priv_M;
       rg_state    <= CPU_RESET2;
       rg_epoch    <= 0;
 
@@ -528,7 +528,7 @@ module mkCPU (CPU_IFC);
       else begin
 	 rg_state <= CPU_DEBUG_MODE;
 `ifdef INCLUDE_GDB_CONTROL
-	 csr_regfile.write_dcsr_cause_priv (DCSR_CAUSE_HALTREQ, m_Priv_Mode);
+	 csr_regfile.write_dcsr_cause_priv (DCSR_CAUSE_HALTREQ, priv_M);
 	 csr_regfile.write_dpc (dpc);
 `endif
 	 if (cur_verbosity != 0)
@@ -924,7 +924,7 @@ module mkCPU (CPU_IFC);
 `endif
 
       // In case of trap (illegal CSRRW)
-      rg_trap_info      <= Trap_Info {epc:      stage1.out.data_to_stage2.pc,
+      rg_trap_info      <= TrapInfo {epc:      stage1.out.data_to_stage2.pc,
                                       exc_code: exc_code_ILLEGAL_INSTRUCTION,
                                       tval:     stage1.out.trap_info.tval};
       rg_trap_interrupt <= False;
@@ -1040,7 +1040,7 @@ module mkCPU (CPU_IFC);
 `endif
 
       // In case of trap (illegal CSRRW)
-      rg_trap_info      <= Trap_Info {epc:      stage1.out.data_to_stage2.pc,
+      rg_trap_info      <= TrapInfo {epc:      stage1.out.data_to_stage2.pc,
                                       exc_code: exc_code_ILLEGAL_INSTRUCTION,
                                       tval:     stage1.out.trap_info.tval};
       rg_trap_interrupt <= False;
@@ -1167,8 +1167,8 @@ module mkCPU (CPU_IFC);
 
       // Return-from-exception actions on CSRs
       PrivMode from_priv = ((stage1.out.control == CONTROL_MRET) ?
-			     m_Priv_Mode : ((stage1.out.control == CONTROL_SRET) ?
-					    s_Priv_Mode : u_Priv_Mode));
+			     priv_M : ((stage1.out.control == CONTROL_SRET) ?
+					    priv_S : priv_U));
       match { .next_pc, .new_priv, .new_mstatus } <- csr_regfile.csr_ret_actions (from_priv);
       // Save new privilege and pc for ifetch
       rg_cur_priv <= new_priv;
@@ -1509,7 +1509,7 @@ module mkCPU (CPU_IFC);
 	  &&& (! csr_regfile.nmi_pending))
 	 exc_code = ec;
 
-      rg_trap_info       <= Trap_Info {epc:      stage1.out.data_to_stage2.pc,
+      rg_trap_info       <= TrapInfo {epc:      stage1.out.data_to_stage2.pc,
 				       exc_code: exc_code,
 				       tval:     0};
       rg_trap_interrupt  <= True;

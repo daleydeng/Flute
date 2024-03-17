@@ -19,7 +19,8 @@ package CPU_Globals;
 // ================================================================
 // Project imports
 
-import isa_decls     :: *;
+import isa_priv_M     :: *;
+import isa_cext :: *;
 import tv_trace_data :: *;
 
 // ================================================================
@@ -204,7 +205,7 @@ typedef struct {
    Addr      epc;
    Exc_Code  exc_code;
    Addr      tval;
-   } Trap_Info
+   } TrapInfo
 deriving (Bits, FShow);
 
 // ================================================================
@@ -347,7 +348,7 @@ typedef struct {
 
    Control                control;
 
-   Trap_Info              trap_info;
+   TrapInfo              trap_info;
 
    // feedback
    Bool                   redirect;
@@ -467,7 +468,7 @@ endinstance
 
 typedef struct {
    Stage_OStatus          ostatus;
-   Trap_Info              trap_info;    // relevant if ostatus == OSTATUS_NONPIPE
+   TrapInfo              trap_info;    // relevant if ostatus == OSTATUS_NONPIPE
 
    // feedback
    Bypass                 bypass;

@@ -10,7 +10,8 @@ import FloatingPoint::*;
 import Divide :: *;
 import SquareRoot ::*;
 
-import isa_decls :: *;
+import isa_base :: *;
+import isa_fdext :: *;
 
 typedef FloatingPoint#(11,52) FDouble;
 typedef FloatingPoint#(8,23)  FSingle;

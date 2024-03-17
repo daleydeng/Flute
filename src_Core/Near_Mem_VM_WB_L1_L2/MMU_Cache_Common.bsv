@@ -13,7 +13,7 @@ import Vector :: *;
 // ================================================================
 // Project imports
 
-import isa_decls   :: *;
+import isa   :: *;
 import Fabric_Defs :: *;
 import Cache_Decls :: *;
 

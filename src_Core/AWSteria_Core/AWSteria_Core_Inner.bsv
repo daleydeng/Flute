@@ -60,14 +60,14 @@ import SoC_Map     :: *;
 import AWSteria_Core_IFC :: *;    // For AXI4_Wd_{Id,Addr,Data_A,Data_B,_User}
                                   // and N_Core_External_Interrupt_Sources
 
-import isa_decls         :: *;
+import isa         :: *;
 import Fabric_Defs       :: *;    // for Wd_{Id,Addr,Data,User}
 
 import DM_Common         :: *;    // Debug Module interface etc.
 import DM_CPU_Req_Rsp    :: *;
 
 `ifdef INCLUDE_PC_TRACE
-import PC_Trace          :: *;    // Lightweight PC trace info
+import PCTrace          :: *;    // Lightweight PC trace info
 `endif
 
 import tv_buffer           :: *;    // Tandem Verification info
@@ -388,13 +388,13 @@ module mkAWSteria_Core_Inner (AWSteria_Core_Inner_IFC);
    Reg #(Tuple2 #(Bool, Bit#(64))) rg_pc_trace_control <- mkReg (tuple2 (False, ?));
    FIFOF #(Bit#(32))               f_misc_to_host      <- mkFIFOF;
 
-   Reg #(PC_Trace)   rg_pc_trace                 <- mkRegU;
+   Reg #(PCTrace)   rg_pc_trace                 <- mkRegU;
    Reg #(Bit#(64))  rg_pc_trace_interval_ctr    <- mkReg (0);
    Reg #(Bit#(3))   rg_pc_trace_serialize_state <- mkReg (0);
 
    rule rl_pc_trace_0 (rg_pc_trace_serialize_state == 0);
       // Drain pc trace packet from CPU
-      PC_Trace pc_trace <- cpu.g_pc_trace.get;
+      PCTrace pc_trace <- cpu.g_pc_trace.get;
       rg_pc_trace <= pc_trace;
 
       match { .pc_trace_on, .pc_trace_interval } = rg_pc_trace_control;

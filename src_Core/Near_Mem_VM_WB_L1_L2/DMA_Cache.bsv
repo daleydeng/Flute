@@ -49,7 +49,7 @@ import AXI4_to_ST :: *;
 // ================================================================
 // Project imports
 
-import isa_decls        :: *;
+import isa        :: *;
 import Near_Mem_IFC     :: *;    // For Wd_{Id/Addr/User/Data}_Mem
 import AXI_Widths       :: *;    // For Wd_{Id/Addr/User/Data}_Dma
 import SoC_Map          :: *;    // For predicate on addresses (cacheble or not)

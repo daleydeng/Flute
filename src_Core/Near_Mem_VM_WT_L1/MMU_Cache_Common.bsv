@@ -8,7 +8,7 @@ package MMU_Cache_Common;
 // ================================================================
 // Project imports
 
-import isa_decls   :: *;
+import isa_priv_S   :: *;
 import Fabric_Defs :: *;
 
 // ================================================================

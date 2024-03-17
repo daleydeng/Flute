@@ -18,7 +18,7 @@ package CSR_MSTATUS;
 // ================================================================
 // Project imports
 
-import isa_decls :: *;
+import isa_priv_M :: *;
 
 // ================================================================
 // INTERFACE
@@ -145,7 +145,7 @@ function WordXL fv_mstatus_reset_value (MISA misa);
 	 mstatus = fv_assign_bits (mstatus, fromInteger (mstatus_uxl_bitpos), misa_mxl_64);
    end
 
-   mstatus = fv_assign_bits (mstatus, fromInteger (mstatus_mpp_bitpos), u_Priv_Mode);
+   mstatus = fv_assign_bits (mstatus, fromInteger (mstatus_mpp_bitpos), priv_U);
 
 `ifdef ISA_F
    // When F/D is present, FS bit needs to be set to initial value on reset
@@ -223,24 +223,24 @@ function WordXL fv_fixup_mstatus (MISA misa, WordXL  wordxl);
    Bit#(1) mpie   = wordxl [mstatus_mpie_bitpos];
 
    // SPP, WPRI_9, MPP
-   Bit#(1) spp    = ((misa.s == 0) ? u_Priv_Mode [0] : wordxl [mstatus_spp_bitpos]);
+   Bit#(1) spp    = ((misa.s == 0) ? priv_U [0] : wordxl [mstatus_spp_bitpos]);
    Bit#(2) wpri_9 = fv_get_bits (wordxl, fromInteger (mstatus_WPRI_9_bitpos));
 
    // MPP
    Bit#(2) mpp = fv_get_bits (wordxl, fromInteger (mstatus_mpp_bitpos));
    if (misa.u == 0) begin
       // Only M supported
-      mpp = m_Priv_Mode;
+      mpp = priv_M;
    end
    else if (misa.s == 0) begin
       // Only M and U supported
-      if (mpp != m_Priv_Mode)
-	 mpp = u_Priv_Mode;
+      if (mpp != priv_M)
+	 mpp = priv_U;
    end
    else begin
       // M, S, and U supported
-      if (mpp == reserved_Priv_Mode)
-	 mpp = s_Priv_Mode;
+      if (mpp == priv_r)
+	 mpp = priv_S;
    end
 
    // FS: cf. Priv Arch 1.10, p.23: "In systems that do not

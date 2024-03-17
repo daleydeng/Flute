@@ -1,0 +1,102 @@
+package isa_types(
+    package isa_defines_bh
+    ,package isa_types
+) where
+
+import isa_defines_bh
+
+type XLEN_2 = TMul XLEN 2
+type XLEN_MINUS_2 = TSub XLEN 2
+
+xlen:: Integer
+xlen = valueOf XLEN
+
+data RVVersion = RV32 | RV64 deriving (Eq, Bits)
+rv_version:: RVVersion
+rv_version = case xlen of {
+    32 -> RV32;
+    64 -> RV64;
+}
+
+type BitsPerByte = 8
+type Byte = Bit BitsPerByte
+bits_per_byte:: Integer
+bits_per_byte = valueOf BitsPerByte
+
+type BitsPerWordXL = XLEN
+type WordXL = Bit BitsPerWordXL
+
+type BytesPerWordXL = TDiv BitsPerWordXL BitsPerByte
+bytes_per_wordxl:: Integer
+bytes_per_wordxl = valueOf BytesPerWordXL
+
+type Bits_per_Byte_in_WordXL = TLog BytesPerWordXL
+type Byte_in_WordXL = Bit Bits_per_Byte_in_WordXL
+bits_per_byte_in_wordxl:: Integer
+bits_per_byte_in_wordxl = valueOf Bits_per_Byte_in_WordXL
+
+type IntXL = Int XLEN
+type Addr = WordXL
+
+{-
+-- ================================================================
+-- FLEN and related constants, for floating point data
+-- Can have one or two fpu sizes (should they be merged sooner than later ?).
+
+-- ISA_D => ISA_F (ISA_D implies ISA_F)
+-- The combination ISA_D and !ISA_F is not permitted
+-}
+
+type WordFL = Bit FLEN
+type BytesPerWordFL = TDiv FLEN BitsPerByte
+
+{-
+-- ================================================================
+-- Tokens are used for signalling/synchronization, and have no payload
+-}
+type Token = Bit 0
+
+{-
+-- ================================================================
+-- Instruction fields
+-- This is used for encoding Tandem Verifier traces
+-}
+data ISize = ISIZE16 | ISIZE32 deriving (Bits, Eq, FShow)
+
+type InstrBits = Bit 32
+type Opcode = Bit 7
+type RegIdx = Bit 5
+type CSRAddr = Bit 12
+type InstrCBits = Bit 16;
+
+-- ================================================================
+-- Privilege Modes
+
+type PrivMode = Bit 2
+
+priv_U:: PrivMode; priv_U = 2'b00
+priv_S:: PrivMode; priv_S = 2'b01
+priv_r:: PrivMode; priv_r = 2'b10
+priv_M:: PrivMode; priv_M = 2'b11
+
+fmt_PrivMode:: PrivMode -> String
+fmt_PrivMode m = case (m) of {
+    2'b00 -> "U";
+    2'b01 -> "S";
+    2'b10 -> "r";
+    2'b11 -> "M";
+}
+
+-- Information from the CSR on a new trap. 
+struct TrapInfo = {
+   pc:: Addr;
+   mstatus:: WordXL;
+   mcause:: WordXL;
+   priv:: PrivMode;
+} deriving (Bits, Eq, FShow);
+
+struct PCTrace = {
+   cycle:: Bit 64;
+   instret:: Bit 64;
+   pc:: Bit 64;
+} deriving (Bits, FShow);   

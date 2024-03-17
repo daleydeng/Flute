@@ -7,7 +7,9 @@ package convert_instr_c;
 
 export convert_instr_C;
 
-import isa_decls   :: *;
+import isa_priv_M   :: *;
+import isa_cext     :: *;
+import isa_fdext    :: *;
 import convert_instr_c_bh :: *;
 
 `include "isa_defines.bsvi"

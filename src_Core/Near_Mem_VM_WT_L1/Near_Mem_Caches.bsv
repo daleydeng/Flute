@@ -37,7 +37,7 @@ import GetPut_Aux :: *;
 // ================================================================
 // Project imports
 
-import isa_decls        :: *;
+import isa_priv_S        :: *;
 import Near_Mem_IFC     :: *;
 import MMU_Cache_Common :: *;
 import MMU_Cache        :: *;

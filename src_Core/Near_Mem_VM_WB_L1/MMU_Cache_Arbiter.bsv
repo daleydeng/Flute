@@ -15,7 +15,7 @@ import ClientServer :: *;
 // ================================================================
 // Project imports
 
-import isa_decls    :: *;
+import isa_base :: *;
 import Near_Mem_IFC :: *;
 import MMU_Cache    :: *;
 

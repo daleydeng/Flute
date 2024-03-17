@@ -23,7 +23,7 @@ mkAWSteria_Core WILL BE INSTANTIATED!
     For the BSV interface see source files:
         Flute/src_Core/AWSteria_Core/AWSteria_Core_IFC.bsv
         Flute/src_Core/Debug_Module/DM_Common.bsv
-        Flute/src_Core/ISA/PC_Trace.bsv
+        Flute/src_Core/ISA/PCTrace.bsv
         Flute/src_Core/ISA/TVBuffer.bsv
 
     For the Verilog interface, see the generated Verilog file:

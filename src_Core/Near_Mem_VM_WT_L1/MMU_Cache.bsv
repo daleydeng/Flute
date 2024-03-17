@@ -59,7 +59,7 @@ import CreditCounter :: *;
 // ================================================================
 // Project imports
 
-import isa_decls        :: *;
+import isa_priv_S        :: *;
 import Near_Mem_IFC     :: *;
 import MMU_Cache_Common :: *;
 import Cache_Decls      :: *;
@@ -478,7 +478,7 @@ module mkMMU_Cache  #(parameter Bool dmem_not_imem)  (MMU_Cache_IFC);
    Reg #(WordXL)     rg_satp        <- mkRegU;    // Copy of value in SATP CSR { VM_Mode, ASID, PPN }
 `else
    // Dummy registers in non-VM mode
-   PrivMode x = m_Priv_Mode;
+   PrivMode x = priv_M;
    Reg #(PrivMode)  rg_priv        = fn_genNullRegIfc (x);
 
    Bit#(1) y = ?;
@@ -1855,7 +1855,7 @@ module mkMMU_Cache  #(parameter Bool dmem_not_imem)  (MMU_Cache_IFC);
       if (cfg_verbosity > 1) begin
 	 $display ("%0d: %m.req: op:", cur_cycle, fshow (op),
 		   " f3:%0d addr:0x%0h st_value:0x%0h", f3, addr, st_value);
-	 $display ("    priv:", fshow_Priv_Mode (priv),
+	 $display ("    priv:", fmt_PrivMode (priv),
 		   " sstatus_SUM:%0d mstatus_MXR:%0d satp:0x%0h",
 		   sstatus_SUM,    mstatus_MXR,    satp);
 `ifdef ISA_A

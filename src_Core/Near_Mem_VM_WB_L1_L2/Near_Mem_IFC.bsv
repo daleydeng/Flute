@@ -33,7 +33,7 @@ import Cur_Cycle :: *;
 // ================================================================
 // Project imports
 
-import isa_decls :: *;
+import isa_priv_M :: *;
 
 import MMU_Cache_Common :: *;
 import AXI4_Types       :: *;

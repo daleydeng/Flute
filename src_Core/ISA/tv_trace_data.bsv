@@ -10,7 +10,7 @@
 package tv_trace_data;
 
 
-import isa_decls    :: *;
+import isa_base :: *;
 
 typedef enum {// These are not from instruction flow and do not have a PC or instruction
    TRACE_RESET,

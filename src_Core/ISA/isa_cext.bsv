@@ -1,5 +1,5 @@
+package isa_cext;
 // ================================================================
-// This is an 'include' file, not a separate BSV package
 //
 // Contains RISC-V ISA defs for the 'C' ("compressed") extension
 // i.e., 16-bit instructions
@@ -7,7 +7,8 @@
 // ================================================================
 // Instruction field encodings
 
-typedef  Bit#(16)  InstrCBits;
+export isa_types::*, isa_cext::*;
+import isa_types ::*;
 
 InstrCBits illegal_instr_c = 16'h0000;
 
@@ -180,3 +181,5 @@ Bit#(6) f6_C_SUBW     = 6'b_100_1_11;
 Bit#(2) f2_C_SUBW     = 2'b_00;
 
 Bit#(4) f4_C_EBREAK   = 4'b_1001;
+
+endpackage
