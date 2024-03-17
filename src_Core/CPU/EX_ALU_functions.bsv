@@ -522,25 +522,27 @@ endfunction: fv_OP_and_OP_IMM_shifts
 // Remaining OP and OP_IMM (excluding shifts, M ops MUL/DIV/REM)
 function ALU_Outputs fv_OP_and_OP_IMM (ALU_Inputs inputs);
    let instr = inputs.instruction;
-   let ast = instr.ast;
    let funct3 = 0;
    let funct7 = 0;
+   let trap = False;
+   let is_subtract = False;
+   let rd = 0;
 
-   case (ast) matches
-      tagged R .x: begin 
+   case (instr) matches
+      tagged Instr_R .x: begin 
          funct3 = x.funct3;
          funct7 = x.funct7;
+         is_subtract = pack(instr)[30] == 1'b1; // ADD and SUB differ only in instr [30]
+         rd = x.rd;
+         trap = (funct7 != 0 && funct7 != f7_SUB) // For op_OP, check Must Be Zero bits in funct7
+               || (funct7 == f7_SUB && funct3 != 0);
       end
-      tagged I .x: funct3 = x.funct3;
+      tagged Instr_I .x: begin
+         funct3 = x.funct3;
+         rd = x.rd;
+      end
+      default: trap = True;
    endcase
-
-   let trap = False;
-   if (instr.fmt != InstrFmtR && instr.fmt != InstrFmtI)
-      trap = True;
-
-   if (instr.fmt == InstrFmtR) // For op_OP, check Must Be Zero bits in funct7
-      trap = (funct7 != 0 && funct7 != f7_SUB)
-         || (funct7 == f7_SUB && funct3 != 0);
 
    if (funct3 != f3_ADD 
       && funct3 != f3_XOR 
@@ -558,9 +560,6 @@ function ALU_Outputs fv_OP_and_OP_IMM (ALU_Inputs inputs);
       let rs1_val = inputs.rs1_val;
       let rs2_val = inputs.rs2_val;
 
-      // ADD and SUB differ only in instr [30]
-      Bool     subtract   = (instr.fmt == InstrFmtR && (ast.Raw[30] == 1'b1));
-
       // Signed versions of rs1_val and rs2_val
       IntXL  s_rs1_val = unpack(rs1_val);
       IntXL  s_rs2_val = unpack(rs2_val);
@@ -568,15 +567,17 @@ function ALU_Outputs fv_OP_and_OP_IMM (ALU_Inputs inputs);
       IntXL  s_rs2_val_local = s_rs2_val;
       WordXL rs2_val_local   = rs2_val;
 
-      if (instr.fmt == InstrFmtI) begin
-         s_rs2_val_local = extend (unpack (ast.I.imm12));
-         rs2_val_local   = pack (s_rs2_val_local);
-      end
+      case (instr) matches
+         tagged Instr_I .x: begin
+            s_rs2_val_local = extend (unpack (x.imm12));
+            rs2_val_local   = pack (s_rs2_val_local);
+         end 
+      endcase
 
       WordXL rd_val = ?;
 
-      if      ((funct3 == f3_ADDI) && (! subtract)) rd_val = pack (s_rs1_val + s_rs2_val_local);
-      else if ((funct3 == f3_ADDI) && (subtract))   rd_val = pack (s_rs1_val - s_rs2_val_local);
+      if      ((funct3 == f3_ADDI) && (! is_subtract)) rd_val = pack (s_rs1_val + s_rs2_val_local);
+      else if ((funct3 == f3_ADDI) && (is_subtract))   rd_val = pack (s_rs1_val - s_rs2_val_local);
       else if (funct3 == f3_SLTI)  rd_val = ((s_rs1_val < s_rs2_val_local) ? 1 : 0);
       else if (funct3 == f3_SLTIU) rd_val = ((rs1_val  < rs2_val_local)  ? 1 : 0);
       else if (funct3 == f3_XORI)  rd_val = pack (s_rs1_val ^ s_rs2_val_local);
@@ -584,7 +585,7 @@ function ALU_Outputs fv_OP_and_OP_IMM (ALU_Inputs inputs);
       else if (funct3 == f3_ANDI)  rd_val = pack (s_rs1_val & s_rs2_val_local);
 
       out = alu_outputs_default;
-      out.rd        = instr.fmt == InstrFmtR ? ast.R.rd : ast.I.rd;
+      out.rd        = rd;
       out.val1      = rd_val;
 
    `ifdef INCLUDE_TANDEM_VERIF

@@ -12,97 +12,84 @@ typedef  Bit#(16)  InstrCBits;
 InstrCBits illegal_instr_c = 16'h0000;
 
 typedef enum {
-   InstrCFmtNone,
-   InstrCFmtCR,
-   InstrCFmtCI,
-   InstrCFmtCSS,
-   InstrCFmtCIW,
-   InstrCFmtCL,
-   InstrCFmtCS,
-   InstrCFmtCA,
-   InstrCFmtCB,
-   InstrCFmtCJ
+   CR, CI, CSS, CIW, CL, CS, CA, CB, CJ
 } InstrCFmt deriving (Bits, Eq, FShow);
 
-typedef struct {
-   InstrCFmt fmt;
-   union tagged {
-      InstrCBits Raw;
-      struct {
-         Bit#(4) funct4;
-         Bit#(5) rd_rs1;
-         Bit#(5) rs2;
-         Bit#(2) op;
-      } CR;
-      struct {
-         Bit#(3) funct3;
-         Bit#(1) imm_12;
-         Bit#(5) rd_rs1;
-         Bit#(5) imm_6_2;
-         Bit#(2) op;
-      } CI;
-      struct {
-         Bit#(3) funct3;
-         Bit#(6) imm_12_7;
-         Bit#(5) rs2;
-         Bit#(2) op;
-      } CSS;
-      struct {
-         Bit#(3) funct3;
-         Bit#(8) imm_12_5;
-         Bit#(3) rd_C;
-         Bit#(2) op;
-      } CIW;
-      struct {
-         Bit#(3) funct3;
-         Bit#(3) imm_12_10;
-         Bit#(3) rs1_C;
-         Bit#(2) imm_6_5;
-         Bit#(3) rd_C;
-         Bit#(2) op;
-      } CL;
-      struct {
-         Bit#(3) funct3;
-         Bit#(3) imm_12_10;
-         Bit#(3) rs1_C;
-         Bit#(2) imm_6_5;
-         Bit#(3) rs2_C;
-         Bit#(2) op;
-      } CS;
-      struct {
-         Bit#(6) funct6;
-         Bit#(3) rd_rs1_C;
-         Bit#(2) funct2;
-         Bit#(3) rs2_C;
-         Bit#(2) op;
-      } CA;
-      struct {
-         Bit#(3) funct3;
-         Bit#(3) imm_12_10;
-         Bit#(3) rs1_C;
-         Bit#(5) imm_6_2;
-         Bit#(2) op;
-      } CB;
-      struct {
-         Bit#(3) funct3;
-         Bit#(11) imm_12_2;
-         Bit#(2) op;
-      } CJ;
-   } ast;
+typedef union tagged {
+   InstrCBits Raw;
+   struct {
+      Bit#(4) funct4;
+      Bit#(5) rd_rs1;
+      Bit#(5) rs2;
+      Bit#(2) op;
+   } Instr_CR;
+   struct {
+      Bit#(3) funct3;
+      Bit#(1) imm_12;
+      Bit#(5) rd_rs1;
+      Bit#(5) imm_6_2;
+      Bit#(2) op;
+   } Instr_CI;
+   struct {
+      Bit#(3) funct3;
+      Bit#(6) imm_12_7;
+      Bit#(5) rs2;
+      Bit#(2) op;
+   } Instr_CSS;
+   struct {
+      Bit#(3) funct3;
+      Bit#(8) imm_12_5;
+      Bit#(3) rd_C;
+      Bit#(2) op;
+   } Instr_CIW;
+   struct {
+      Bit#(3) funct3;
+      Bit#(3) imm_12_10;
+      Bit#(3) rs1_C;
+      Bit#(2) imm_6_5;
+      Bit#(3) rd_C;
+      Bit#(2) op;
+   } Instr_CL;
+   struct {
+      Bit#(3) funct3;
+      Bit#(3) imm_12_10;
+      Bit#(3) rs1_C;
+      Bit#(2) imm_6_5;
+      Bit#(3) rs2_C;
+      Bit#(2) op;
+   } Instr_CS;
+   struct {
+      Bit#(6) funct6;
+      Bit#(3) rd_rs1_C;
+      Bit#(2) funct2;
+      Bit#(3) rs2_C;
+      Bit#(2) op;
+   } Instr_CA;
+   struct {
+      Bit#(3) funct3;
+      Bit#(3) imm_12_10;
+      Bit#(3) rs1_C;
+      Bit#(5) imm_6_2;
+      Bit#(2) op;
+   } Instr_CB;
+   struct {
+      Bit#(3) funct3;
+      Bit#(11) imm_12_2;
+      Bit#(2) op;
+   } Instr_CJ;
 } InstructionC deriving (Bits, FShow);
 
 function InstructionC parse_instr_C(InstrCBits bits, InstrCFmt fmt);
    return case (fmt) 
-      InstrCFmtCR: InstructionC {fmt: fmt, ast: tagged CR(unpack(bits))};
-      InstrCFmtCI: InstructionC {fmt: fmt, ast: tagged CI(unpack(bits))};
-      InstrCFmtCSS: InstructionC {fmt: fmt, ast: tagged CSS(unpack(bits))};
-      InstrCFmtCIW: InstructionC {fmt: fmt, ast: tagged CIW(unpack(bits))};
-      InstrCFmtCL: InstructionC {fmt: fmt, ast: tagged CL(unpack(bits))};
-      InstrCFmtCS: InstructionC {fmt: fmt, ast: tagged CS(unpack(bits))};
-      InstrCFmtCA: InstructionC {fmt: fmt, ast: tagged CA(unpack(bits))};
-      InstrCFmtCB: InstructionC {fmt: fmt, ast: tagged CB(unpack(bits))};
-      InstrCFmtCJ: InstructionC {fmt: fmt, ast: tagged CJ(unpack(bits))};
-      default: InstructionC {fmt: InstrCFmtNone, ast: tagged Raw(bits)};
+      CR: tagged Instr_CR(unpack(bits));
+      CI: tagged Instr_CI(unpack(bits));
+      CSS: tagged Instr_CSS(unpack(bits));
+      CIW: tagged Instr_CIW(unpack(bits));
+      CL: tagged Instr_CL(unpack(bits));
+      CS: tagged Instr_CS(unpack(bits));
+      CA: tagged Instr_CA(unpack(bits));
+      CB: tagged Instr_CB(unpack(bits));
+      CJ: tagged Instr_CJ(unpack(bits));
    endcase;
 endfunction
 

@@ -124,18 +124,16 @@ instr_succ x = x[23:20]
 instr_aqrl:: InstrBits -> Bit 2
 instr_aqrl x = x[26:25]
 
-data InstrFmt = InstrFmtNone | InstrFmtR | InstrFmtI 
-    deriving (Bits, Eq, FShow)
-
+-- difference with haskell, `struct` keyword is used for record type instead of data
 -- difference with haskell, semicolon ; is used to seperation
-data InstrType = Raw InstrBits | R {
+data Instruction = Instr_R {
     funct7:: (Bit 7);
     rs2:: RegIdx;
     rs1:: RegIdx;
     funct3:: Bit 3;
     rd:: RegIdx;
     opcode:: Opcode;
-} | I {
+} | Instr_I {
     imm12:: Bit 12;
     rs1:: RegIdx;
     funct3:: Bit 3;
@@ -143,17 +141,10 @@ data InstrType = Raw InstrBits | R {
     opcode:: Opcode;
 } deriving (Bits, FShow)
 
--- difference with haskell, `struct` keyword is used for record type instead of data
-struct Instruction = {
-    fmt:: InstrFmt;
-    ast:: InstrType;
-} deriving (Bits, FShow)
-
 decode_instruction:: InstrBits -> Instruction
 decode_instruction x = case x[6:0] of {
-    7'b0110011 -> Instruction {fmt = InstrFmtR; ast = R (unpack x)};
-    7'b0010011 -> Instruction {fmt = InstrFmtI; ast = I (unpack x)};
-    _ -> Instruction {fmt = InstrFmtNone; ast = Raw x};
+    7'b0110011 -> Instr_R (unpack x);
+    7'b0010011 -> Instr_I (unpack x);
 }
 
 encode_instr_R:: Bit 7 -> RegIdx -> RegIdx -> Bit 3 -> RegIdx -> Bit 7 -> InstrBits

@@ -10,6 +10,8 @@ export convert_instr_C;
 import isa_decls   :: *;
 import convert_instr_c_bh :: *;
 
+`include "isa_defines.bsvi"
+
 `define check(val) \
    case (val) matches \
       tagged Valid .x: if (!illegal && !found) begin \
@@ -207,7 +209,7 @@ endfunction
 function Maybe#(InstrBits) decode_C_LWSP (InstrCBits  instr_C);
    begin
       // InstrBits fields: I-type
-      let i = parse_instr_C(instr_C, InstrCFmtCI).ast.CI;
+      let i = `PAT(parse_instr_C(instr_C, CI), Instr_CI);
       Bit#(12) offset = {0, i.imm_6_2[1:0], i.imm_12, i.imm_6_2[4:2], 2'b0};
 
       let is_legal = ((i.op == opcode_C2)
@@ -229,7 +231,7 @@ endfunction
 function Maybe#(InstrBits) decode_C_LDSP (InstrCBits  instr_C);
    begin
       // InstrBits fields: I-type
-      let i = parse_instr_C(instr_C, InstrCFmtCI).ast.CI;
+      let i = `PAT(parse_instr_C(instr_C, CI), Instr_CI);
       Bit#(12) offset = {0, i.imm_6_2[2:0], i.imm_12, i.imm_6_2[4:3], 3'b0 };
 
       let is_legal = ((i.op == opcode_C2)
@@ -252,7 +254,7 @@ endfunction
 function Maybe#(InstrBits) decode_C_LQSP (InstrCBits  instr_C);
    begin
       // InstrBits fields: I-type
-      let i = parse_instr_C(instr_C, InstrCFmtCI).ast.CI;
+      let i = `PAT(parse_instr_C(instr_C, CI), Instr_CI);
       Bit#(12) offset = {0, i.imm_6_2 [3:0], i.imm_12, i.imm_6_2 [4], 4'b0 };
 
       let is_legal = ((i.op == opcode_C2)
@@ -275,7 +277,7 @@ endfunction
 function Maybe#(InstrBits) decode_C_FLWSP (InstrCBits  instr_C);
    begin
       // InstrBits fields: I-type
-      let i = parse_instr_C(instr_C, InstrCFmtCI).ast.CI;
+      let i = `PAT(parse_instr_C(instr_C, CI), Instr_CI);
       Bit#(12) offset = {0, i.imm_6_2 [1:0], i.imm_12, i.imm_6_2 [4:2], 2'b0 };
 
       let is_legal = i.op == opcode_C2 && i.funct3 == f3_C_FLWSP;
@@ -295,7 +297,7 @@ endfunction
 function Maybe#(InstrBits) decode_C_FLDSP (InstrCBits  instr_C);
    begin
       // InstrBits fields: I-type
-      let i = parse_instr_C(instr_C, InstrCFmtCI).ast.CI;
+      let i = `PAT(parse_instr_C(instr_C, CI), Instr_CI);
       Bit#(12) offset = {0, i.imm_6_2[2:0], i.imm_12, i.imm_6_2[4:3], 3'b0 };
 
       let is_legal = i.op == opcode_C2 && i.funct3 == f3_C_FLDSP;
@@ -318,7 +320,7 @@ endfunction
 function Maybe#(InstrBits) decode_C_SWSP (InstrCBits  instr_C);
    begin
       // InstrBits fields: CSS-type
-      let i = parse_instr_C(instr_C, InstrCFmtCSS).ast.CSS;
+      let i = `PAT(parse_instr_C(instr_C, CSS), Instr_CSS);
       Bit#(12) offset = {0, i.imm_12_7 [1:0], i.imm_12_7 [5:2], 2'b0 };
 
       let is_legal = i.op == opcode_C2 && i.funct3 == f3_C_SWSP;
@@ -338,7 +340,7 @@ endfunction
 function Maybe#(InstrBits) decode_C_SDSP (InstrCBits  instr_C);
    begin
       // InstrBits fields: CSS-type
-      let i = parse_instr_C(instr_C, InstrCFmtCSS).ast.CSS;
+      let i = `PAT(parse_instr_C(instr_C, CSS), Instr_CSS);
       Bit#(12) offset = {0, i.imm_12_7[2:0], i.imm_12_7[5:3], 3'b0 };
 
       let is_legal = i.op == opcode_C2 && i.funct3 == f3_C_SDSP;
@@ -359,7 +361,7 @@ endfunction
 function Maybe#(InstrBits) decode_C_SQSP (InstrCBits  instr_C);
    begin
       // InstrBits fields: CSS-type
-      let i = parse_instr_C(instr_C, InstrCFmtCSS).ast.CSS;
+      let i = `PAT(parse_instr_C(instr_C, CSS), Instr_CSS);
       Bit#(12) offset = {0, i.imm_12_7[3:0], i.imm_12_7[5:4], 4'b0 };
 
       let is_legal = i.op == opcode_C2 && i.funct3 == f3_C_SQSP;
@@ -380,7 +382,7 @@ endfunction
 function Maybe#(InstrBits) decode_C_FSWSP(InstrCBits  instr_C);
    begin
       // InstrBits fields: CSS-type
-      let i = parse_instr_C(instr_C, InstrCFmtCSS).ast.CSS;
+      let i = `PAT(parse_instr_C(instr_C, CSS), Instr_CSS);
       Bit#(12) offset = {0, i.imm_12_7 [1:0], i.imm_12_7 [5:2], 2'b0 };
 
       let is_legal = op == opcode_C2 && funct3 == f3_C_FSWSP;
@@ -401,7 +403,7 @@ endfunction
 function Maybe#(InstrBits) decode_C_FSDSP (InstrCBits  instr_C);
    begin
       // InstrBits fields: CSS-type
-      let i = parse_instr_C(instr_C, InstrCFmtCSS).ast.CSS;
+      let i = `PAT(parse_instr_C(instr_C, CSS), Instr_CSS);
       Bit#(12) offset = {0, i.imm_12_7 [2:0], i.imm_12_7 [5:3], 3'b0 };
 
       let is_legal = i.op == opcode_C2 && i.funct3 == f3_C_FSDSP;
@@ -423,7 +425,7 @@ endfunction
 function Maybe#(InstrBits) decode_C_LW (InstrCBits  instr_C);
    begin
       // InstrBits fields: CL-type
-      let i = parse_instr_C(instr_C, InstrCFmtCL).ast.CL;
+      let i = `PAT(parse_instr_C(instr_C, CL), Instr_CL);
       Bit#(12) offset = {0, i.imm_6_5 [0], i.imm_12_10, i.imm_6_5 [1], 2'b0 };
 
       let is_legal = i.op == opcode_C0 && i.funct3 == f3_C_LW;
@@ -443,7 +445,7 @@ endfunction
 function Maybe#(InstrBits) decode_C_LD (InstrCBits  instr_C);
    begin
       // InstrBits fields: CL-type
-      let i = parse_instr_C(instr_C, InstrCFmtCL).ast.CL;
+      let i = `PAT(parse_instr_C(instr_C, CL), Instr_CL);
       Bit#(12) offset = {0, i.imm_6_5, i.imm_12_10, 3'b0 };
 
       let is_legal = i.op == opcode_C0 && i.funct3 == f3_C_LD;
@@ -464,7 +466,7 @@ endfunction
 function Maybe#(InstrBits) decode_C_LQ (InstrCBits  instr_C);
    begin
       // InstrBits fields: CL-type
-      let i = parse_instr_C(instr_C, InstrCFmtCL).ast.CL;
+      let i = `PAT(parse_instr_C(instr_C, CL), Instr_CL);
       Bit#(12) offset = {0, i.imm_12_10 [0], i.imm_6_5, i.imm_12_10 [2], i.imm_12_10 [1], 4'b0 };
 
       let is_legal = i.op == opcode_C0 && i.funct3 == f3_C_LQ;
@@ -485,7 +487,7 @@ endfunction
 function Maybe#(InstrBits) decode_C_FLW(InstrCBits  instr_C);
    begin
       // InstrBits fields: CL-type
-      let i = parse_instr_C(instr_C, InstrCFmtCL).ast.CL;
+      let i = `PAT(parse_instr_C(instr_C, CL), Instr_CL);
       Bit#(12) offset = {0, i.imm_6_5[0], i.imm_12_10, i.imm_6_5[1], 2'b0 };
 
       let is_legal =i.op == opcode_C0 && i.funct3 == f3_C_FLW;
@@ -506,7 +508,7 @@ endfunction
 function Maybe#(InstrBits) decode_C_FLD (InstrCBits  instr_C);
    begin
       // InstrBits fields: CL-type
-      let i = parse_instr_C(instr_C, InstrCFmtCL).ast.CL;
+      let i = `PAT(parse_instr_C(instr_C, CL), Instr_CL);
       Bit#(12) offset = {0, i.imm_6_5, i.imm_12_10, 3'b0 };
 
       let is_legal = i.op == opcode_C0 && i.funct3 == f3_C_FLD;
@@ -529,7 +531,7 @@ endfunction
 function Maybe#(InstrBits) decode_C_SW (InstrCBits  instr_C);
    begin
       // InstrBits fields: CS-type
-      let i = parse_instr_C(instr_C, InstrCFmtCS).ast.CS;
+      let i = `PAT(parse_instr_C(instr_C, CS), Instr_CS);
       Bit#(12) offset = {0, i.imm_6_5[0], i.imm_12_10, i.imm_6_5[1], 2'b0 };
 
       let is_legal = i.op == opcode_C0 && i.funct3 == f3_C_SW;
@@ -549,7 +551,7 @@ endfunction
 function Maybe#(InstrBits) decode_C_SD (InstrCBits  instr_C);
    begin
       // InstrBits fields: CS-type
-      let i = parse_instr_C(instr_C, InstrCFmtCS).ast.CS;
+      let i = `PAT(parse_instr_C(instr_C, CS), Instr_CS);
       Bit#(12) offset = {0, i.imm_6_5, i.imm_12_10, 3'b0 };
 
       let is_legal = i.op == opcode_C0 && i.funct3 == f3_C_SD;
@@ -570,7 +572,7 @@ endfunction
 function Maybe#(InstrBits) decode_C_SQ (InstrCBits  instr_C);
    begin
       // InstrBits fields: CS-type
-      let i = parse_instr_C(instr_C, InstrCFmtCS).ast.CS;
+      let i = `PAT(parse_instr_C(instr_C, CS), Instr_CS);
       Bit#(9) offset = { i.imm_12_10[0], i.imm_6_5, i.imm_12_10[2], i.imm_12_10[1], 4'b0 };
 
       let is_legal = op == opcode_C0 && funct3 == f3_C_SQ;
@@ -591,7 +593,7 @@ endfunction
 function Maybe#(InstrBits) decode_C_FSW(InstrCBits  instr_C);
    begin
       // InstrBits fields: CS-type
-      let i = parse_instr_C(instr_C, InstrCFmtCS).ast.CS;
+      let i = `PAT(parse_instr_C(instr_C, CS), Instr_CS);
       Bit#(12) offset = {0, i.imm_6_5 [0], i.imm_12_10, i.imm_6_5 [1], 2'b0 };
 
       let is_legal = op == opcode_C0 && funct3 == f3_C_FSW;
@@ -612,7 +614,7 @@ endfunction
 function Maybe#(InstrBits) decode_C_FSD(InstrCBits  instr_C);
    begin
       // InstrBits fields: CS-type
-      let i = parse_instr_C(instr_C, InstrCFmtCS).ast.CS;
+      let i = `PAT(parse_instr_C(instr_C, CS), Instr_CS);
       Bit#(12) offset = {0, i.imm_6_5, i.imm_12_10, 3'b0 };
 
       let is_legal = i.op == opcode_C0 && i.funct3 == f3_C_FSD;
@@ -636,7 +638,7 @@ endfunction
 function Maybe#(InstrBits) decode_C_J(InstrCBits  instr_C);
    begin
       // InstrBits fields: CJ-type
-      let i = parse_instr_C(instr_C, InstrCFmtCJ).ast.CJ;
+      let i = `PAT(parse_instr_C(instr_C, CJ), Instr_CJ);
       Bit#(21) imm21 = signExtend({
          i.imm_12_2 [10],
          i.imm_12_2 [6],
@@ -661,7 +663,7 @@ endfunction
 function Maybe#(InstrBits) decode_C_JAL (InstrCBits  instr_C);
    begin
       // InstrBits fields: CJ-type
-      let i = parse_instr_C(instr_C, InstrCFmtCJ).ast.CJ;
+      let i = `PAT(parse_instr_C(instr_C, CJ), Instr_CJ);
       Bit#(21) imm21 = signExtend({
          i.imm_12_2 [10],
          i.imm_12_2 [6],
@@ -685,7 +687,7 @@ endfunction
 // C.JR: expands to JALR
 function Maybe#(InstrBits) decode_C_JR (InstrCBits  instr_bits);
    begin
-      let i = parse_instr_C(instr_bits, InstrCFmtCR).ast.CR;
+      let i = `PAT(parse_instr_C(instr_bits, CR), Instr_CR);
 
       let is_legal = ((i.op == opcode_C2)
 		       && (i.funct4 == f4_C_JR)
@@ -705,7 +707,7 @@ endfunction
 // C.JALR: expands to JALR
 function Maybe#(InstrBits) decode_C_JALR (InstrCBits  instr_bits);
    begin
-      let i = parse_instr_C(instr_bits, InstrCFmtCR).ast.CR;
+      let i = `PAT(parse_instr_C(instr_bits, CR), Instr_CR);
 
       let is_legal = ((i.op == opcode_C2)
 		       && (i.funct4 == f4_C_JALR)
@@ -726,7 +728,7 @@ endfunction
 function Maybe#(InstrBits) decode_C_BEQZ (InstrCBits  instr_C);
    begin
       // InstrBits fields: CB-type
-      let i = parse_instr_C(instr_C, InstrCFmtCB).ast.CB;
+      let i = `PAT(parse_instr_C(instr_C, CB), Instr_CB);
       Bit#(13) imm13 = signExtend({ 
          i.imm_12_10[2], i.imm_6_2[4:3], i.imm_6_2[0], 
          i.imm_12_10[1:0], i.imm_6_2[2:1], 1'b0 });
@@ -747,7 +749,7 @@ endfunction
 function Maybe#(InstrBits) decode_C_BNEZ (InstrCBits  instr_C);
    begin
       // InstrBits fields: CB-type
-      let i = parse_instr_C(instr_C, InstrCFmtCB).ast.CB;
+      let i = `PAT(parse_instr_C(instr_C, CB), Instr_CB);
       Bit#(13) imm13 = signExtend({ 
          i.imm_12_10[2], i.imm_6_2[4:3], i.imm_6_2[0], 
          i.imm_12_10[1:0], i.imm_6_2 [2:1], 1'b0 });
@@ -771,7 +773,7 @@ endfunction
 function Maybe#(InstrBits) decode_C_LI (InstrCBits  instr_C);
    begin
       // InstrBits fields: CI-type
-      let i = parse_instr_C(instr_C, InstrCFmtCI).ast.CI;
+      let i = `PAT(parse_instr_C(instr_C, CI), Instr_CI);
       Bit#(12) imm12 = signExtend({ i.imm_12, i.imm_6_2 });
 
       let is_legal = ((i.op == opcode_C1)
@@ -792,7 +794,7 @@ endfunction
 function Maybe#(InstrBits) decode_C_LUI (InstrCBits  instr_C);
    begin
       // InstrBits fields: CI-type
-      let i = parse_instr_C(instr_C, InstrCFmtCI).ast.CI;
+      let i = `PAT(parse_instr_C(instr_C, CI), Instr_CI);
       Bit#(6) nzimm6 = { i.imm_12, i.imm_6_2 };
 
       let is_legal = ((i.op == opcode_C1)
@@ -818,7 +820,7 @@ endfunction
 function Maybe#(InstrBits) decode_C_ADDI (InstrCBits  instr_C);
    begin
       // InstrBits fields: CI-type
-      let i = parse_instr_C(instr_C, InstrCFmtCI).ast.CI;
+      let i = `PAT(parse_instr_C(instr_C, CI), Instr_CI);
       Bit#(6) nzimm6 = { i.imm_12, i.imm_6_2 };
 
       let is_legal = ((i.op == opcode_C1)
@@ -841,7 +843,7 @@ endfunction
 function Maybe#(InstrBits) decode_C_NOP (InstrCBits  instr_C);
    begin
       // InstrBits fields: CI-type
-      let i = parse_instr_C(instr_C, InstrCFmtCI).ast.CI;
+      let i = `PAT(parse_instr_C(instr_C, CI), Instr_CI);
       Bit#(6) nzimm6 = { i.imm_12, i.imm_6_2 };
 
       let is_legal = ((i.op == opcode_C1)
@@ -866,7 +868,7 @@ endfunction
 function Maybe#(InstrBits) decode_C_ADDIW (InstrCBits  instr_C);
    begin
       // InstrBits fields: CI-type
-      let i = parse_instr_C(instr_C, InstrCFmtCI).ast.CI;
+      let i = `PAT(parse_instr_C(instr_C, CI), Instr_CI);
       Bit#(6) imm6 = { i.imm_12, i.imm_6_2 };
 
       let is_legal = ((i.op == opcode_C1)
@@ -890,7 +892,7 @@ endfunction
 function Maybe#(InstrBits) decode_C_ADDI16SP (InstrCBits  instr_C);
    begin
       // InstrBits fields: CI-type
-      let i = parse_instr_C(instr_C, InstrCFmtCI).ast.CI;
+      let i = `PAT(parse_instr_C(instr_C, CI), Instr_CI);
       Bit#(10) nzimm10 = { i.imm_12, i.imm_6_2[2:1], i.imm_6_2[3], i.imm_6_2[0], i.imm_6_2[4], 4'b0 };
 
       let is_legal = ((i.op == opcode_C1)
@@ -914,7 +916,7 @@ endfunction
 function Maybe#(InstrBits) decode_C_ADDI4SPN (InstrCBits  instr_C);
    begin
       // InstrBits fields: CIW-type
-      let i = parse_instr_C(instr_C, InstrCFmtCIW).ast.CIW;
+      let i = `PAT(parse_instr_C(instr_C, CIW), Instr_CIW);
       Bit#(10) nzimm10 = {i.imm_12_5 [5:2], i.imm_12_5 [7:6], i.imm_12_5 [0], i.imm_12_5 [1], 2'b0 };
 
       let is_legal = ((i.op == opcode_C0)
@@ -937,7 +939,7 @@ endfunction
 function Maybe#(InstrBits) decode_C_SLLI (InstrCBits  instr_C, Bit#(2)  xl);
    begin
       // InstrBits fields: CI-type
-      let i = parse_instr_C(instr_C, InstrCFmtCI).ast.CI;
+      let i = `PAT(parse_instr_C(instr_C, CI), Instr_CI);
       Bit#(6) shamt6 = { i.imm_12, i.imm_6_2 };
 
       let is_legal = ((i.op == opcode_C2)
@@ -965,7 +967,7 @@ endfunction
 function Maybe#(InstrBits) decode_C_SRLI(InstrCBits  instr_C, Bit#(2)  xl);
    begin
       // InstrBits fields: CB-type
-      let i = parse_instr_C(instr_C, InstrCFmtCB).ast.CB;      
+      let i = `PAT(parse_instr_C(instr_C, CB), Instr_CB);      
       Bit#(1) shamt6_5 = i.imm_12_10 [2];
       Bit#(2) funct2   = i.imm_12_10 [1:0];
       Bit#(6) shamt6   = { shamt6_5, i.imm_6_2 };
@@ -997,7 +999,7 @@ endfunction
 function Maybe#(InstrBits) decode_C_SRAI (InstrCBits  instr_C, Bit#(2)  xl);
    begin
       // InstrBits fields: CB-type
-      let i = parse_instr_C(instr_C, InstrCFmtCB).ast.CB;
+      let i = `PAT(parse_instr_C(instr_C, CB), Instr_CB);
       Bit#(1) shamt6_5 = i.imm_12_10 [2];
       Bit#(2) funct2   = i.imm_12_10 [1:0];
       Bit#(6) shamt6   = { shamt6_5, i.imm_6_2 };
@@ -1028,7 +1030,7 @@ endfunction
 function Maybe#(InstrBits) decode_C_ANDI (InstrCBits  instr_C);
    begin
       // InstrBits fields: CB-type
-      let i = parse_instr_C(instr_C, InstrCFmtCB).ast.CB;
+      let i = `PAT(parse_instr_C(instr_C, CB), Instr_CB);
       Bit#(12) imm12   = signExtend({ i.imm_12_10 [2], i.imm_6_2 });
 
       Bit#(2) funct2 = i.imm_12_10 [1:0];
@@ -1055,7 +1057,7 @@ endfunction
 // C.MV: expands to ADD
 function Maybe#(InstrBits) decode_C_MV (InstrCBits  instr_bits);
    begin
-      let i = parse_instr_C(instr_bits, InstrCFmtCR).ast.CR;
+      let i = `PAT(parse_instr_C(instr_bits, CR), Instr_CR);
 
       let is_legal = ((i.op == opcode_C2)
 		       && (i.funct4 == f4_C_MV)
@@ -1076,7 +1078,7 @@ endfunction
 // C.ADD: expands to ADD
 function Maybe#(InstrBits) decode_C_ADD (InstrCBits  instr_bits);
    begin
-      let i = parse_instr_C(instr_bits, InstrCFmtCR).ast.CR;
+      let i = `PAT(parse_instr_C(instr_bits, CR), Instr_CR);
 
       let is_legal = ((i.op == opcode_C2)
 		       && (i.funct4 == f4_C_ADD)
@@ -1098,7 +1100,7 @@ endfunction
 function Maybe#(InstrBits) decode_C_AND (InstrCBits  instr_C);
    begin
       // InstrBits fields: CA-type
-      let i = parse_instr_C(instr_C, InstrCFmtCA).ast.CA;
+      let i = `PAT(parse_instr_C(instr_C, CA), Instr_CA);
       let is_legal = ((i.op == opcode_C1)
 		       && (i.funct6 == f6_C_AND)
 		       && (i.funct2 == f2_C_AND));
@@ -1118,7 +1120,7 @@ endfunction
 function Maybe#(InstrBits) decode_C_OR (InstrCBits  instr_C);
    begin
       // InstrBits fields: CA-type
-      let i = parse_instr_C(instr_C, InstrCFmtCA).ast.CA;
+      let i = `PAT(parse_instr_C(instr_C, CA), Instr_CA);
 
       let is_legal = ((i.op == opcode_C1)
 		       && (i.funct6 == f6_C_OR)
@@ -1139,7 +1141,7 @@ endfunction
 function Maybe#(InstrBits) decode_C_XOR (InstrCBits  instr_C);
    begin
       // InstrBits fields: CA-type
-      let i = parse_instr_C(instr_C, InstrCFmtCA).ast.CA;
+      let i = `PAT(parse_instr_C(instr_C, CA), Instr_CA);
 
       let is_legal = ((i.op == opcode_C1)
 		       && (i.funct6 == f6_C_XOR)
@@ -1160,7 +1162,7 @@ endfunction
 function Maybe#(InstrBits) decode_C_SUB (InstrCBits  instr_C);
    begin
       // InstrBits fields: CA-type
-      let i = parse_instr_C(instr_C, InstrCFmtCA).ast.CA;
+      let i = `PAT(parse_instr_C(instr_C, CA), Instr_CA);
       let is_legal = ((i.op == opcode_C1)
 		       && (i.funct6 == f6_C_SUB)
 		       && (i.funct2 == f2_C_SUB));
@@ -1180,7 +1182,7 @@ endfunction
 function Maybe#(InstrBits) decode_C_ADDW(InstrCBits  instr_C);
    begin
       // InstrBits fields: CA-type
-      let i = parse_instr_C(instr_C, InstrCFmtCA).ast.CA;
+      let i = `PAT(parse_instr_C(instr_C, CA), Instr_CA);
 
       let is_legal = ((i.op == opcode_C1)
 		       && (i.funct6 == f6_C_ADDW)
@@ -1202,7 +1204,7 @@ endfunction
 function Maybe#(InstrBits) decode_C_SUBW(InstrCBits  instr_C);
    begin
       // InstrBits fields: CA-type
-      let i = parse_instr_C(instr_C, InstrCFmtCA).ast.CA;
+      let i = `PAT(parse_instr_C(instr_C, CA), Instr_CA);
 
       let is_legal = ((i.op == opcode_C1)
 		       && (i.funct6 == f6_C_SUBW)
@@ -1226,7 +1228,7 @@ endfunction
 // C.EBREAK: expands to EBREAK
 function Maybe#(InstrBits) decode_C_EBREAK (InstrCBits  instr_bits);
    begin
-      let i = parse_instr_C(instr_bits, InstrCFmtCR).ast.CR;
+      let i = `PAT(parse_instr_C(instr_bits, CR), Instr_CR);
 
       let is_legal = ((i.op == opcode_C2)
 		       && (i.funct4 == f4_C_EBREAK)
