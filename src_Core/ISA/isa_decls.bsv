@@ -3,62 +3,6 @@ package isa_decls;
 export isa_decls_bh::*, isa_decls::*;
 
 import isa_decls_bh::*;
-// ----------------
-// Decoded instructions
-
-typedef struct {
-   Opcode   opcode;
-
-   RegIdx   rd;
-   RegIdx   rs1;
-   RegIdx   rs2;
-   RegIdx   rs3;
-   CSRAddr  csr;
-
-   Bit#(3)  funct3;
-   Bit#(5)  funct5;
-   Bit#(7)  funct7;
-   Bit#(10) funct10;
-
-   Bit#(12) imm12_I;
-   Bit#(12) imm12_S;
-   Bit#(13) imm13_B;
-   Bit#(20) imm20_U;
-   Bit#(21) imm13_J;
-
-   Bit#(4)  pred;
-   Bit#(4)  succ;
-
-   Bit#(2)  aqrl;
-   } DecodedInstr
-deriving (FShow, Bits);
-
-function DecodedInstr decode_instr (InstrBits instr);
-   return DecodedInstr {
-      opcode:    instr_opcode   (instr),
-      rd:        instr_rd       (instr),
-      rs1:       instr_rs1      (instr),
-      rs2:       instr_rs2      (instr),
-      rs3:       instr_rs3      (instr),
-      csr:       instr_csr      (instr),
-
-      funct3:    instr_funct3   (instr),
-      funct5:    instr_funct5   (instr),
-      funct7:    instr_funct7   (instr),
-      funct10:   instr_funct10  (instr),
-
-      imm12_I:   instr_I_imm12  (instr),
-      imm12_S:   instr_S_imm12  (instr),
-      imm13_B:  instr_B_imm13 (instr),
-      imm20_U:   instr_U_imm20  (instr),
-      imm13_J:  instr_J_imm21 (instr),
-
-      pred:      instr_pred     (instr),
-      succ:      instr_succ     (instr),
-
-      aqrl:      instr_aqrl     (instr)
-      };
-endfunction
 
 function InstrBits encode_instr_I(Bit#(12) imm12, RegIdx rs1, Bit#(3) funct3, RegIdx rd, Bit#(7) opcode);
    return {imm12, rs1, funct3, rd, opcode};
@@ -788,10 +732,9 @@ Bit#(7)  f7_SFENCE_VMA = 7'b_0001_001;
 InstrBits break_instr = { f12_EBREAK, 5'b00000, 3'b000, 5'b00000, op_SYSTEM };
 
 function Bool is_instr_csrrx (InstrBits  instr);
-   let decoded_instr = decode_instr (instr);
-   let opcode        = decoded_instr.opcode;
-   let funct3        = decoded_instr.funct3;
-   let csr           = decoded_instr.csr;
+   let opcode        = instr_opcode(instr);
+   let funct3        = instr_funct3(instr);
+   let csr           = instr_csr(instr);
    return ((opcode == op_SYSTEM) && f3_is_CSRR_any (funct3));
 endfunction
 

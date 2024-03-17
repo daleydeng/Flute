@@ -44,7 +44,6 @@ typedef struct {
 `ifdef ISA_C
    InstrCBits        instr_C;
 `endif
-   DecodedInstr  decoded_instr;
    Instruction   instruction;
    WordXL         rs1_val;
    WordXL         rs2_val;
@@ -283,12 +282,12 @@ function ALU_Outputs fv_BRANCH (ALU_Inputs inputs);
    IntXL s_rs1_val = unpack (inputs.rs1_val);
    IntXL s_rs2_val = unpack (inputs.rs2_val);
 
-   IntXL offset        = extend (unpack (inputs.decoded_instr.imm13_B));
+   IntXL offset        = extend (unpack (instr_B_imm13(inputs.instr)));
    Addr  branch_target = pack (unpack (inputs.pc) + offset);
    Bool  branch_taken  = False;
    Bool  trap          = False;
 
-   let funct3 = inputs.decoded_instr.funct3;
+   let funct3 = instr_funct3(inputs.instr);
    if      (funct3 == f3_BEQ)  branch_taken = (rs1_val  == rs2_val);
    else if (funct3 == f3_BNE)  branch_taken = (rs1_val  != rs2_val);
    else if (funct3 == f3_BLT)  branch_taken = (s_rs1_val <  s_rs2_val);
@@ -339,7 +338,7 @@ endfunction
 // JAL
 
 function ALU_Outputs fv_JAL (ALU_Inputs inputs);
-   IntXL offset  = extend (unpack (inputs.decoded_instr.imm13_J));
+   IntXL offset  = extend (unpack (instr_J_imm21(inputs.instr)));
    Addr  next_pc = pack (unpack (inputs.pc) + offset);
    Addr  ret_pc  = fall_through_pc (inputs);
 
@@ -358,7 +357,7 @@ function ALU_Outputs fv_JAL (ALU_Inputs inputs);
    alu_outputs.control   = (misaligned_target ? CONTROL_TRAP : CONTROL_BRANCH);
    alu_outputs.exc_code  = exc_code_INSTR_ADDR_MISALIGNED;
    alu_outputs.op_stage2 = OP_Stage2_ALU;
-   alu_outputs.rd        = inputs.decoded_instr.rd;
+   alu_outputs.rd        = instr_rd(inputs.instr);
    alu_outputs.addr      = next_pc;
    alu_outputs.val1      = extend (ret_pc);
    alu_outputs.cf_info   = cf_info;
@@ -370,7 +369,7 @@ function ALU_Outputs fv_JAL (ALU_Inputs inputs);
       next_pc,
       fv_trace_isize (inputs),
       get_instr (inputs),
-      inputs.decoded_instr.rd,
+      instr_rd(inputs.instr),
       ret_pc);
 `endif
    return alu_outputs;
@@ -380,7 +379,7 @@ endfunction
 // JALR
 
 function ALU_Outputs fv_JALR (ALU_Inputs inputs);
-   Bool f3_is_not_zero = (inputs.decoded_instr.funct3 != 0);
+   Bool f3_is_not_zero = (instr_funct3(inputs.instr) != 0);
 
    let rs1_val = inputs.rs1_val;
    let rs2_val = inputs.rs2_val;
@@ -388,7 +387,7 @@ function ALU_Outputs fv_JALR (ALU_Inputs inputs);
    // Signed versions of rs1_val and rs2_val
    IntXL s_rs1_val = unpack (rs1_val);
    IntXL s_rs2_val = unpack (rs2_val);
-   IntXL offset    = extend (unpack (inputs.decoded_instr.imm12_I));
+   IntXL offset    = extend (unpack (instr_I_imm12(inputs.instr)));
    Addr  next_pc   = pack (s_rs1_val + offset);
    Addr  ret_pc    = fall_through_pc (inputs);
 
@@ -412,7 +411,7 @@ function ALU_Outputs fv_JALR (ALU_Inputs inputs);
 			    : CONTROL_BRANCH);
    alu_outputs.exc_code  = exc_code_INSTR_ADDR_MISALIGNED;
    alu_outputs.op_stage2 = OP_Stage2_ALU;
-   alu_outputs.rd        = inputs.decoded_instr.rd;
+   alu_outputs.rd        = instr_rd(inputs.instr);
    alu_outputs.addr      = next_pc;
    alu_outputs.val1      = extend (ret_pc);
    alu_outputs.cf_info   = cf_info;
@@ -424,7 +423,7 @@ function ALU_Outputs fv_JALR (ALU_Inputs inputs);
       next_pc,
       fv_trace_isize (inputs),
       get_instr (inputs),
-      inputs.decoded_instr.rd,
+      instr_rd(inputs.instr),
       ret_pc);
 `endif
    return alu_outputs;
@@ -442,12 +441,12 @@ function ALU_Outputs fv_OP_and_OP_IMM_shifts (ALU_Inputs inputs);
 
    IntXL s_rs1_val = unpack (rs1_val);    // Signed version of rs1, for SRA
 
-   Bit#(TLog #(XLEN)) shamt = (  (inputs.decoded_instr.opcode == op_OP_IMM)
-				? truncate (inputs.decoded_instr.imm12_I)
+   Bit#(TLog #(XLEN)) shamt = (  (instr_opcode(inputs.instr) == op_OP_IMM)
+				? truncate (instr_I_imm12(inputs.instr))
 				: truncate (rs2_val));
 
    WordXL   rd_val    = ?;
-   let      funct3    = inputs.decoded_instr.funct3;
+   let      funct3    = instr_funct3(inputs.instr);
    Bit#(1) instr_b30 = inputs.instr [30];
 
 `ifdef SHIFT_BARREL
@@ -486,12 +485,12 @@ function ALU_Outputs fv_OP_and_OP_IMM_shifts (ALU_Inputs inputs);
    Bool trap = (   (inputs.instr [31]    != 1'b0)
 		|| (inputs.instr [29:26] != 4'b0)
 		|| (   (rv_version == RV32)
-		    && (inputs.decoded_instr.opcode == op_OP_IMM)
+		    && (instr_opcode(inputs.instr) == op_OP_IMM)
 		    && (inputs.instr [25] != 1'b0)));
 
    let alu_outputs       = alu_outputs_base;
    alu_outputs.control   = (trap ? CONTROL_TRAP : CONTROL_STRAIGHT);
-   alu_outputs.rd        = inputs.decoded_instr.rd;
+   alu_outputs.rd        = instr_rd(inputs.instr);
 
 `ifndef SHIFT_SERIAL
    alu_outputs.op_stage2 = OP_Stage2_ALU;
@@ -513,7 +512,7 @@ function ALU_Outputs fv_OP_and_OP_IMM_shifts (ALU_Inputs inputs);
       fall_through_pc (inputs),
       fv_trace_isize (inputs),
       get_instr (inputs),
-      inputs.decoded_instr.rd,
+      instr_rd(inputs.instr),
       rd_val);
 `endif
    return alu_outputs;
@@ -595,7 +594,7 @@ function ALU_Outputs fv_OP_and_OP_IMM (ALU_Inputs inputs);
          fall_through_pc (inputs),
          fv_trace_isize (inputs),
          get_instr (inputs),
-         inputs.decoded_instr.rd,
+         instr_rd(inputs.instr),
          rd_val);
    `endif
    end
@@ -607,9 +606,9 @@ endfunction
 // OP_IMM_32 (ADDIW, SLLIW, SRxIW)
 
 function ALU_Outputs fv_OP_IMM_32 (ALU_Inputs inputs);
-   Bit#(5) shamt     = truncate (inputs.decoded_instr.imm12_I);
+   Bit#(5) shamt     = truncate (instr_I_imm12(inputs.instr));
    Bit#(1) instr_b30 = inputs.instr [30];
-   Bit#(3) funct3    = inputs.decoded_instr.funct3;
+   Bit#(3) funct3    = instr_funct3(inputs.instr);
    WordXL   rs1_val   = inputs.rs1_val;
 
    IntXL    s_rs1_val = unpack (rs1_val);
@@ -620,7 +619,7 @@ function ALU_Outputs fv_OP_IMM_32 (ALU_Inputs inputs);
    Bool   trap   = False;
    WordXL rd_val = ?;
    if (funct3 == f3_ADDIW) begin
-      IntXL  s_rs2_val = extend (unpack (inputs.decoded_instr.imm12_I));
+      IntXL  s_rs2_val = extend (unpack (instr_I_imm12(inputs.instr)));
       IntXL  sum       = s_rs1_val + s_rs2_val;
       WordXL tmp       = pack (sum);
       rd_val           = signExtend (tmp [31:0]);
@@ -648,7 +647,7 @@ function ALU_Outputs fv_OP_IMM_32 (ALU_Inputs inputs);
    let alu_outputs       = alu_outputs_base;
    alu_outputs.control   = (trap ? CONTROL_TRAP : CONTROL_STRAIGHT);
    alu_outputs.op_stage2 = OP_Stage2_ALU;
-   alu_outputs.rd        = inputs.decoded_instr.rd;
+   alu_outputs.rd        = instr_rd(inputs.instr);
    alu_outputs.val1      = rd_val;
 
 `ifdef INCLUDE_TANDEM_VERIF
@@ -658,7 +657,7 @@ function ALU_Outputs fv_OP_IMM_32 (ALU_Inputs inputs);
       fall_through_pc (inputs),
       fv_trace_isize (inputs),
       get_instr (inputs),
-      inputs.decoded_instr.rd,
+      instr_rd(inputs.instr),
       rd_val);
 `endif
    return alu_outputs;
@@ -675,7 +674,7 @@ function ALU_Outputs fv_OP_32 (ALU_Inputs inputs);
    Int #(32) s_rs1_val = unpack (rs1_val);
    Int #(32) s_rs2_val = unpack (rs2_val);
 
-   let    funct10 = inputs.decoded_instr.funct10;
+   let    funct10 = instr_funct10(inputs.instr);
    Bool   trap    = False;
    WordXL rd_val  = ?;
 
@@ -700,7 +699,7 @@ function ALU_Outputs fv_OP_32 (ALU_Inputs inputs);
    let alu_outputs       = alu_outputs_base;
    alu_outputs.control   = (trap ? CONTROL_TRAP : CONTROL_STRAIGHT);
    alu_outputs.op_stage2 = OP_Stage2_ALU;
-   alu_outputs.rd        = inputs.decoded_instr.rd;
+   alu_outputs.rd        = instr_rd(inputs.instr);
    alu_outputs.val1      = rd_val;
 
 `ifdef INCLUDE_TANDEM_VERIF
@@ -710,7 +709,7 @@ function ALU_Outputs fv_OP_32 (ALU_Inputs inputs);
       fall_through_pc (inputs),
       fv_trace_isize (inputs),
       get_instr (inputs),
-      inputs.decoded_instr.rd,
+      instr_rd(inputs.instr),
       rd_val);
 `endif
    return alu_outputs;
@@ -720,13 +719,13 @@ endfunction: fv_OP_32
 // Upper Immediates
 
 function ALU_Outputs fv_LUI (ALU_Inputs inputs);
-   Bit#(32)  v32    = { inputs.decoded_instr.imm20_U, 12'h0 };
+   Bit#(32)  v32    = { instr_U_imm20(inputs.instr), 12'h0 };
    IntXL      iv     = extend (unpack (v32));
    let        rd_val = pack (iv);
 
    let alu_outputs       = alu_outputs_base;
    alu_outputs.op_stage2 = OP_Stage2_ALU;
-   alu_outputs.rd        = inputs.decoded_instr.rd;
+   alu_outputs.rd        = instr_rd(inputs.instr);
    alu_outputs.val1      = rd_val;
 
 `ifdef INCLUDE_TANDEM_VERIF
@@ -736,20 +735,20 @@ function ALU_Outputs fv_LUI (ALU_Inputs inputs);
       fall_through_pc (inputs),
       fv_trace_isize (inputs),
       get_instr (inputs),
-      inputs.decoded_instr.rd,
+      instr_rd(inputs.instr),
       rd_val);
 `endif
    return alu_outputs;
 endfunction
 
 function ALU_Outputs fv_AUIPC (ALU_Inputs inputs);
-   IntXL  iv     = extend (unpack ({ inputs.decoded_instr.imm20_U, 12'b0}));
+   IntXL  iv     = extend (unpack ({ instr_U_imm20(inputs.instr), 12'b0}));
    IntXL  pc_s   = unpack (inputs.pc);
    WordXL rd_val = pack (pc_s + iv);
 
    let alu_outputs       = alu_outputs_base;
    alu_outputs.op_stage2 = OP_Stage2_ALU;
-   alu_outputs.rd        = inputs.decoded_instr.rd;
+   alu_outputs.rd        = instr_rd(inputs.instr);
    alu_outputs.val1      = rd_val;
 
 `ifdef INCLUDE_TANDEM_VERIF
@@ -759,7 +758,7 @@ function ALU_Outputs fv_AUIPC (ALU_Inputs inputs);
       fall_through_pc (inputs),
       fv_trace_isize (inputs),
       get_instr (inputs),
-      inputs.decoded_instr.rd,
+      instr_rd(inputs.instr),
       rd_val);
 `endif
    return alu_outputs;
@@ -770,14 +769,14 @@ endfunction
 
 function ALU_Outputs fv_LOAD (ALU_Inputs inputs);
    // Signed versions of rs1_val and rs2_val
-   let opcode = inputs.decoded_instr.opcode;
+   let opcode = instr_opcode(inputs.instr);
    IntXL s_rs1_val = unpack (inputs.rs1_val);
    IntXL s_rs2_val = unpack (inputs.rs2_val);
 
-   IntXL  imm_s = extend (unpack (inputs.decoded_instr.imm12_I));
+   IntXL  imm_s = extend (unpack (instr_I_imm12(inputs.instr)));
    WordXL eaddr = pack (s_rs1_val + imm_s);
 
-   let funct3 = inputs.decoded_instr.funct3;
+   let funct3 = instr_funct3(inputs.instr);
 
    Bool legal_LOAD = (   (opcode == op_LOAD)
 		      && (   (funct3 == f3_LB) || (funct3 == f3_LBU)
@@ -808,7 +807,7 @@ function ALU_Outputs fv_LOAD (ALU_Inputs inputs);
 			    ? CONTROL_STRAIGHT
 			    : CONTROL_TRAP);
    alu_outputs.op_stage2 = OP_Stage2_LD;
-   alu_outputs.rd        = inputs.decoded_instr.rd;
+   alu_outputs.rd        = instr_rd(inputs.instr);
    alu_outputs.addr      = eaddr;
 `ifdef ISA_F
    // For LOAD_FP, destination register is in FP regs
@@ -824,7 +823,7 @@ function ALU_Outputs fv_LOAD (ALU_Inputs inputs);
          fall_through_pc (inputs),
          fv_trace_isize (inputs),
          get_instr (inputs),
-         inputs.decoded_instr.rd,
+         instr_rd(inputs.instr),
          ?,
          eaddr,
          inputs.mstatus);
@@ -835,7 +834,7 @@ function ALU_Outputs fv_LOAD (ALU_Inputs inputs);
          fall_through_pc (inputs),
          fv_trace_isize (inputs),
          get_instr (inputs),
-         inputs.decoded_instr.rd,
+         instr_rd(inputs.instr),
          ?,
          eaddr);
 `endif
@@ -848,11 +847,11 @@ endfunction
 function ALU_Outputs fv_STORE (ALU_Inputs inputs);
    // Signed version of rs1_val
    IntXL  s_rs1_val = unpack (inputs.rs1_val);
-   IntXL  imm_s     = extend (unpack (inputs.decoded_instr.imm12_S));
+   IntXL  imm_s     = extend (unpack (instr_S_imm12(inputs.instr)));
    WordXL eaddr     = pack (s_rs1_val + imm_s);
 
-   let opcode = inputs.decoded_instr.opcode;
-   let funct3 = inputs.decoded_instr.funct3;
+   let opcode = instr_opcode(inputs.instr);
+   let funct3 = instr_funct3(inputs.instr);
 
    Bool legal_STORE = (   (opcode == op_STORE)
 		       && (   (funct3 == f3_SB)
@@ -923,15 +922,15 @@ endfunction
 // No-ops, for now
 
 function ALU_Outputs fv_MISC_MEM (ALU_Inputs inputs);
-   Bool is_FENCE_I = (   (inputs.decoded_instr.funct3  == f3_FENCE_I)
-		      && (inputs.decoded_instr.rd      == 0)
-		      && (inputs.decoded_instr.rs1     == 0)
-		      && (inputs.decoded_instr.imm12_I == 0));
+   Bool is_FENCE_I = (   (instr_funct3(inputs.instr)  == f3_FENCE_I)
+		      && (instr_rd(inputs.instr)      == 0)
+		      && (instr_rs1(inputs.instr)     == 0)
+		      && (instr_I_imm12(inputs.instr) == 0));
 
    Bit#(4) fence_fm = instr_to_fence_fm (inputs.instr);
-   Bool is_FENCE   = (   (inputs.decoded_instr.funct3  == f3_FENCE)
-		      && (inputs.decoded_instr.rd      == 0)
-		      && (inputs.decoded_instr.rs1     == 0)
+   Bool is_FENCE   = (   (instr_funct3(inputs.instr)  == f3_FENCE)
+		      && (instr_rd(inputs.instr)      == 0)
+		      && (instr_rs1(inputs.instr)     == 0)
 		      && (   (fence_fm == fence_fm_none)
 			  || (fence_fm == fence_fm_TSO)));
 
@@ -957,7 +956,7 @@ endfunction
 // System instructions
 
 function ALU_Outputs fv_SYSTEM (ALU_Inputs inputs);
-   let funct3      = inputs.decoded_instr.funct3;
+   let funct3      = instr_funct3(inputs.instr);
    let alu_outputs = alu_outputs_base;
 
 `ifdef INCLUDE_TANDEM_VERIF
@@ -972,21 +971,21 @@ function ALU_Outputs fv_SYSTEM (ALU_Inputs inputs);
    if (funct3  == f3_PRIV) begin
 `ifdef ISA_PRIV_S
       // SFENCE.VMA instruction
-      if (   (inputs.decoded_instr.rd  == 0)
+      if (   (instr_rd(inputs.instr)  == 0)
 	  && (   (inputs.cur_priv == m_Priv_Mode)
 	      || (   (inputs.cur_priv == s_Priv_Mode)
 		  && (inputs.mstatus [mstatus_tvm_bitpos] == 0)))
-	  && (inputs.decoded_instr.funct7 == f7_SFENCE_VMA))
+	  && (instr_funct7(inputs.instr) == f7_SFENCE_VMA))
 	 begin
 	    alu_outputs.control = CONTROL_SFENCE_VMA;
 	 end
       else
 `endif
-      if (   (inputs.decoded_instr.rd  == 0)
-	  && (inputs.decoded_instr.rs1 == 0))
+      if (   (instr_rd(inputs.instr)  == 0)
+	  && (instr_rs1(inputs.instr) == 0))
 	 begin
 	    // ECALL instructions
-	    if (inputs.decoded_instr.imm12_I == f12_ECALL) begin
+	    if (instr_I_imm12(inputs.instr) == f12_ECALL) begin
 	       alu_outputs.control  = CONTROL_TRAP;
 	       alu_outputs.exc_code = ((inputs.cur_priv == u_Priv_Mode)
 				       ? exc_code_ECALL_FROM_U
@@ -996,14 +995,14 @@ function ALU_Outputs fv_SYSTEM (ALU_Inputs inputs);
 	    end
 
 	    // EBREAK instruction
-	    else if (inputs.decoded_instr.imm12_I == f12_EBREAK) begin
+	    else if (instr_I_imm12(inputs.instr) == f12_EBREAK) begin
 	       alu_outputs.control  = CONTROL_TRAP;
 	       alu_outputs.exc_code = exc_code_BREAKPOINT;
 	    end
 
 	    // MRET instruction
 	    else if (   (inputs.cur_priv >= m_Priv_Mode)
-		     && (inputs.decoded_instr.imm12_I == f12_MRET))
+		     && (instr_I_imm12(inputs.instr) == f12_MRET))
 	       begin
 		  alu_outputs.control = CONTROL_MRET;
 	       end
@@ -1013,7 +1012,7 @@ function ALU_Outputs fv_SYSTEM (ALU_Inputs inputs);
 	    else if (   (   (inputs.cur_priv == m_Priv_Mode)
 			 || (   (inputs.cur_priv == s_Priv_Mode)
 			     && (inputs.mstatus [mstatus_tsr_bitpos] == 0)))
-		     && (inputs.decoded_instr.imm12_I == f12_SRET))
+		     && (instr_I_imm12(inputs.instr) == f12_SRET))
 	       begin
 		  alu_outputs.control = CONTROL_SRET;
 	       end
@@ -1022,7 +1021,7 @@ function ALU_Outputs fv_SYSTEM (ALU_Inputs inputs);
 	    /*
 	    // URET instruction (future: support 'N' extension)
 	    else if (   (inputs.cur_priv >= u_Priv_Mode)
-		     && (inputs.decoded_instr.imm12_I == f12_URET))
+		     && (instr_I_imm12(inputs.instr) == f12_URET))
 	       begin
 		  alu_outputs.control = CONTROL_URET;
 	       end
@@ -1034,7 +1033,7 @@ function ALU_Outputs fv_SYSTEM (ALU_Inputs inputs);
 			     && (inputs.mstatus [mstatus_tw_bitpos] == 0))
 			 || (   (inputs.cur_priv == u_Priv_Mode)
 			     && (inputs.misa.n == 1)))
-		     && (inputs.decoded_instr.imm12_I == f12_WFI))
+		     && (instr_I_imm12(inputs.instr) == f12_WFI))
 	       begin
 		  alu_outputs.control = CONTROL_WFI;
 	       end
@@ -1052,7 +1051,7 @@ function ALU_Outputs fv_SYSTEM (ALU_Inputs inputs);
    // CSRRW, CSRRWI
    else if (f3_is_CSRR_W (funct3)) begin
       WordXL rs1_val = (  (funct3 [2] == 1)
-			? extend (inputs.decoded_instr.rs1)    // Immediate zimm
+			? extend (instr_rs1(inputs.instr))    // Immediate zimm
 			: inputs.rs1_val);                     // From rs1 reg
 
       alu_outputs.control   = CONTROL_CSRR_W;
@@ -1062,7 +1061,7 @@ function ALU_Outputs fv_SYSTEM (ALU_Inputs inputs);
    // CSRRS, CSRRSI, CSRRC, CSRRCI
    else if (f3_is_CSRR_S_or_C (funct3)) begin
       WordXL rs1_val = (  (funct3 [2] == 1)
-			? extend (inputs.decoded_instr.rs1)    // Immediate zimm
+			? extend (instr_rs1(inputs.instr))    // Immediate zimm
 			: inputs.rs1_val);                     // From rs1 reg
 
       alu_outputs.control   = CONTROL_CSRR_S_or_C;
@@ -1083,15 +1082,15 @@ endfunction: fv_SYSTEM
 
 `ifdef ISA_F
 function ALU_Outputs fv_FP (ALU_Inputs inputs, Bit#(3) rm);
-   let opcode = inputs.decoded_instr.opcode;
-   let funct3 = inputs.decoded_instr.funct3;
-   let funct7 = inputs.decoded_instr.funct7;
-   let rs2    = inputs.decoded_instr.rs2;
+   let opcode = instr_opcode(inputs.instr);
+   let funct3 = instr_funct3(inputs.instr);
+   let funct7 = instr_funct7(inputs.instr);
+   let rs2    = instr_rs2(inputs.instr);
 
    let alu_outputs         = alu_outputs_base;
    alu_outputs.control     = CONTROL_STRAIGHT;
    alu_outputs.op_stage2   = OP_Stage2_FD;
-   alu_outputs.rd          = inputs.decoded_instr.rd;
+   alu_outputs.rd          = instr_rd(inputs.instr);
    alu_outputs.rm          = rm;
 
    // Operand values
@@ -1118,7 +1117,7 @@ function ALU_Outputs fv_FP (ALU_Inputs inputs, Bit#(3) rm);
          fall_through_pc (inputs),
          fv_trace_isize (inputs),
          get_instr (inputs),
-         inputs.decoded_instr.rd,
+         instr_rd(inputs.instr),
          ?,
          inputs.fflags,
          inputs.mstatus);
@@ -1128,7 +1127,7 @@ function ALU_Outputs fv_FP (ALU_Inputs inputs, Bit#(3) rm);
          fall_through_pc (inputs),
          fv_trace_isize (inputs),
          get_instr (inputs),
-         inputs.decoded_instr.rd,
+         instr_rd(inputs.instr),
          ?,
          inputs.fflags,
          inputs.mstatus);
@@ -1143,10 +1142,10 @@ endfunction
 
 `ifdef ISA_A
 function ALU_Outputs fv_AMO (ALU_Inputs inputs);
-   let rs2    = inputs.decoded_instr.rs2;
-   let funct3 = inputs.decoded_instr.funct3;
-   let funct5 = inputs.decoded_instr.funct5;
-   let funct7 = inputs.decoded_instr.funct7;
+   let rs2    = instr_rs2(inputs.instr);
+   let funct3 = instr_funct3(inputs.instr);
+   let funct5 = instr_funct5(inputs.instr);
+   let funct7 = instr_funct7(inputs.instr);
 
    Bool legal_f5 = (   ((funct5 == f5_AMO_LR) && (rs2 == 0))
 		    || (funct5 == f5_AMO_SC)
@@ -1168,7 +1167,7 @@ function ALU_Outputs fv_AMO (ALU_Inputs inputs);
    alu_outputs.control   = ((legal_f5 && legal_width) ? CONTROL_STRAIGHT : CONTROL_TRAP);
    alu_outputs.op_stage2 = OP_Stage2_AMO;
    alu_outputs.addr      = eaddr;
-   alu_outputs.val1      = zeroExtend (inputs.decoded_instr.funct7);
+   alu_outputs.val1      = zeroExtend (instr_funct7(inputs.instr));
    alu_outputs.val2      = inputs.rs2_val;
 
 `ifdef INCLUDE_TANDEM_VERIF
@@ -1179,7 +1178,7 @@ function ALU_Outputs fv_AMO (ALU_Inputs inputs);
       funct3,
       fv_trace_isize (inputs),
       get_instr (inputs),
-      inputs.decoded_instr.rd, ?,
+      instr_rd(inputs.instr), ?,
       inputs.rs2_val,
       eaddr);
 `endif
@@ -1197,28 +1196,28 @@ function ALU_Outputs fv_ALU (ALU_Inputs inputs);
    let fp_insts_are_legal = (! (fv_mstatus_fs (inputs.mstatus) == fs_xs_off));
 
    // Is floating point rounding mode legal?
-   match {.rm, .rm_is_legal} = fop_rmode_check (inputs.decoded_instr.funct3, inputs.frm);
+   match {.rm, .rm_is_legal} = fop_rmode_check (instr_funct3(inputs.instr), inputs.frm);
 `endif
 
    let alu_outputs = alu_outputs_base;
 
-   if (inputs.decoded_instr.opcode == op_BRANCH)
+   if (instr_opcode(inputs.instr) == op_BRANCH)
       alu_outputs = fv_BRANCH (inputs);
 
-   else if (inputs.decoded_instr.opcode == op_JAL)
+   else if (instr_opcode(inputs.instr) == op_JAL)
       alu_outputs = fv_JAL (inputs);
 
-   else if (inputs.decoded_instr.opcode == op_JALR)
+   else if (instr_opcode(inputs.instr) == op_JALR)
       alu_outputs = fv_JALR (inputs);
 
 `ifdef ISA_M
    // OP 'M' ops MUL/ MULH/ MULHSU/ MULHU/ DIV/ DIVU/ REM/ REMU
-   else if (   (inputs.decoded_instr.opcode == op_OP)
-	    && f7_is_OP_MUL_DIV_REM (inputs.decoded_instr.funct7))
+   else if (   (instr_opcode(inputs.instr) == op_OP)
+	    && f7_is_OP_MUL_DIV_REM (instr_funct7(inputs.instr)))
       begin
 	 // Will be executed in MBox in next stage
 	 alu_outputs.op_stage2 = OP_Stage2_M;
-	 alu_outputs.rd        = inputs.decoded_instr.rd;
+	 alu_outputs.rd        = instr_rd(inputs.instr);
 	 alu_outputs.val1      = inputs.rs1_val;
 	 alu_outputs.val2      = inputs.rs2_val;
 
@@ -1229,22 +1228,22 @@ function ALU_Outputs fv_ALU (ALU_Inputs inputs);
       fall_through_pc (inputs),
       fv_trace_isize (inputs),
       get_instr (inputs),
-      inputs.decoded_instr.rd,
+      instr_rd(inputs.instr),
    ?);
 `endif
       end
 
 `ifdef RV64
    // OP 'M' ops MULW/ DIVW/ DIVUW/ REMW/ REMUW
-   else if (   (inputs.decoded_instr.opcode == op_OP_32)
-	    && f7_is_OP_MUL_DIV_REM (inputs.decoded_instr.funct7)
-	    && (inputs.decoded_instr.funct3 != 3'b001)
-	    && (inputs.decoded_instr.funct3 != 3'b010)
-	    && (inputs.decoded_instr.funct3 != 3'b011))
+   else if (   (instr_opcode(inputs.instr) == op_OP_32)
+	    && f7_is_OP_MUL_DIV_REM (instr_funct7(inputs.instr))
+	    && (instr_funct3(inputs.instr) != 3'b001)
+	    && (instr_funct3(inputs.instr) != 3'b010)
+	    && (instr_funct3(inputs.instr) != 3'b011))
       begin
 	 // Will be executed in MBox in next stage
 	 alu_outputs.op_stage2 = OP_Stage2_M;
-	 alu_outputs.rd        = inputs.decoded_instr.rd;
+	 alu_outputs.rd        = instr_rd(inputs.instr);
 	 alu_outputs.val1      = inputs.rs1_val;
 	 alu_outputs.val2      = inputs.rs2_val;
 
@@ -1255,7 +1254,7 @@ function ALU_Outputs fv_ALU (ALU_Inputs inputs);
       fall_through_pc (inputs),
       fv_trace_isize (inputs),
       get_instr (inputs),
-      inputs.decoded_instr.rd,
+      instr_rd(inputs.instr),
       ?);
 `endif
       end
@@ -1263,63 +1262,63 @@ function ALU_Outputs fv_ALU (ALU_Inputs inputs);
 `endif
 
    // OP_IMM and OP (shifts)
-   else if (   (   (inputs.decoded_instr.opcode == op_OP_IMM)
-		|| (inputs.decoded_instr.opcode == op_OP))
-	    && (   (inputs.decoded_instr.funct3 == f3_SLLI)
-		|| (inputs.decoded_instr.funct3 == f3_SRLI)
-		|| (inputs.decoded_instr.funct3 == f3_SRAI)))
+   else if (   (   (instr_opcode(inputs.instr) == op_OP_IMM)
+		|| (instr_opcode(inputs.instr) == op_OP))
+	    && (   (instr_funct3(inputs.instr) == f3_SLLI)
+		|| (instr_funct3(inputs.instr) == f3_SRLI)
+		|| (instr_funct3(inputs.instr) == f3_SRAI)))
       alu_outputs = fv_OP_and_OP_IMM_shifts (inputs);
 
    // Remaining OP_IMM and OP (excluding shifts and 'M' ops MUL/DIV/REM)
-   else if (   (inputs.decoded_instr.opcode == op_OP_IMM)
-	    || (inputs.decoded_instr.opcode == op_OP))
+   else if (   (instr_opcode(inputs.instr) == op_OP_IMM)
+	    || (instr_opcode(inputs.instr) == op_OP))
       alu_outputs = fv_OP_and_OP_IMM (inputs);
 
 `ifdef RV64
-   else if (inputs.decoded_instr.opcode == op_OP_IMM_32)
+   else if (instr_opcode(inputs.instr) == op_OP_IMM_32)
       alu_outputs = fv_OP_IMM_32 (inputs);
 
    // Remaining op_OP_32 (excluding 'M' ops)
-   else if (inputs.decoded_instr.opcode == op_OP_32)
+   else if (instr_opcode(inputs.instr) == op_OP_32)
       alu_outputs = fv_OP_32 (inputs);
 `endif
 
-   else if (inputs.decoded_instr.opcode == op_LUI)
+   else if (instr_opcode(inputs.instr) == op_LUI)
       alu_outputs = fv_LUI (inputs);
 
-   else if (inputs.decoded_instr.opcode == op_AUIPC)
+   else if (instr_opcode(inputs.instr) == op_AUIPC)
       alu_outputs = fv_AUIPC (inputs);
 
-   else if (inputs.decoded_instr.opcode == op_LOAD)
+   else if (instr_opcode(inputs.instr) == op_LOAD)
       alu_outputs = fv_LOAD (inputs);
 
-   else if (inputs.decoded_instr.opcode == op_STORE)
+   else if (instr_opcode(inputs.instr) == op_STORE)
       alu_outputs = fv_STORE (inputs);
 
-   else if (inputs.decoded_instr.opcode == op_MISC_MEM)
+   else if (instr_opcode(inputs.instr) == op_MISC_MEM)
       alu_outputs = fv_MISC_MEM (inputs);
 
-   else if (inputs.decoded_instr.opcode == op_SYSTEM)
+   else if (instr_opcode(inputs.instr) == op_SYSTEM)
       alu_outputs = fv_SYSTEM (inputs);
 
 `ifdef ISA_A
-   else if (inputs.decoded_instr.opcode == op_AMO)
+   else if (instr_opcode(inputs.instr) == op_AMO)
       alu_outputs = fv_AMO (inputs);
 `endif
 
 `ifdef ISA_F
-   else if (   (inputs.decoded_instr.opcode == op_LOAD_FP))
+   else if (   (instr_opcode(inputs.instr) == op_LOAD_FP))
       alu_outputs = fv_LOAD (inputs);
 
-   else if (   (inputs.decoded_instr.opcode == op_STORE_FP))
+   else if (   (instr_opcode(inputs.instr) == op_STORE_FP))
       alu_outputs = fv_STORE (inputs);
 
    else if (   fp_insts_are_legal
 	    && rm_is_legal
-	    && is_fp_instr_legal (inputs.decoded_instr.funct7,
+	    && is_fp_instr_legal (instr_funct7(inputs.instr),
 				     rm,
-				     inputs.decoded_instr.rs2,
-				     inputs.decoded_instr.opcode))
+				     instr_rs2(inputs.instr),
+				     instr_opcode(inputs.instr)))
       alu_outputs = fv_FP (inputs, rm);
 `endif
 

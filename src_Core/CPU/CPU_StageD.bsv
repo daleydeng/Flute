@@ -81,7 +81,6 @@ module mkCPU_StageD #(Bit#(4)  verbosity, MISA misa)
    // Combinational output function
 
    function Output_StageD fv_out;
-      let decoded_instr = decode_instr (instr);
       let instruction = decode_instruction(instr);
 
       Output_StageD  output_stageD = ?;
@@ -104,7 +103,6 @@ module mkCPU_StageD #(Bit#(4)  verbosity, MISA misa)
 							       instr_C:        instr_C,
 `endif
 							       pred_pc:        rg_data.pred_pc,
-							       decoded_instr:  decoded_instr,
                             instruction: instruction};
       end
 

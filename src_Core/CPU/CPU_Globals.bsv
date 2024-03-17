@@ -304,7 +304,6 @@ typedef struct {
    InstrBits          instr;              // Valid if no exception
    InstrCBits        instr_C;            // Valid if no exception; original compressed instruction
    WordXL         pred_pc;            // Predicted next pc
-   DecodedInstr  decoded_instr;
    Instruction   instruction;
 } Data_StageD_to_Stage1 deriving (Bits);
 

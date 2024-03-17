@@ -96,12 +96,11 @@ module mkCPU_Stage1 #(Bit#(4)         verbosity,
 
    // ----------------
    // ALU
-
-   let decoded_instr  = rg_stage_input.decoded_instr;
-   let funct3         = decoded_instr.funct3;
+   let instr = rg_stage_input.instr;
+   let funct3         = instr_funct3(instr);
 
    // Register rs1 read and bypass
-   let rs1 = decoded_instr.rs1;
+   let rs1 = instr_rs1(instr);
    let rs1_val = gpr_regfile.read_rs1 (rs1);
    match { .busy1a, .rs1a } = fn_gpr_bypass (bypass_from_stage3, rs1, rs1_val);
    match { .busy1b, .rs1b } = fn_gpr_bypass (bypass_from_stage2, rs1, rs1a);
@@ -109,7 +108,7 @@ module mkCPU_Stage1 #(Bit#(4)         verbosity,
    WordXL rs1_val_bypassed = ((rs1 == 0) ? 0 : rs1b);
 
    // Register rs2 read and bypass
-   let rs2 = decoded_instr.rs2;
+   let rs2 = instr_rs2(instr);
    let rs2_val = gpr_regfile.read_rs2 (rs2);
    match { .busy2a, .rs2a } = fn_gpr_bypass (bypass_from_stage3, rs2, rs2_val);
    match { .busy2b, .rs2b } = fn_gpr_bypass (bypass_from_stage2, rs2, rs2a);
@@ -132,7 +131,7 @@ module mkCPU_Stage1 #(Bit#(4)         verbosity,
    WordFL frs2_val_bypassed = frs2b;
 
    // FP Register rs3 read and bypass
-   let rs3 = decoded_instr.rs3;
+   let rs3 = instr_rs3(instr);
    let frs3_val = fpr_regfile.read_rs3 (rs3);
    match { .fbusy3a, .frs3a } = fn_fpr_bypass (fbypass_from_stage3, rs3, frs3_val);
    match { .fbusy3b, .frs3b } = fn_fpr_bypass (fbypass_from_stage2, rs3, frs3a);
@@ -148,7 +147,6 @@ module mkCPU_Stage1 #(Bit#(4)         verbosity,
 `ifdef ISA_C
 				instr_C        : rg_stage_input.instr_C,
 `endif
-				decoded_instr  : rg_stage_input.decoded_instr,
             instruction    : rg_stage_input.instruction,
             
 				rs1_val        : rs1_val_bypassed,
