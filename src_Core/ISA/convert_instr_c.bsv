@@ -10,6 +10,70 @@ export convert_instr_C;
 import isa_decls   :: *;
 import convert_instr_c_bh :: *;
 
+`define mcheck(val) \
+   case (val) matches \
+      tagged Valid .x: if (!illegal && !found) begin \
+         found = True; \
+         out = x; \
+      end \
+   endcase
+
+`define mcheck_n(val, n) \
+   case (val) matches \
+      tagged Valid .x: if (!illegal && !found && xl == n) begin \
+         found = True; \
+         out = x; \
+      end \
+   endcase
+
+`define mcheck_n2(val, n1, n2) \
+   case (val) matches \
+      tagged Valid .x: if (!illegal && !found && (xl == n1 || xl == n2)) begin \
+         found = True; \
+         out = x; \
+      end \
+   endcase
+
+`define mcheck_nf(val, n) \
+   case (val) matches \
+      tagged Valid .x: if (!illegal && !found && xl == n && misa.f == 1) begin \
+         found = True; \
+         out = x; \
+      end \
+   endcase
+
+`define mcheck_n2f(val, n1, n2) \
+   case (val) matches \
+      tagged Valid .x: if (!illegal && !found && (xl == n1 || xl == n2) && misa.f == 1) begin \
+         found = True; \
+         out = x; \
+      end \
+   endcase
+
+`define mcheck_nd(val, n) \
+   case (val) matches \
+      tagged Valid .x: if (!illegal && !found && xl == n && misa.d == 1) begin \
+         found = True; \
+         out = x; \
+      end \
+   endcase
+
+`define check_n2d(val, n1, n2) \
+   case (val) matches \
+      tagged Valid .x: if (!illegal && !found && (xl == n1 || xl == n2) && misa.d == 1) begin \
+         found = True; \
+         out = x; \
+      end \
+   endcase
+
+`define mcheck_32(val) `mcheck_n(val, misa_mxl_32)
+`define mcheck_64(val) `mcheck_n(val, misa_mxl_64)
+`define mcheck_128(val) `mcheck_n(val, misa_mxl_128)
+
+`define mcheck_32_64(val) `mcheck_n2(val, misa_mxl_32, misa_mxl_64)
+`define mcheck_32_64_d(val) `mcheck_n2d(val, misa_mxl_32, misa_mxl_64)
+`define mcheck_64_128(val) `mcheck_n2(val, misa_mxl_64, misa_mxl_128)
+
 `define check(val) \
    case (val) matches \
       {.valid, .instr}: if (!illegal && !found && valid) begin \
@@ -160,17 +224,17 @@ function InstrBits convert_instr_C (MISA misa, Bit #(2) xl, InstrCBits instr_C);
 `endif
 
 `ifdef RV_128_D
-   `check_128(decode_C_LQSP(instr_C))
+   `mcheck_128(decode_C_LQSP(instr_C))
 `endif
 
-   `check(decode_C_LWSP(instr_C))
+   `mcheck(decode_C_LWSP(instr_C))
 
 `ifdef RV_32_F
    `check_32_f(decode_C_FLWSP(instr_C))
 `endif
 
 `ifdef RV_64_128
-   `check_64_128(decode_C_LDSP(instr_C))
+   `mcheck_64_128(decode_C_LDSP(instr_C))
 `endif
 
    `check(decode_C_JR(instr_C))
@@ -204,62 +268,68 @@ endfunction
 // 'C' Extension Stack-Pointer-Based Loads
 
 // LWSP: expands into LW
-function Tuple2#(Bool, InstrBits) decode_C_LWSP (InstrCBits  instr_C);
+function Maybe#(InstrBits) decode_C_LWSP (InstrCBits  instr_C);
    begin
       // InstrBits fields: I-type
       let i = parse_instr_C(instr_C, InstrCFmtCI).ast.CI;
-      Bit#(8) offset = { i.imm_6_2[1:0], i.imm_12, i.imm_6_2[4:2], 2'b0};
+      Bit#(12) offset = {0, i.imm_6_2[1:0], i.imm_12, i.imm_6_2[4:2], 2'b0};
 
       let is_legal = ((i.op == opcode_C2)
 		       && (i.rd_rs1 != 0)
 		       && (i.funct3 == f3_C_LWSP));
 
-      let instr = encode_instr_I(
-         zeroExtend(offset),  
+      return is_legal ? tagged Valid(encode_instr_I(
+         offset,  
          /*rs1*/reg_sp,  
          f3_LW,  
          i.rd_rs1,  
          op_LOAD
-      );
-
-      return tuple2 (is_legal, instr);
+      )) : tagged Invalid;
    end
 endfunction
 
 `ifdef RV_64_128
 // LDSP: expands into LD
-function Tuple2#(Bool, InstrBits) decode_C_LDSP (InstrCBits  instr_C);
+function Maybe#(InstrBits) decode_C_LDSP (InstrCBits  instr_C);
    begin
       // InstrBits fields: I-type
       let i = parse_instr_C(instr_C, InstrCFmtCI).ast.CI;
-      Bit#(9) offset = { i.imm_6_2[2:0], i.imm_12, i.imm_6_2[4:3], 3'b0 };
+      Bit#(12) offset = {0, i.imm_6_2[2:0], i.imm_12, i.imm_6_2[4:3], 3'b0 };
 
       let is_legal = ((i.op == opcode_C2)
 		       && (i.rd_rs1 != 0)
 		       && (i.funct3 == f3_C_LDSP));
 
-      let instr = encode_instr_I (zeroExtend (offset),  /*rs1*/reg_sp,  f3_LD,  i.rd_rs1,  op_LOAD);
-
-      return tuple2 (is_legal, instr);
+      return is_legal ? tagged Valid(encode_instr_I(
+         offset,  
+         /*rs1*/reg_sp,  
+         f3_LD,  
+         i.rd_rs1,  
+         op_LOAD
+      )) : tagged Invalid;
    end
 endfunction
 `endif
 
 `ifdef RV128
 // LQSP: expands into LQ
-function Tuple2#(Bool, InstrBits) decode_C_LQSP (InstrCBits  instr_C);
+function Maybe#(InstrBits) decode_C_LQSP (InstrCBits  instr_C);
    begin
       // InstrBits fields: I-type
       let i = parse_instr_C(instr_C, InstrCFmtCI).ast.CI;
-      Bit#(10) offset = { i.imm_6_2 [3:0], i.imm_12, i.imm_6_2 [4], 4'b0 };
+      Bit#(12) offset = {0, i.imm_6_2 [3:0], i.imm_12, i.imm_6_2 [4], 4'b0 };
 
       let is_legal = ((i.op == opcode_C2)
 		       && (i.rd_rs1 != 0)
 		       && (i.funct3 == f3_C_LQSP));
 
-      let     instr = encode_instr_I (zeroExtend (offset),  /*rs1*/reg_sp,  f3_LQ,  i.rd_rs1,  op_LOAD);
-
-      return tuple2 (is_legal, instr);
+      return is_legal ? tagged Valid(encode_instr_I(
+         offset,  
+         /*rs1*/reg_sp,  
+         f3_LQ,  
+         i.rd_rs1,  
+         op_LOAD
+      )) : tagged Invalid;
    end
 endfunction
 `endif
