@@ -17,8 +17,11 @@ check orignal [doc](intro.adoc) first
 
 ## Refactor Roadmap
 refactor roadmap
-- [ ] src_Core/ISA/* cleanups
+- [ ] src_Core/ISA/*
   - [ ] *.bsv -> *.bh, migrate to haskell
   - [ ] compressed extension convert_instr_c cleanups
   - [ ] tv_trace_data cleanups
+  - [x] isa_defines.bsvi, isa_defines_bh.bsv
+  - [x] isa_types.bs
+  - [x] isa_base.bs
 - [ ] src_Core/tandem_verif/ cleanups
