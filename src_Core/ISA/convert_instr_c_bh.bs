@@ -2,7 +2,7 @@ package convert_instr_c_bh where
 
 import isa_decls
 
-decode_C_LWSP1 :: InstrCBits -> (Bool, InstrBits)
+decode_C_LWSP1 :: InstrCBits -> Maybe InstrBits
 decode_C_LWSP1 instr_C = 
     let i = case (parse_instr_C instr_C InstrCFmtCI).ast of CI v -> v
         offset = i.imm_6_2[1:0] ++ i.imm_12 ++ i.imm_6_2[4:2] ++ 2'b0
