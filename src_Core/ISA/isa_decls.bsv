@@ -4,26 +4,6 @@ export isa_decls_bh::*, isa_decls::*;
 
 import isa_decls_bh::*;
 
-function InstrBits encode_instr_I(Bit#(12) imm12, RegIdx rs1, Bit#(3) funct3, RegIdx rd, Bit#(7) opcode);
-   return {imm12, rs1, funct3, rd, opcode};
-endfunction
-
-function InstrBits encode_instr_S(Bit#(12) imm12, RegIdx rs2, RegIdx rs1, Bit#(3) funct3, Bit#(7) opcode);
-   return {imm12[11:5], rs2, rs1, funct3, imm12[4:0], opcode};
-endfunction
-
-function InstrBits encode_instr_B(Bit#(13) imm13, RegIdx rs2, RegIdx rs1, Bit#(3) funct3, Bit#(7) opcode);
-   return {imm13[12], imm13[10:5], rs2, rs1, funct3, imm13[4:1], imm13[11], opcode};
-endfunction
-
-function InstrBits encode_instr_U(Bit#(20) imm20, RegIdx rd, Bit#(7) opcode);
-   return {imm20, rd, opcode};
-endfunction
-
-function InstrBits encode_instr_J (Bit#(21) imm21, RegIdx rd, Bit#(7) opcode);
-   return {imm21[20], imm21[10:1], imm21[11], imm21[19:12], rd, opcode};
-endfunction
-
 RegIdx x0  =  0;    RegIdx x1  =  1;    RegIdx x2  =  2;    RegIdx x3  =  3;
 RegIdx x4  =  4;    RegIdx x5  =  5;    RegIdx x6  =  6;    RegIdx x7  =  7;
 RegIdx x8  =  8;    RegIdx x9  =  9;    RegIdx x10 = 10;    RegIdx x11 = 11;

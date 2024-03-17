@@ -155,3 +155,26 @@ decode_instruction x = case x[6:0] of {
     7'b0010011 -> Instruction {fmt = InstrFmtI; ast = I (unpack x)};
     _ -> Instruction {fmt = InstrFmtNone; ast = Raw x};
 }
+
+encode_instr_R:: Bit 7 -> RegIdx -> RegIdx -> Bit 3 -> RegIdx -> Bit 7 -> InstrBits
+encode_instr_R funct7 rs2 rs1 funct3 rd opcode = 
+    funct7 ++ rs2 ++ rs1 ++ funct3 ++ rd ++ opcode
+
+encode_instr_I:: Bit 12 -> RegIdx -> Bit 3 -> RegIdx -> Opcode -> InstrBits
+encode_instr_I imm12 rs1 funct3 rd opcode = 
+    imm12 ++ rs1 ++ funct3 ++ rd ++ opcode
+
+encode_instr_S:: Bit 12 -> RegIdx -> RegIdx -> Bit 3 -> Opcode -> InstrBits
+encode_instr_S imm12 rs2 rs1 funct3 opcode = 
+    imm12[11:5] ++ rs2 ++ rs1 ++ funct3 ++ imm12[4:0] ++ opcode
+
+encode_instr_B:: Bit 13 -> RegIdx -> RegIdx -> Bit 3 -> Opcode -> InstrBits
+encode_instr_B imm13 rs2 rs1 funct3 opcode = 
+    imm13[12:12] ++ imm13[10:5] ++ rs2 ++ rs1 ++ funct3 ++ imm13[4:1] ++ imm13[11:11] ++ opcode
+
+encode_instr_U:: Bit 20 -> RegIdx -> Opcode -> InstrBits
+encode_instr_U imm20 rd opcode = imm20 ++ rd ++ opcode
+
+encode_instr_J:: Bit 21 -> RegIdx -> Opcode -> InstrBits
+encode_instr_J imm21 rd opcode = 
+    imm21[20:20] ++ imm21[10:1] ++ imm21[11:11] ++ imm21[19:12] ++ rd ++ opcode
