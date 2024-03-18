@@ -1,0 +1,171 @@
+package isa_cext(
+   package isa_cext
+   ,package isa_types
+) where
+-- ================================================================
+--
+-- Contains RISC-V ISA defs for the 'C' ("compressed") extension
+-- i.e., 16-bit instructions
+--
+-- ================================================================
+
+import isa_types;
+
+illegal_instr_c:: InstrCBits; illegal_instr_c = 16'h0000
+
+data InstrCFmt = CR | CI | CSS | CIW | CL | CS | CA | CB | CJ
+
+data InstructionC = Instr_CR {
+   funct4   :: Bit 4; 
+   rd_rs1   :: Bit 5;
+   rs2      :: Bit 5; 
+   op       :: Bit 2; 
+} | Instr_CI {
+   funct3   :: Bit 3; 
+   imm_12   :: Bit 1; 
+   rd_rs1   :: Bit 5; 
+   imm_6_2  :: Bit 5; 
+   op       :: Bit 2; 
+} | Instr_CSS {
+   funct3   :: Bit 3; 
+   imm_12_7 :: Bit 6; 
+   rs2      :: Bit 5; 
+   op       :: Bit 2; 
+} | Instr_CIW {
+   funct3   :: Bit 3; 
+   imm_12_5 :: Bit 8; 
+   rd_C     :: Bit 3;   
+   op       :: Bit 2; 
+} | Instr_CL {
+   funct3   :: Bit 3;    
+   imm_12_10:: Bit 3;       
+   rs1_C    :: Bit 3;    
+   imm_6_5  :: Bit 2;       
+   rd_C     :: Bit 3;    
+   op       :: Bit 2; 
+} | Instr_CS {
+   funct3   :: Bit 3;    
+   imm_12_10:: Bit 3;       
+   rs1_C    :: Bit 3;    
+   imm_6_5  :: Bit 2;       
+   rs2_C    :: Bit 3;    
+   op       :: Bit 2; 
+} | Instr_CA {
+   funct6   :: Bit 6;    
+   rd_rs1_C :: Bit 3;       
+   funct2   :: Bit 2;    
+   rs2_C    :: Bit 3;    
+   op       :: Bit 2; 
+} | Instr_CB {
+   funct3   :: Bit 3;    
+   imm_12_10:: Bit 3;       
+   rs1_C    :: Bit 3;    
+   imm_6_2  :: Bit 5;       
+   op       :: Bit 2; 
+} | Instr_CJ {
+   funct3   :: Bit 3;    
+   imm_12_2 :: Bit 11;        
+   op       :: Bit 2; 
+} deriving (Bits, FShow)
+
+parse_instr_C:: InstrCBits -> InstrCFmt -> InstructionC
+parse_instr_C bits fmt = 
+   let instr = unpack bits
+   in case fmt of {
+      CR -> Instr_CR instr;
+      CI -> Instr_CI instr;
+      CSS -> Instr_CSS instr;
+      CIW -> Instr_CIW instr;
+      CL -> Instr_CL instr;
+      CS -> Instr_CS instr;
+      CA -> Instr_CA instr;
+      CB -> Instr_CB instr;
+      CJ -> Instr_CJ instr;
+   }
+
+get_creg:: Bit 3 -> Bit 5
+get_creg x = 2'b01 ++ x
+
+opcode_C0:: Bit 2; opcode_C0 = 2'b00
+opcode_C1:: Bit 2; opcode_C1 = 2'b01
+opcode_C2:: Bit 2; opcode_C2 = 2'b10
+
+f3_C_LWSP    :: Bit 3; f3_C_LWSP     = 3'b010
+f3_C_LDSP    :: Bit 3; f3_C_LDSP     = 3'b011     -- RV64 and RV128
+f3_C_LQSP    :: Bit 3; f3_C_LQSP     = 3'b001     -- RV128
+f3_C_FLWSP   :: Bit 3; f3_C_FLWSP    = 3'b011     -- RV32FC
+f3_C_FLDSP   :: Bit 3; f3_C_FLDSP    = 3'b001     -- RV32DC, RV64DC
+
+f3_C_SWSP    :: Bit 3; f3_C_SWSP     = 3'b110
+
+f3_C_SQSP    :: Bit 3; f3_C_SQSP     = 3'b101     -- RV128
+f3_C_FSDSP   :: Bit 3; f3_C_FSDSP    = 3'b101     -- RV32DC, RV64DC
+
+f3_C_SDSP    :: Bit 3; f3_C_SDSP     = 3'b111     -- RV64 and RV128
+f3_C_FSWSP   :: Bit 3; f3_C_FSWSP    = 3'b111     -- RV32FC
+
+f3_C_LQ      :: Bit 3; f3_C_LQ       = 3'b001     -- RV128
+f3_C_FLD     :: Bit 3; f3_C_FLD      = 3'b001     -- RV32DC, RV64DC
+
+f3_C_LW      :: Bit 3; f3_C_LW       = 3'b010
+
+f3_C_LD      :: Bit 3; f3_C_LD       = 3'b011     -- RV64 and RV128
+f3_C_FLW     :: Bit 3; f3_C_FLW      = 3'b011     -- RV32FC
+
+f3_C_FSD     :: Bit 3; f3_C_FSD      = 3'b101     -- RV32DC, RV64DC
+f3_C_SQ      :: Bit 3; f3_C_SQ       = 3'b101     -- RV128
+
+f3_C_SW      :: Bit 3; f3_C_SW       = 3'b110
+
+f3_C_SD      :: Bit 3; f3_C_SD       = 3'b111     -- RV64 and RV128
+f3_C_FSW     :: Bit 3; f3_C_FSW      = 3'b111     -- RV32FC
+
+f3_C_JAL     :: Bit 3; f3_C_JAL      = 3'b001     -- RV32
+f3_C_J       :: Bit 3; f3_C_J        = 3'b101
+f3_C_BEQZ    :: Bit 3; f3_C_BEQZ     = 3'b110
+f3_C_BNEZ    :: Bit 3; f3_C_BNEZ     = 3'b111
+
+f4_C_JR    :: Bit 4; f4_C_JR       = 4'b1000
+f4_C_JALR  :: Bit 4; f4_C_JALR     = 4'b1001
+
+f3_C_LI      :: Bit 3; f3_C_LI       = 3'b010
+f3_C_LUI     :: Bit 3; f3_C_LUI      = 3'b011     -- RV64 and RV128
+
+f3_C_NOP     :: Bit 3; f3_C_NOP      = 3'b000
+f3_C_ADDI    :: Bit 3; f3_C_ADDI     = 3'b000
+f3_C_ADDIW   :: Bit 3; f3_C_ADDIW    = 3'b001
+f3_C_ADDI16SP:: Bit 3; f3_C_ADDI16SP = 3'b011
+f3_C_ADDI4SPN:: Bit 3; f3_C_ADDI4SPN = 3'b000
+f3_C_SLLI    :: Bit 3; f3_C_SLLI     = 3'b000
+
+f3_C_SRLI    :: Bit 3; f3_C_SRLI     = 3'b100
+f2_C_SRLI    :: Bit 2; f2_C_SRLI     = 2'b00
+
+f3_C_SRAI    :: Bit 3; f3_C_SRAI     = 3'b100
+f2_C_SRAI:: Bit 2; f2_C_SRAI     = 2'b01
+
+f3_C_ANDI    :: Bit 3; f3_C_ANDI     = 3'b100
+f2_C_ANDI:: Bit 2; f2_C_ANDI     = 2'b10
+
+f4_C_MV    :: Bit 4; f4_C_MV       = 4'b1000
+f4_C_ADD   :: Bit 4; f4_C_ADD      = 4'b1001
+
+f6_C_AND :: Bit 6; f6_C_AND      = 6'b100_0_11
+f2_C_AND :: Bit 2; f2_C_AND      = 2'b11
+
+f6_C_OR  :: Bit 6; f6_C_OR       = 6'b100_0_11
+f2_C_OR  :: Bit 2; f2_C_OR       = 2'b10
+
+f6_C_XOR :: Bit 6; f6_C_XOR      = 6'b100_0_11
+f2_C_XOR :: Bit 2; f2_C_XOR      = 2'b01
+
+f6_C_SUB :: Bit 6; f6_C_SUB      = 6'b100_0_11
+f2_C_SUB :: Bit 2; f2_C_SUB      = 2'b00
+
+f6_C_ADDW:: Bit 6; f6_C_ADDW     = 6'b100_1_11
+f2_C_ADDW:: Bit 2; f2_C_ADDW     = 2'b01
+
+f6_C_SUBW:: Bit 6; f6_C_SUBW     = 6'b100_1_11
+f2_C_SUBW:: Bit 2; f2_C_SUBW     = 2'b00
+
+f4_C_EBREAK:: Bit 4; f4_C_EBREAK   = 4'b1001
