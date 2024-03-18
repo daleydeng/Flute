@@ -445,7 +445,7 @@ f3_is_CSRR_S_or_C f3 = f3 == f3_CSRRS || f3 == f3_CSRRSI || f3 == f3_CSRRC || f3
 -- ================================================================
 -- Control/Status registers
 can_csr_write:: CSRAddr -> Bool
-can_csr_write csr = csr[11:10] /= 2'b11
+can_csr_write csr = csr[11:10] != 2'b11
 
 is_csr_priv_ok:: CSRAddr -> PrivMode -> Bool
 is_csr_priv_ok csr priv = priv >= csr[9:8]

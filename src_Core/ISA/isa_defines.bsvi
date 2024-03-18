@@ -25,3 +25,9 @@ typedef 0 FLEN;
    case (v) matches \
       tagged P .x: return x; \
    endcase
+ 
+`ifdef INCLUDE_TANDEM_VERIF
+Integer kINCLUDE_TANDEM_VERIF = 1;
+`else
+Integer INCLUDE_TANDEM_VERIF = 0;
+`endif

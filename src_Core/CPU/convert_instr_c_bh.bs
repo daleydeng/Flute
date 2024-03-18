@@ -15,7 +15,7 @@ decode_C_LWSP1 instr_C =
     let i = case (parse_instr_C instr_C CI) of Instr_CI v -> v
         offset = zeroExtend i.imm_6_2[1:0] ++ i.imm_12 ++ i.imm_6_2[4:2] ++ 2'b0
         is_legal =  (i.op == opcode_C2
-	     	&& i.rd_rs1 /= 0
+	     	&& i.rd_rs1 != 0
             && i.funct3 == f3_C_LWSP)
 
         instr = encode_instr_I offset reg_sp f3_LW i.rd_rs1 op_LOAD 

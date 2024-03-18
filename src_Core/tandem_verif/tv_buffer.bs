@@ -1,0 +1,12 @@
+
+package tv_buffer(package tv_buffer) where
+
+import Vector;
+
+type  TV_VB_SIZE = 80   -- max bytes needed for each transaction
+type  TVVecBytes = Vector TV_VB_SIZE (Bit 8)
+
+struct TVBuffer = {
+   num_bytes:: Bit 32;
+   vec_bytes:: TVVecBytes;
+} deriving (Bits, FShow)

@@ -24,4 +24,5 @@ Logs/
 trace_out.dat
 scripts/samples/
 .*
+tmp/
 !.gitignore

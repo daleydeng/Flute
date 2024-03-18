@@ -1,28 +1,7 @@
-// Copyright (c) 2016-2022 Bluespec, Inc. All Rights Reserved
-
 package CSR_MIP;
 
-// ================================================================
-// CSR (Control and Status Register) Register MIP
-// and its restricted views as SIP and UIP.
-
-// ================================================================
-// BSV library imports
-
-// None
-
-// ----------------
-// BSV additional libs
-
 import Cur_Cycle  :: *;
-
-// ================================================================
-// Project imports
-
 import isa_priv_M :: *;
-
-// ================================================================
-// INTERFACE
 
 interface CSR_MIP_IFC;
    (* always_ready *)
