@@ -38,6 +38,15 @@ bits_per_byte_in_wordxl = valueOf Bits_per_Byte_in_WordXL
 type IntXL = Int XLEN
 type Addr = WordXL
 
+set_bit:: (Add a 1 n) => Bit n -> Bit 6 -> Bit 1 -> Bit n
+set_bit x bitpos b = x & invert (1 << bitpos) | (extend b) << bitpos
+
+set_bits:: (Add a w n) => Bit n -> Bit 6 -> Bit w -> Bit n
+set_bits x bitpos bs = x & invert (((1 << valueOf (w)) - 1) << bitpos) | extend (bs) << bitpos
+
+get_bits :: (Add a w n) => Bit n -> Bit 6 -> Bit w
+get_bits x bitpos = truncate ((x >> bitpos) & ((1 << valueOf (w)) - 1))
+
 {-
 -- ================================================================
 -- FLEN and related constants, for floating point data

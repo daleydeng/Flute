@@ -140,16 +140,16 @@ function WordXL fv_mstatus_reset_value (MISA misa);
 
    if (misa.mxl == misa_mxl_64) begin
       if (misa.s == 1)
-	 mstatus = fv_assign_bits (mstatus, fromInteger (mstatus_sxl_bitpos), misa_mxl_64);
+	 mstatus = set_bits (mstatus, fromInteger (mstatus_sxl_bitpos), misa_mxl_64);
       if (misa.u == 1)
-	 mstatus = fv_assign_bits (mstatus, fromInteger (mstatus_uxl_bitpos), misa_mxl_64);
+	 mstatus = set_bits (mstatus, fromInteger (mstatus_uxl_bitpos), misa_mxl_64);
    end
 
-   mstatus = fv_assign_bits (mstatus, fromInteger (mstatus_mpp_bitpos), priv_U);
+   mstatus = set_bits (mstatus, fromInteger (mstatus_mpp_bitpos), priv_U);
 
 `ifdef ISA_F
    // When F/D is present, FS bit needs to be set to initial value on reset
-   mstatus = fv_assign_bits (mstatus, fromInteger (mstatus_fs_bitpos), fs_xs_initial);
+   mstatus = set_bits (mstatus, fromInteger (mstatus_fs_bitpos), fs_xs_initial);
 `endif
    return mstatus;
 endfunction
@@ -224,10 +224,10 @@ function WordXL fv_fixup_mstatus (MISA misa, WordXL  wordxl);
 
    // SPP, WPRI_9, MPP
    Bit#(1) spp    = ((misa.s == 0) ? priv_U [0] : wordxl [mstatus_spp_bitpos]);
-   Bit#(2) wpri_9 = fv_get_bits (wordxl, fromInteger (mstatus_WPRI_9_bitpos));
+   Bit#(2) wpri_9 = get_bits (wordxl, fromInteger (mstatus_WPRI_9_bitpos));
 
    // MPP
-   Bit#(2) mpp = fv_get_bits (wordxl, fromInteger (mstatus_mpp_bitpos));
+   Bit#(2) mpp = get_bits (wordxl, fromInteger (mstatus_mpp_bitpos));
    if (misa.u == 0) begin
       // Only M supported
       mpp = priv_M;
@@ -248,12 +248,12 @@ function WordXL fv_fixup_mstatus (MISA misa, WordXL  wordxl);
    // the FS field is hardwired to zero."
    Bit#(2) fs = (  ((misa.s == 0) && (misa.f == 0) && (misa.d == 0))
 		  ? 0
-		  : fv_get_bits (wordxl, fromInteger (mstatus_fs_bitpos)));
+		  : get_bits (wordxl, fromInteger (mstatus_fs_bitpos)));
 
    // XS
    Bit#(2) xs = (  (misa.x == 0)
 		  ? 0
-		  : fv_get_bits (wordxl, fromInteger (mstatus_xs_bitpos)));
+		  : get_bits (wordxl, fromInteger (mstatus_xs_bitpos)));
 
    // UXL and SXL UXL (RV64 only)
    Bit#(2) uxl = ((misa.u == 1) ? misa_mxl_64 : 0);

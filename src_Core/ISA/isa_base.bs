@@ -1,6 +1,6 @@
 package isa_base(
-    package isa_types
-    ,package isa_base
+    package isa_base
+    ,package isa_types
 ) where
 
 import isa_types

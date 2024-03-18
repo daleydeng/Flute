@@ -6,36 +6,8 @@ package isa_priv_M;
 //
 // ================================================================
 
-
-export isa_base :: *, isa_priv_M :: *;
-import isa_base :: *;
-
-
-// ================================================================
-// Utility functions
-
-// In these functions, 'bitpos' is Bit#(6) which is enough to index
-// 64-bit words in RV64.
-
-function Bit#(n) fv_assign_bit (Bit#(n) x, Bit#(6) bitpos, Bit#(1) b)
-   provisos (Add #(a__, 1, n));
-   Bit#(n) mask = (1          << bitpos);
-   Bit#(n) val  = (extend (b) << bitpos);
-   return ((x & (~ mask)) | val);
-endfunction
-
-function Bit#(n) fv_assign_bits (Bit#(n) x, Bit#(6) bitpos, Bit#(w) bs)
-   provisos (Add #(a__, w, n));
-   Bit#(n) mask = (((1 << valueOf (w)) - 1) << bitpos);
-   Bit#(n) val  = (extend (bs)              << bitpos);
-   return ((x & (~ mask)) | val);
-endfunction
-
-function Bit#(w) fv_get_bits (Bit#(n) x, Bit#(6) bitpos)
-   provisos (Add #(a__, w, n));
-   Bit#(n) mask = ((1 << valueOf (w)) - 1);
-   return truncate ((x >> bitpos) & mask);
-endfunction
+export isa_priv_M_bh :: *, isa_priv_M :: *;
+import isa_priv_M_bh :: *;
 
 // ================================================================
 // Machine-level CSRs
@@ -321,22 +293,22 @@ Bit#(2) fs_xs_dirty    = 2'h3;
 
 // Extract MSTATUS.FS field
 function Bit#(2) fv_mstatus_fs (WordXL mstatus);
-   return (fv_get_bits (mstatus, fromInteger (mstatus_fs_bitpos)));
+   return (get_bits (mstatus, fromInteger (mstatus_fs_bitpos)));
 endfunction
 
 // Virtual field SD is computed from FS and XS
 function Bit#(1) fv_mstatus_sd (WordXL  mstatus);
-   Bit#(2) xs = fv_get_bits (mstatus, fromInteger (mstatus_xs_bitpos));
-   Bit#(2) fs = fv_get_bits (mstatus, fromInteger (mstatus_fs_bitpos));
+   Bit#(2) xs = get_bits (mstatus, fromInteger (mstatus_xs_bitpos));
+   Bit#(2) fs = get_bits (mstatus, fromInteger (mstatus_fs_bitpos));
    return (((fs == fs_xs_dirty) || (xs == fs_xs_dirty)) ? 1 : 0);
 endfunction
 
 function Fmt fshow_mstatus (MISA  misa, WordXL  mstatus);
-   Bit#(2) sxl = ((misa.mxl == misa_mxl_64) ? fv_get_bits (mstatus, fromInteger (mstatus_sxl_bitpos)) : 0);
-   Bit#(2) uxl = ((misa.mxl == misa_mxl_64) ? fv_get_bits (mstatus, fromInteger (mstatus_uxl_bitpos)) : 0);
-   Bit#(2) xs  = fv_get_bits (mstatus, fromInteger (mstatus_xs_bitpos));
-   Bit#(2) fs  = fv_get_bits (mstatus, fromInteger (mstatus_fs_bitpos));
-   Bit#(2) mpp = fv_get_bits (mstatus, fromInteger (mstatus_mpp_bitpos));
+   Bit#(2) sxl = ((misa.mxl == misa_mxl_64) ? get_bits (mstatus, fromInteger (mstatus_sxl_bitpos)) : 0);
+   Bit#(2) uxl = ((misa.mxl == misa_mxl_64) ? get_bits (mstatus, fromInteger (mstatus_uxl_bitpos)) : 0);
+   Bit#(2) xs  = get_bits (mstatus, fromInteger (mstatus_xs_bitpos));
+   Bit#(2) fs  = get_bits (mstatus, fromInteger (mstatus_fs_bitpos));
+   Bit#(2) mpp = get_bits (mstatus, fromInteger (mstatus_mpp_bitpos));
 
    return (  $format ("MStatus{")
 	   + $format ("sd:%0d", fv_mstatus_sd (mstatus))
@@ -426,14 +398,14 @@ function WordXL fv_new_mstatus_on_exception (WordXL mstatus, PrivMode from_y, Pr
    Bit#(6) ie_to_x  = extend (to_x);
    Bit#(6) pie_to_x = fromInteger (mstatus_upie_bitpos) + extend (to_x);
    // xPIE = xIE
-   mstatus = fv_assign_bit (mstatus, pie_to_x, mstatus [ie_to_x]);
+   mstatus = set_bit (mstatus, pie_to_x, mstatus [ie_to_x]);
    // xIE = 0
-   mstatus = fv_assign_bit (mstatus, ie_to_x, 1'b0);
+   mstatus = set_bit (mstatus, ie_to_x, 1'b0);
 
    // xPP = y        Assert: (to_x == priv_M) || (to_x == priv_S)
    mstatus = (  (to_x == priv_M)
-	      ? fv_assign_bits (mstatus, fromInteger (mstatus_mpp_bitpos), from_y)
-	      : fv_assign_bit (mstatus, fromInteger (mstatus_spp_bitpos), from_y [0]));
+	      ? set_bits (mstatus, fromInteger (mstatus_mpp_bitpos), from_y)
+	      : set_bit (mstatus, fromInteger (mstatus_spp_bitpos), from_y [0]));
    return mstatus;
 endfunction
 
@@ -445,11 +417,11 @@ function Tuple2 #(WordXL, PrivMode) fv_new_mstatus_on_ret (MISA       misa,
 
    // Pop the interrupt-enable stack
    // (set xIE = xPIE)
-   mstatus = fv_assign_bit (mstatus, ie_from_x, mstatus [pie_from_x]);
+   mstatus = set_bit (mstatus, ie_from_x, mstatus [pie_from_x]);
 
    // Enable interrupt at from_x
    // (set xPIE = 1)
-   mstatus = fv_assign_bit (mstatus, pie_from_x, 1'b1);
+   mstatus = set_bit (mstatus, pie_from_x, 1'b1);
 
    // Pop the previous privilege mode
    // which empties the one-element stack, revealing the default value
@@ -457,12 +429,12 @@ function Tuple2 #(WordXL, PrivMode) fv_new_mstatus_on_ret (MISA       misa,
    PrivMode to_y;
    PrivMode default_pp = ((misa.u == 1'b1) ? priv_U : priv_M);
    if (from_x == priv_M) begin
-      to_y = fv_get_bits (mstatus, fromInteger (mstatus_mpp_bitpos));
-      mstatus = fv_assign_bits (mstatus, fromInteger (mstatus_mpp_bitpos), default_pp);
+      to_y = get_bits (mstatus, fromInteger (mstatus_mpp_bitpos));
+      mstatus = set_bits (mstatus, fromInteger (mstatus_mpp_bitpos), default_pp);
    end
    else begin //if (from_x == priv_S)
       to_y = {1'b0, mstatus [mstatus_spp_bitpos]};
-      mstatus = fv_assign_bit (mstatus, fromInteger (mstatus_spp_bitpos), default_pp [0]);
+      mstatus = set_bit (mstatus, fromInteger (mstatus_spp_bitpos), default_pp [0]);
    end
 
    return tuple2 (mstatus, to_y);

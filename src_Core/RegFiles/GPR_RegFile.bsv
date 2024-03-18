@@ -1,40 +1,19 @@
-// Copyright (c) 2016-2020 Bluespec, Inc. All Rights Reserved
-
 package GPR_RegFile;
 
-// ================================================================
-// GPR (General Purpose Register) Register File
-
-// ================================================================
-// Exports
-
 export GPR_RegFile_IFC (..), mkGPR_RegFile;
-
-// ================================================================
-// BSV library imports
 
 import ConfigReg    :: *;
 import RegFile      :: *;
 import FIFOF        :: *;
 import GetPut       :: *;
 import ClientServer :: *;
-
-// BSV additional libs
-
 import GetPut_Aux :: *;
-
-// ================================================================
-// Project imports
 
 import isa_base :: *;
 
-// ================================================================
-
 interface GPR_RegFile_IFC;
-   // Reset
    interface Server #(Token, Token) server_reset;
 
-   // GPR read
    (* always_ready *)
    method WordXL read_rs1 (RegIdx rs1);
    (* always_ready *)
@@ -59,14 +38,13 @@ deriving (Eq, Bits, FShow);
 (* synthesize *)
 module mkGPR_RegFile (GPR_RegFile_IFC);
 
-   Reg #(RF_State) rg_state      <- mkReg (RF_RESET_START);
+   Reg#(RF_State) rg_state      <- mkReg (RF_RESET_START);
 
-   // Reset
-   FIFOF #(Token) f_reset_rsps <- mkFIFOF;
+   FIFOF#(Token) f_reset_rsps <- mkFIFOF;
 
    // General Purpose Registers
    // TODO: can we use Reg [0] for some other purpose?
-   RegFile #(RegIdx, WordXL) regfile <- mkRegFileFull;
+   RegFile#(RegIdx, WordXL) regfile <- mkRegFileFull;
 
    // ----------------------------------------------------------------
    // Reset.
@@ -110,12 +88,14 @@ module mkGPR_RegFile (GPR_RegFile_IFC);
 	    f_reset_rsps.enq (?);
 	 endmethod
       endinterface
+
       interface Get response;
 	 method ActionValue #(Token) get if (rg_state == RF_RUNNING);
 	    let token <- pop (f_reset_rsps);
 	    return token;
 	 endmethod
       endinterface
+      
    endinterface
 
    // GPR read

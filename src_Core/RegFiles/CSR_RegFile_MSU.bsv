@@ -769,7 +769,7 @@ module mkCSR_RegFile (CSR_RegFile_IFC);
 
 				       // Update mstatus.fs to 'dirty'
 				       let old_mstatus  = csr_mstatus.mv_read;
-				       let new_mstatus1 = fv_assign_bits (old_mstatus,
+				       let new_mstatus1 = set_bits (old_mstatus,
 									  fromInteger (mstatus_fs_bitpos),
 									  fs_xs_dirty);
 				       let new_mstatus2 <- csr_mstatus.mav_write (misa, new_mstatus1);
@@ -781,7 +781,7 @@ module mkCSR_RegFile (CSR_RegFile_IFC);
 
 				       // Update mstatus.fs to 'dirty'
 				       let old_mstatus  = csr_mstatus.mv_read;
-				       let new_mstatus1 = fv_assign_bits (old_mstatus,
+				       let new_mstatus1 = set_bits (old_mstatus,
 									  fromInteger (mstatus_fs_bitpos),
 									  fs_xs_dirty);
 				       let new_mstatus2 <- csr_mstatus.mav_write (misa, new_mstatus1);
@@ -795,7 +795,7 @@ module mkCSR_RegFile (CSR_RegFile_IFC);
 
 				       // Update mstatus.fs to 'dirty'
 				       let old_mstatus  = csr_mstatus.mv_read;
-				       let new_mstatus1 = fv_assign_bits (old_mstatus,
+				       let new_mstatus1 = set_bits (old_mstatus,
 									 fromInteger (mstatus_fs_bitpos),
 									 fs_xs_dirty);
 				       let new_mstatus2 <- csr_mstatus.mav_write (misa, new_mstatus1);
@@ -1080,7 +1080,7 @@ module mkCSR_RegFile (CSR_RegFile_IFC);
 
    function WordXL fv_update_mstatus_fs (Bit#(2) fs);
       let old_mstatus = csr_mstatus.mv_read;
-      let new_mstatus = fv_assign_bits (old_mstatus, fromInteger (mstatus_fs_bitpos), fs);
+      let new_mstatus = set_bits (old_mstatus, fromInteger (mstatus_fs_bitpos), fs);
       return csr_mstatus.mv_write (misa, new_mstatus);
    endfunction
 
@@ -1155,7 +1155,7 @@ module mkCSR_RegFile (CSR_RegFile_IFC);
 
    method Action ma_update_mstatus_fs (Bit#(2) fs);
       let old_mstatus = csr_mstatus.mv_read;
-      let new_mstatus = fv_assign_bits (old_mstatus, fromInteger (mstatus_fs_bitpos), fs);
+      let new_mstatus = set_bits (old_mstatus, fromInteger (mstatus_fs_bitpos), fs);
       csr_mstatus.ma_write (misa, new_mstatus);
    endmethod
 `endif

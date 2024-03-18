@@ -1,0 +1,7 @@
+package isa_priv_M_bh(
+    package isa_priv_M_bh
+    ,package isa_base
+) where
+
+import isa_base
+
