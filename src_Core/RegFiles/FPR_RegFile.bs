@@ -1,6 +1,6 @@
-package GPR_RegFile(
-   GPR_RegFile_IFC (..) 
-   ,mkGPR_RegFile
+package FPR_RegFile(
+   FPR_RegFile_IFC (..) 
+   ,mkFPR_RegFile
 ) where
 
 import RegFile
@@ -11,29 +11,30 @@ import GetPut_Aux
 
 import isa_types
 
-interface GPR_RegFile_IFC =
+interface FPR_RegFile_IFC =
    server_reset:: Server Token Token
 
-   read_rs1:: RegIdx -> WordXL
-   read_rs1_port2:: RegIdx -> WordXL -- For debugger access only
-   read_rs2:: RegIdx -> WordXL 
-   write_rd:: RegIdx -> WordXL -> Action
+   read_rs1:: RegIdx -> WordFL
+   read_rs1_port2:: RegIdx -> WordFL -- For debugger access only
+   read_rs2:: RegIdx -> WordFL 
+   read_rs3:: RegIdx -> WordFL 
+   write_rd:: RegIdx -> WordFL -> Action
 
 data RF_State = RF_RESET_START | RF_RESETTING | RF_RUNNING deriving (Eq, Bits, FShow);
 
-mkGPR_RegFile:: Module GPR_RegFile_IFC
-mkGPR_RegFile = 
+mkFPR_RegFile:: Module FPR_RegFile_IFC
+mkFPR_RegFile = 
    module
       rg_state:: Reg RF_State <- mkReg RF_RESET_START
       f_reset_rsps:: FIFOF Token <- mkFIFOF
 
       -- General Purpose Registers
       -- TODO: can we use Reg [0] for some other purpose?
-      regfile::RegFile RegIdx WordXL <- mkRegFileFull
+      regfile::RegFile RegIdx WordFL <- mkRegFileFull
 
 --    -- ----------------------------------------------------------------
 --    -- Reset.
---    -- This loop initializes all GPRs to 0.
+--    -- This loop initializes all FPRs to 0.
 --    -- The spec does not require this, but it's useful for debugging
 --    -- and tandem verification
 
@@ -85,8 +86,8 @@ mkGPR_RegFile =
          server_reset = mk_server_reset
          server_reset = mk_server_reset
 
-         read_rs1 rs1 = if rs1 == 0 then 0 else regfile.sub rs1
-
-         read_rs1_port2 rs1 = if rs1 == 0 then 0 else regfile.sub rs1
-         read_rs2 rs2 = if rs2 == 0 then 0 else regfile.sub rs2
-         write_rd rd rd_val = rd != 0 ?? regfile.upd rd rd_val when rg_state == RF_RUNNING
+         read_rs1 rs1 = regfile.sub rs1
+         read_rs1_port2 rs1 = regfile.sub rs1
+         read_rs2 rs2 = regfile.sub rs2
+         read_rs3 rs3 = regfile.sub rs3
+         write_rd rd rd_val = regfile.upd rd rd_val when rg_state == RF_RUNNING
