@@ -22,10 +22,10 @@ refactor roadmap
   - [ ] compressed extension convert_instr_c cleanups
   - [ ] tv_trace_data cleanups
   - [x] isa_defines.bsvi, isa_defines_bh.bsv
-  - [x] isa_types.bs
-  - [x] isa_base.bs
-  - [x] isa_cext.bs
+  - [x] [isa_types.bs](src_Core/ISA/isa_types.bs)
+  - [x] [isa_base.bs](src_Core/ISA/isa_base.bs)
+  - [x] [isa_cext.bs](src_Core/ISA/isa_cext.bs)
 - [ ] src_Core/RegFiles
-  - [x] {GPR,FPR}_RegFile.{bsv->bs} 
+  - [x] {[GPR](src_Core/RegFiles/GPR_RegFile.bs),[FPR](src_Core/RegFiles/FPR_RegFile.bs)}_RegFile.{bsv->bs} 
 - [ ] src_Core/tandem_verif/
-  - [x] tv_buffer.{bsv->bs} 
+  - [x] [tv_buffer](src_Core/tandem_verif/tv_buffer.bs).{bsv->bs} 
