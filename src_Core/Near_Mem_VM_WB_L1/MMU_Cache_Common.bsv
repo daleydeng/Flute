@@ -16,9 +16,9 @@ import Fabric_Defs :: *;
 
 typedef enum {  CACHE_LD
 	      , CACHE_ST
-`ifdef ISA_A
+#ifdef ISA_A
 	      , CACHE_AMO
-`endif
+#endif
    } CacheOp
 deriving (Bits, Eq, FShow);
 
@@ -30,41 +30,41 @@ typedef struct {CacheOp    op;
 		WordXL     va;
 		Bit#(64)  st_value;
 
-`ifdef ISA_A
+#ifdef ISA_A
 		Bit#(7)   amo_funct7;
-`endif
-`ifdef ISA_PRIV_S
+#endif
+#ifdef ISA_PRIV_S
 		// The following are needed/used for VM translation only
 		PrivMode  priv;
 		Bit#(1)   sstatus_SUM;
 		Bit#(1)   mstatus_MXR;
 		WordXL     satp;           // = { VM_Mode, ASID, PPN_for_page_table }
-`endif
+#endif
    } MMU_Cache_Req
 deriving (Bits, FShow);
 
 function Fmt fshow_MMU_Cache_Req (MMU_Cache_Req req);
    Fmt fmt = $format ("MMU_Cache_Req{", fshow (req.op), " f3 %3b", req.f3);
 
-`ifdef ISA_A
+#ifdef ISA_A
    if (req.op == CACHE_AMO) begin
       fmt = fmt + $format (" ", fshow_f5_AMO_op (req.amo_funct7 [6:2]));
       fmt = fmt + $format (" aqrl %2b", req.amo_funct7 [1:0]);
    end
-`endif
+#endif
    fmt = fmt + $format (" va %0h", req.va);
 
    Bool show_st_val = (req.op == CACHE_ST);
-`ifdef ISA_A
+#ifdef ISA_A
    if ((req.op == CACHE_AMO) && (! fv_is_AMO_LR (req)))
       show_st_val = True;
-`endif
+#endif
    if (show_st_val) fmt = fmt + $format (" st_val %0h", req.st_value);
 
-`ifdef ISA_PRIV_S
+#ifdef ISA_PRIV_S
    fmt = fmt + $format (" priv %0d sstatus_SUM %0d mstatus_MXR %0d satp %0h",
 			req.priv, req.sstatus_SUM, req.mstatus_MXR, req.satp);
-`endif
+#endif
    fmt = fmt + $format ("}");
    return fmt;
 endfunction
@@ -75,7 +75,7 @@ endfunction
 // There are two versions below: the actual version when we support S
 // Privilege Mode and a 'dummy' version when we don't.
 
-`ifdef ISA_PRIV_S
+#ifdef ISA_PRIV_S
 
 typedef enum { VM_XLATE_OK, VM_XLATE_TLB_MISS, VM_XLATE_EXCEPTION } VM_Xlate_Outcome
 deriving (Bits, Eq, FShow);
@@ -111,7 +111,7 @@ endfunction
 
 // ----------------
 
-`else // of ifdef ISA_PRIV_S
+#else // of ifdef ISA_PRIV_S
 
 typedef enum { VM_XLATE_OK } VM_Xlate_Outcome
 deriving (Bits, Eq, FShow);
@@ -127,7 +127,7 @@ function Fmt fshow_VM_Xlate_Result (VM_Xlate_Result  r);
    return fmt;
 endfunction
 
-`endif
+#endif
 
 // ================================================================
 // Check if addr is aligned
@@ -153,29 +153,29 @@ endfunction
 // Classify AMO ops into LR, SC and the rest (read-modify-write ops)
 
 function Bool fv_is_AMO_LR (MMU_Cache_Req req);
-`ifdef ISA_A
+#ifdef ISA_A
    return ((req.op == CACHE_AMO) && (req.amo_funct7 [6:2] == f5_AMO_LR));
-`else
+#else
    return False;
-`endif
+#endif
 endfunction
 
 function Bool fv_is_AMO_SC (MMU_Cache_Req req);
-`ifdef ISA_A
+#ifdef ISA_A
    return ((req.op == CACHE_AMO) && (req.amo_funct7 [6:2] == f5_AMO_SC));
-`else
+#else
    return False;
-`endif
+#endif
 endfunction
 
 function Bool fv_is_AMO_RMW (MMU_Cache_Req req);
-`ifdef ISA_A
+#ifdef ISA_A
    return ((req.op == CACHE_AMO)
 	   && (req.amo_funct7 [6:2] != f5_AMO_LR)
 	   && (req.amo_funct7 [6:2] != f5_AMO_SC));
-`else
+#else
    return False;
-`endif
+#endif
 endfunction
 
 // ================================================================

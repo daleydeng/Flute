@@ -94,13 +94,13 @@ function VM_Xlate_Result  fv_vm_xlate (WordXL             va,
       // Translate if in VM mode (sv32, sv39), and priv <= priv_S
       // Default PA (no translation) = va
 
-`ifdef RV32
+#ifdef RV32
       Bool xlate = ((priv <= priv_S) && (fn_satp_to_VM_Mode (satp) == satp_mode_RV32_sv32));
       PA   pa    = zeroExtend (va);
-`elsif SV39
+#elif defined SV39
       Bool xlate = ((priv <= priv_S) && (fn_satp_to_VM_Mode (satp) == satp_mode_RV64_sv39));
       PA   pa    = truncate (va);
-`endif
+#endif
 
       VM_Xlate_Outcome  outcome      = VM_XLATE_OK;
       Exc_Code          exc_code     = ?;
@@ -130,13 +130,13 @@ function VM_Xlate_Result  fv_vm_xlate (WordXL             va,
 		  pa = zeroExtend ({fn_PTE_to_PPN_mega (pte),
 				    fn_Addr_to_VPN_0 (va),
 				    fn_Addr_to_Offset (va) });
-`ifdef SV39
+#ifdef SV39
 	       else if (tlb_result.pte_level == 2)
 		  pa = zeroExtend ({fn_PTE_to_PPN_giga (pte),
 				    fn_Addr_to_VPN_1 (va),
 				    fn_Addr_to_VPN_0 (va),
 				    fn_Addr_to_Offset (va) });
-`endif
+#endif
 
 	       // $display ("    fav_vm_xlate: PTE.A = %0d", fn_PTE_to_A (pte));
 	       if (fn_PTE_to_A (pte) == 1'b0) begin
@@ -265,10 +265,10 @@ module mkTLB (TLB_IFC);
    // ----------------
    // Level 2 TLB (for gigapages)
 
-`ifdef RV64
+#ifdef RV64
    Vector  #(TLB2_Size,  Reg #(Bool))         tlb2_valids  <- replicateM (mkRegU);
    RegFile #(TLB2_Index, TLBE #(TLB2_Tag_sz)) tlb2_entries <- mkRegFileFull;
-`endif
+#endif
 
    // ----------------
    // Level 1 TLB (for megapages)
@@ -290,7 +290,7 @@ module mkTLB (TLB_IFC);
    // polymorphic function because of the different types for tags,
    // indexes and tlb_entries.
 
-`ifdef RV64
+#ifdef RV64
    function Tuple2 #(Bool, TLB2_Index) fn_lookup2 (ASID asid, VPN vpn);
       Integer index_lo = 2 * vpn_j_sz;
       Integer index_hi = (2 * vpn_j_sz) + tlb2_index_sz - 1;
@@ -308,7 +308,7 @@ module mkTLB (TLB_IFC);
 		     && (tlbe.vpn_tag  == tag));
       return tuple2 (match2, idx);
    endfunction
-`endif
+#endif
 
    function Tuple2 #(Bool, TLB1_Index) fn_lookup1 (ASID asid, VPN vpn);
       Integer index_lo = vpn_j_sz;
@@ -355,9 +355,9 @@ module mkTLB (TLB_IFC);
 
    rule rl_flush (pw_flushing);
       // Invalidate all tlb entries
-`ifdef RV64
+#ifdef RV64
       writeVReg (tlb2_valids, replicate (False));
-`endif
+#endif
       writeVReg (tlb1_valids, replicate (False));
       writeVReg (tlb0_valids, replicate (False));
       if (verbosity > 1)
@@ -384,11 +384,11 @@ module mkTLB (TLB_IFC);
       // Look for a matching entry for a given va in the three TLBs
       match { .match0, .idx0 } = fn_lookup0 (asid, vpn);
       match { .match1, .idx1 } = fn_lookup1 (asid, vpn);
-`ifdef RV64
+#ifdef RV64
       match { .match2, .idx2 } = fn_lookup2 (asid, vpn);
-`else
+#else
       let match2 = False;
-`endif
+#endif
 
       TLB_Lookup_Result  result0 = unpack (0);
       TLB_Lookup_Result  result1 = unpack (0);
@@ -404,12 +404,12 @@ module mkTLB (TLB_IFC);
 	 result1 = TLB_Lookup_Result {hit: True, pte: tlbe1.pte, pte_level: 1, pte_pa: tlbe1.pte_pa};
       end
 
-`ifdef RV64
+#ifdef RV64
       if (match2) begin
 	 let tlbe2 = tlb2_entries.sub (idx2);
 	 result2 = TLB_Lookup_Result {hit: True, pte: tlbe2.pte, pte_level: 2, pte_pa: tlbe2.pte_pa};
       end
-`endif
+#endif
       TLB_Lookup_Result tlb_result = unpack ((pack (result0) | pack (result1) | pack (result2)));
 
       // Translate, based on TLB probe
@@ -442,7 +442,7 @@ module mkTLB (TLB_IFC);
 	 tlb1_valids [idx] <= True;
 	 tlb1_entries.upd (idx, tlbe);
       end
-`ifdef RV64
+#ifdef RV64
       else begin // (level == 2)
 	 TLB2_Tag            tag  = vpn [(vpn_sz - 1) : tlb2_index_sz + (2 * vpn_j_sz)];
 	 TLB2_Index          idx  = vpn [(tlb2_index_sz + (2 * vpn_j_sz) - 1) : (2 * vpn_j_sz)];
@@ -451,7 +451,7 @@ module mkTLB (TLB_IFC);
 	 tlb2_valids [idx] <= True;
 	 tlb2_entries.upd (idx, tlbe);
       end
-`endif
+#endif
    endmethod
 
    // Invalidate all entries, in 1 cycle

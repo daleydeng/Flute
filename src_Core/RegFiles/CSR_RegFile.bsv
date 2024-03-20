@@ -34,9 +34,9 @@ import GetPut_Aux :: *;
 import isa_priv_S :: *;
 import SoC_Map   :: *;
 
-`ifdef INCLUDE_GDB_CONTROL
+#ifdef INCLUDE_GDB_CONTROL
 import DM_Common :: *;    // Debug Module defs
-`endif
+#endif
 
 import CSR_MSTATUS :: *;
 import CSR_MIP     :: *;
@@ -74,7 +74,7 @@ interface CSR_RegFile_IFC;
    (* always_ready *)
    method ActionValue #(CSR_Write_Result) mav_csr_write (CSRAddr csr_addr, WordXL word);
 
-`ifdef ISA_F
+#ifdef ISA_F
    // Read FRM
    (* always_ready *)
    method Bit#(3) read_frm;
@@ -94,7 +94,7 @@ interface CSR_RegFile_IFC;
    method WordXL mv_update_mstatus_fs (Bit#(2) fs);
    (* always_ready *)
    method Action ma_update_mstatus_fs (Bit#(2) fs);
-`endif
+#endif
 
    // Read MISA
    (* always_ready *)
@@ -104,17 +104,17 @@ interface CSR_RegFile_IFC;
    (* always_ready *)
    method WordXL read_mstatus;
 
-`ifdef ISA_PRIV_S
+#ifdef ISA_PRIV_S
    // Read SSTATUS
    (* always_ready *)
    method WordXL read_sstatus;
-`endif
+#endif
 
-`ifdef ISA_PRIV_U
+#ifdef ISA_PRIV_U
    // Read USTATUS
    (* always_ready *)
    method WordXL read_ustatus;
-`endif
+#endif
 
    // Read SATP
    (* always_ready *)
@@ -198,7 +198,7 @@ interface CSR_RegFile_IFC;
    // ----------------
    // Methods when Debug Module is present
 
-`ifdef INCLUDE_GDB_CONTROL
+#ifdef INCLUDE_GDB_CONTROL
    // Read dpc
    method WordXL read_dpc ();
 
@@ -215,7 +215,7 @@ interface CSR_RegFile_IFC;
    (* always_ready *)
    method Action write_dcsr_cause_priv (DCSR_Cause  cause, PrivMode  priv);
 
-`endif
+#endif
 
    // ----------------
    // Debugging this module
@@ -229,56 +229,56 @@ endinterface
 function MISA misa_reset_value;
    MISA ms = unpack (0);
 
-`ifdef RV32
+#ifdef RV32
    ms.mxl = misa_mxl_32;
-`elsif RV64
+#elif defined RV64
    ms.mxl = misa_mxl_64;
-`elsif RV128
+#elif defined RV128
    ms.mxl = misa_mxl_128;
-`else
+#else
    ms.mxl = misa_mxl_zero;
-`endif
+#endif
 
-`ifdef ISA_PRIV_U
+#ifdef ISA_PRIV_U
    // User Mode
    ms.u = 1'b1;
-`ifdef ISA_N
+#ifdef ISA_N
    // User-level Interrupts
    ms.n = 1'b1;
-`endif
-`endif
+#endif
+#endif
 
-`ifdef ISA_PRIV_S
+#ifdef ISA_PRIV_S
    // Supervisor Mode
    ms.s = 1'b1;
-`endif
+#endif
 
    // Integer Base
    ms.i = 1'b1;
 
-`ifdef ISA_M
+#ifdef ISA_M
    // Integer Multiply/Divide
    ms.m = 1'b1;
-`endif
+#endif
 
-`ifdef ISA_F
+#ifdef ISA_F
    // Single- and Double-precision Floating Point
    ms.f = 1'b1;
-`endif
+#endif
 
-`ifdef ISA_D
+#ifdef ISA_D
    ms.d = 1'b1;
-`endif
+#endif
 
-`ifdef ISA_A
+#ifdef ISA_A
    // Atomic Memory Ops
    ms.a = 1'b1;
-`endif
+#endif
 
-`ifdef ISA_C
+#ifdef ISA_C
    // Compressed Instructions
    ms.c = 1'b1;
-`endif
+#endif
 
    return ms;
 endfunction
@@ -304,10 +304,10 @@ module mkCSR_RegFile (CSR_RegFile_IFC);
 
    // CSRs
    // User-mode CSRs
-`ifdef ISA_F
+#ifdef ISA_F
    Reg #(Bit#(5)) rg_fflags <- mkRegU;    // floating point flags
    Reg #(Bit#(3)) rg_frm    <- mkRegU;    // floating point rounding mode
-`endif
+#endif
 
    Reg #(Bit#(64)) rg_time <- mkReg (0);    // Read-only shadow of MTIME
 
@@ -315,7 +315,7 @@ module mkCSR_RegFile (CSR_RegFile_IFC);
    Bit#(16)  sedeleg = 0;    // hardwired to 0
    Bit#(12)  sideleg = 0;    // hardwired to 0
 
-`ifdef ISA_PRIV_S
+#ifdef ISA_PRIV_S
    // sie     is a restricted view of mie
    // sip     is a restricted view of mip
 
@@ -331,10 +331,10 @@ module mkCSR_RegFile (CSR_RegFile_IFC);
 
    Reg #(Bit#(16))  rg_medeleg   <- mkRegU;    // TODO: also in M-U systems with user-level traps
    Reg #(Bit#(12))  rg_mideleg   <- mkRegU;    // TODO: also in M-U systems with user-level traps
-`else
+#else
    Bit#(16)         rg_medeleg   = 0;
    Bit#(12)         rg_mideleg   = 0;
-`endif
+#endif
 
    // Machine-mode CSRs
    WordXL mvendorid   = 0;    // Not implemented
@@ -392,18 +392,18 @@ module mkCSR_RegFile (CSR_RegFile_IFC);
 
    rule rl_reset_start (rg_state == RF_RESET_START);
       // User-level CSRs
-`ifdef ISA_F
+#ifdef ISA_F
       rg_fflags <= 0;
       rg_frm    <= 0;
-`endif
+#endif
 
       // Supervisor-level CSRs
-`ifdef ISA_PRIV_S
+#ifdef ISA_PRIV_S
       rg_stvec    <= word_to_mtvec (truncate (soc_map.m_mtvec_reset_value));
       rg_scause   <= word_to_mcause (0);    // Supposed to be the cause of the reset.
       rg_satp     <= 0;
       //rg_scounteren <= mcounteren_reset_value;
-`endif
+#endif
 
       // Machine-level CSRs
       csr_mstatus.reset (misa_reset_value);
@@ -412,10 +412,10 @@ module mkCSR_RegFile (CSR_RegFile_IFC);
 
       rg_mtvec      <= word_to_mtvec (truncate (soc_map.m_mtvec_reset_value));
       rg_mcause     <= word_to_mcause (0);    // Supposed to be the cause of the reset.
-`ifdef ISA_PRIV_S
+#ifdef ISA_PRIV_S
       rg_medeleg    <= 0;
       rg_mideleg    <= 0;
-`endif
+#endif
       rg_mcounteren <= mcounteren_reset_value;
 
       rg_tselect    <= 0;
@@ -423,7 +423,7 @@ module mkCSR_RegFile (CSR_RegFile_IFC);
 
       rw_minstret.wset (0);
 
-`ifdef INCLUDE_GDB_CONTROL
+#ifdef INCLUDE_GDB_CONTROL
       rg_dpc  <= truncate (soc_map.m_pc_reset_value);
       rg_dcsr <= zeroExtend ({4'h4,    // [31:28]  xdebugver
 			      12'h0,   // [27:16]  reserved
@@ -441,7 +441,7 @@ module mkCSR_RegFile (CSR_RegFile_IFC);
 			      1'h0,    // [2]      step
 			      2'h3}    // [1:0]    prv (machine mode)
 			     );
-`endif
+#endif
 
       // Non-maskable interrupts
       rg_nmi        <= False;
@@ -491,28 +491,28 @@ module mkCSR_RegFile (CSR_RegFile_IFC);
    function Bool fv_csr_exists (CSRAddr csr_addr);
       Bool result = (   ((csr_hpmcounter3 <= csr_addr) && (csr_addr <= csr_hpmcounter31))
 		     || ((csr_addr_mhpmcounter3 <= csr_addr) && (csr_addr <= csr_addr_mhpmcounter31))
-`ifdef RV32
+#ifdef RV32
 		     || ((csr_hpmcounter3h <= csr_addr) && (csr_addr <= csr_hpmcounter31h))
 		     || ((csr_addr_mhpmcounter3h <= csr_addr) && (csr_addr <= csr_addr_mhpmcounter31h))
-`endif
+#endif
 		     || ((csr_addr_mhpmevent3 <= csr_addr) && (csr_addr <= csr_addr_mhpmevent31))
 
 		     // User mode csrs
-`ifdef ISA_F
+#ifdef ISA_F
 		     || (csr_addr == csr_fflags)
 		     || (csr_addr == csr_frm)
 		     || (csr_addr == csr_fcsr)
-`endif
+#endif
 		     || (csr_addr == csr_cycle)
 		     || (csr_addr == csr_time)    // 'shadow copy' of mem-mapped MTIME
 		     || (csr_addr == csr_instret)
-`ifdef RV32
+#ifdef RV32
 		     || (csr_addr == csr_cycleh)
 		     || (csr_addr == csr_timeh)
 		     || (csr_addr == csr_instreth)
-`endif
+#endif
 
-`ifdef ISA_PRIV_S
+#ifdef ISA_PRIV_S
 		     // Supervisor mode csrs
 		     || (csr_addr == csr_addr_sstatus)
 		     || (csr_addr == csr_addr_sedeleg)
@@ -531,7 +531,7 @@ module mkCSR_RegFile (CSR_RegFile_IFC);
 
 		     || (csr_addr == csr_addr_medeleg)
 		     || (csr_addr == csr_addr_mideleg)
-`endif
+#endif
 
 		     // Machine mode csrs
 		     || (csr_addr == csr_addr_mvendorid)
@@ -576,22 +576,22 @@ module mkCSR_RegFile (CSR_RegFile_IFC);
 
 		     || (csr_addr == csr_addr_mcycle)
 		     || (csr_addr == csr_addr_minstret)
-`ifdef RV32
+#ifdef RV32
 		     || (csr_addr == csr_addr_mcycleh)
 		     || (csr_addr == csr_addr_minstreth)
-`endif
+#endif
 
 		     || (csr_addr == csr_addr_tselect)
 		     || (csr_addr == csr_addr_tdata1)
 		     || (csr_addr == csr_addr_tdata2)
 		     || (csr_addr == csr_addr_tdata3)
 
-`ifdef INCLUDE_GDB_CONTROL
+#ifdef INCLUDE_GDB_CONTROL
 		     || (csr_addr == csr_addr_dcsr)
 		     || (csr_addr == csr_addr_dpc)
 		     || (csr_addr == csr_addr_dscratch0)
 		     || (csr_addr == csr_addr_dscratch1)
-`endif
+#endif
 	 );
       return result;
    endfunction: fv_csr_exists
@@ -605,39 +605,39 @@ module mkCSR_RegFile (CSR_RegFile_IFC);
 
       if ((csr_hpmcounter3 <= csr_addr) && (csr_addr <= csr_hpmcounter31))
 	 m_csr_value = tagged Valid 0;
-`ifdef RV32
+#ifdef RV32
       else if ((csr_hpmcounter3h <= csr_addr) && (csr_addr <= csr_hpmcounter31h))
 	 m_csr_value = tagged Valid 0;
-`endif
+#endif
       else if ((csr_addr_mhpmcounter3 <= csr_addr) && (csr_addr <= csr_addr_mhpmcounter31))
 	 m_csr_value = tagged Valid 0;
-`ifdef RV32
+#ifdef RV32
       else if ((csr_addr_mhpmcounter3h <= csr_addr) && (csr_addr <= csr_addr_mhpmcounter31h))
 	 m_csr_value = tagged Valid 0;
-`endif
+#endif
       else if ((csr_addr_mhpmevent3 <= csr_addr) && (csr_addr <= csr_addr_mhpmevent31))
 	 m_csr_value = tagged Valid 0;
 
       else begin
 	 case (csr_addr)
 	    // User mode csrs
-`ifdef ISA_F
+#ifdef ISA_F
 	    csr_fflags:   m_csr_value = tagged Valid ({ 0, rg_fflags });
 	    csr_frm:      m_csr_value = tagged Valid ({ 0, rg_frm });
 	    csr_fcsr:     m_csr_value = tagged Valid ({ 0, rg_frm, rg_fflags });
-`endif
+#endif
 	    csr_cycle:    m_csr_value = tagged Valid (truncate (rg_mcycle));
 
 	    csr_time:     m_csr_value = tagged Valid (truncate (rg_time));
 
 	    csr_instret:  m_csr_value = tagged Valid (truncate (rg_minstret));
-`ifdef RV32
+#ifdef RV32
 	    csr_cycleh:   m_csr_value = tagged Valid (rg_mcycle   [63:32]);
 	    csr_timeh:    m_csr_value = tagged Valid (rg_time     [63:32]);
 	    csr_instreth: m_csr_value = tagged Valid (rg_minstret [63:32]);
-`endif
+#endif
 
-`ifdef ISA_PRIV_S
+#ifdef ISA_PRIV_S
 	    // Supervisor mode csrs
 	    csr_addr_sstatus:    m_csr_value = tagged Valid (csr_mstatus.mv_sstatus_read);
 	    csr_addr_sedeleg:    m_csr_value = tagged Valid zeroExtend (sedeleg);
@@ -656,7 +656,7 @@ module mkCSR_RegFile (CSR_RegFile_IFC);
 
 	    csr_addr_medeleg:    m_csr_value = tagged Valid zeroExtend (rg_medeleg);
 	    csr_addr_mideleg:    m_csr_value = tagged Valid zeroExtend (rg_mideleg);
-`endif
+#endif
 
 	    // Machine mode csrs
 	    csr_addr_mvendorid:  m_csr_value = tagged Valid mvendorid;
@@ -701,17 +701,17 @@ module mkCSR_RegFile (CSR_RegFile_IFC);
 
 	    csr_addr_mcycle:    m_csr_value = tagged Valid (truncate (rg_mcycle));
 	    csr_addr_minstret:  m_csr_value = tagged Valid (truncate (rg_minstret));
-`ifdef RV32
+#ifdef RV32
 	    csr_addr_mcycleh:   m_csr_value = tagged Valid (rg_mcycle [63:32]);
 	    csr_addr_minstreth: m_csr_value = tagged Valid (rg_minstret [63:32]);
-`endif
+#endif
 
 	    csr_addr_tselect:  m_csr_value = tagged Valid rg_tselect;
 	    csr_addr_tdata1:   m_csr_value = tagged Valid rg_tdata1;
 	    csr_addr_tdata2:   m_csr_value = tagged Valid rg_tdata2;
 	    csr_addr_tdata3:   m_csr_value = tagged Valid rg_tdata3;
 
-`ifdef INCLUDE_GDB_CONTROL
+#ifdef INCLUDE_GDB_CONTROL
 	    csr_addr_dcsr:       begin
 				    Bit#(32) dcsr_nmip_mask = 'b_1000;
 				    Bit#(32) dcsr = (rg_nmi
@@ -722,7 +722,7 @@ module mkCSR_RegFile (CSR_RegFile_IFC);
 	    csr_addr_dpc:        m_csr_value = tagged Valid rg_dpc;
 	    csr_addr_dscratch0:  m_csr_value = tagged Valid rg_dscratch0;
 	    csr_addr_dscratch1:  m_csr_value = tagged Valid rg_dscratch1;
-`endif
+#endif
 
 	    default: m_csr_value = tagged Invalid;
 	 endcase
@@ -749,12 +749,12 @@ module mkCSR_RegFile (CSR_RegFile_IFC);
 	    begin
 	       new_csr_value = 0;    // hardwired
 	    end
-`ifdef RV32
+#ifdef RV32
 	 else if ((csr_addr_mhpmcounter3h <= csr_addr) && (csr_addr <= csr_addr_mhpmcounter31h))
 	    begin
 	       new_csr_value = 0;    // hardwired
 	    end
-`endif
+#endif
 	 else if ((csr_addr_mhpmevent3 <= csr_addr) && (csr_addr <= csr_addr_mhpmevent31))
 	    begin
 	       new_csr_value = 0;    // hardwired
@@ -762,7 +762,7 @@ module mkCSR_RegFile (CSR_RegFile_IFC);
 	 else
 	    case (csr_addr)
 	       // User mode csrs
-`ifdef ISA_F
+#ifdef ISA_F
 	       csr_fflags:     begin
 				       new_csr_value = zeroExtend (wordxl [4:0]);
 				       rg_fflags    <= wordxl [4:0];
@@ -801,9 +801,9 @@ module mkCSR_RegFile (CSR_RegFile_IFC);
 				       let new_mstatus2 <- csr_mstatus.mav_write (misa, new_mstatus1);
 				       m_new_csr_value2 = tagged Valid new_mstatus2;
 				    end
-`endif
+#endif
 
-`ifdef ISA_PRIV_S
+#ifdef ISA_PRIV_S
 	       csr_addr_sstatus:    begin
 				       new_csr_value <- csr_mstatus.mav_sstatus_write (misa, wordxl);
 				    end
@@ -828,11 +828,11 @@ module mkCSR_RegFile (CSR_RegFile_IFC);
 				       rg_sscratch  <= new_csr_value;
 				    end
 	       csr_addr_sepc:       begin
-`ifdef ISA_C
+#ifdef ISA_C
 				       new_csr_value = (wordxl & (~ 1));    // sepc [0] always zero
-`else
+#else
 				       new_csr_value = (wordxl & (~ 3));    // sepc [1:0] always zero
-`endif
+#endif
 				       rg_sepc      <= new_csr_value;
 				    end
 	       csr_addr_scause:     begin
@@ -859,7 +859,7 @@ module mkCSR_RegFile (CSR_RegFile_IFC);
 				       new_csr_value = (wordxl & 'h_0FFF);  // 12 bits relevant
 				       rg_mideleg   <= truncate (new_csr_value);
 				    end
-`endif
+#endif
 
 	       // Machine mode
 	       csr_addr_mvendorid:  new_csr_value = mvendorid;    // hardwired
@@ -890,11 +890,11 @@ module mkCSR_RegFile (CSR_RegFile_IFC);
 				       rg_mscratch  <= new_csr_value;
 				    end
 	       csr_addr_mepc:       begin
-`ifdef ISA_C
+#ifdef ISA_C
 				       new_csr_value = (wordxl & (~ 1));    // mepc [0] always zero
-`else
+#else
 				       new_csr_value = (wordxl & (~ 3));    // mepc [1:0] always zero
-`endif
+#endif
 				       rg_mepc      <= new_csr_value;
 				    end
 	       csr_addr_mcause:     begin
@@ -932,7 +932,7 @@ module mkCSR_RegFile (CSR_RegFile_IFC);
 	       // csr_pmpaddr14: vrg_pmpaddr [14] <= wordxl;
 	       // csr_pmpaddr15: vrg_pmpaddr [15] <= wordxl;
 
-`ifdef RV32
+#ifdef RV32
 	       csr_addr_mcycle:     begin
 				       new_csr_value = wordxl;
 				       rw_mcycle.wset ({ rg_mcycle   [63:32], wordxl });
@@ -949,7 +949,7 @@ module mkCSR_RegFile (CSR_RegFile_IFC);
 				       new_csr_value = wordxl;
 				       rw_minstret.wset ({ wordxl, rg_minstret [31:0] });
 				    end
-`else
+#else
 	       csr_addr_mcycle:     begin
 				       new_csr_value = wordxl;
 				       rw_mcycle.wset (new_csr_value);
@@ -958,7 +958,7 @@ module mkCSR_RegFile (CSR_RegFile_IFC);
 				       new_csr_value = wordxl;
 				       rw_minstret.wset (new_csr_value);
 				    end
-`endif
+#endif
 	       csr_addr_tselect:   begin
 				      // Until we implement trigger functionality,
 				      // return tselect always contains 0
@@ -981,7 +981,7 @@ module mkCSR_RegFile (CSR_RegFile_IFC);
 				      rg_tdata3    <= new_csr_value;
 				   end
 
-`ifdef INCLUDE_GDB_CONTROL
+#ifdef INCLUDE_GDB_CONTROL
 	       csr_addr_dcsr:       begin
 				       Bit#(32) new_dcsr
 				       = {rg_dcsr [31:28],   // xdebugver: read-only
@@ -1009,7 +1009,7 @@ module mkCSR_RegFile (CSR_RegFile_IFC);
 				       new_csr_value = wordxl;
 				       rg_dscratch1 <= new_csr_value;
 				    end
-`endif
+#endif
 
 	       default: success = False;
 	    endcase
@@ -1072,11 +1072,11 @@ module mkCSR_RegFile (CSR_RegFile_IFC);
 
    // ----------------------------------------------------------------
    // Help functions for interface methods
-`ifdef ISA_F
+#ifdef ISA_F
    function Bit#(5) fv_update_fcsr_fflags (Bit#(5) flags);
       return (rg_fflags | flags);
    endfunction
-`endif
+#endif
 
    function WordXL fv_update_mstatus_fs (Bit#(2) fs);
       let old_mstatus = csr_mstatus.mv_read;
@@ -1130,7 +1130,7 @@ module mkCSR_RegFile (CSR_RegFile_IFC);
       return misa;
    endmethod
 
-`ifdef ISA_F
+#ifdef ISA_F
    // Read FCSR.FRM
    method Bit# (3) read_frm;
       return rg_frm;
@@ -1158,34 +1158,34 @@ module mkCSR_RegFile (CSR_RegFile_IFC);
       let new_mstatus = set_bits (old_mstatus, fromInteger (mstatus_fs_bitpos), fs);
       csr_mstatus.ma_write (misa, new_mstatus);
    endmethod
-`endif
+#endif
 
    // Read MSTATUS
    method WordXL read_mstatus;
       return  csr_mstatus.mv_read;
    endmethod
 
-`ifdef ISA_PRIV_S
+#ifdef ISA_PRIV_S
    // Read SSTATUS
    method WordXL read_sstatus;
       return  csr_mstatus.mv_sstatus_read;
    endmethod
-`endif
+#endif
 
-`ifdef ISA_PRIV_U
+#ifdef ISA_PRIV_U
    // Read USTATUS
    method WordXL read_ustatus;
       return  csr_mstatus.mv_ustatus_read;
    endmethod
-`endif
+#endif
 
    // Read SATP
    method WordXL read_satp;
-`ifdef ISA_PRIV_S
+#ifdef ISA_PRIV_S
       return  rg_satp;
-`else
+#else
       return  ?;
-`endif
+#endif
    endmethod
 
    // CSR Trap actions
@@ -1201,11 +1201,11 @@ module mkCSR_RegFile (CSR_RegFile_IFC);
 	 $display ("%0d: CSR_Regfile.csr_trap_actions:", rg_mcycle);
 	 $display ("    from priv %0d  pc 0x%0h  interrupt %0d  exc_code %0d  xtval 0x%0h",
 		   from_priv, pc, pack (interrupt), exc_code, xtval);
-`ifdef ISA_PRIV_S
+#ifdef ISA_PRIV_S
 	 fa_show_trap_csrs (priv_S, csr_mip.mv_read, csr_mie.mv_read, 0, 0, rg_scause,
 			    csr_mstatus.mv_sstatus_read,
 			    rg_stvec, rg_sepc, rg_stval);
-`endif
+#endif
 	 fa_show_trap_csrs (priv_M, csr_mip.mv_read, csr_mie.mv_read, rg_medeleg, rg_mideleg, rg_mcause,
 			    csr_mstatus.mv_read,
 			    rg_mtvec, rg_mepc, rg_mtval);
@@ -1242,7 +1242,7 @@ module mkCSR_RegFile (CSR_RegFile_IFC);
 	 rg_mcause  <= xcause;
 	 rg_mtval   <= xtval;
       end
-`ifdef ISA_PRIV_S
+#ifdef ISA_PRIV_S
       else if (new_priv == priv_S) begin
 	 rg_sepc    <= pc;
 	 rg_scause  <= xcause;
@@ -1252,7 +1252,7 @@ module mkCSR_RegFile (CSR_RegFile_IFC);
 	 new_status  = fv_mstatus_to_sstatus (new_status);
 	 exc_pc      = (extend (rg_stvec.base)) << 2;
       end
-`endif
+#endif
       // TODO: if (new_priv == priv_U)
 
       // Adjust the exception PC if xTVEC mode bits so indicate
@@ -1279,10 +1279,10 @@ module mkCSR_RegFile (CSR_RegFile_IFC);
       match { .new_mstatus, .to_priv } = fv_new_mstatus_on_ret (misa, csr_mstatus.mv_read, from_priv);
       csr_mstatus.ma_write (misa, new_mstatus);
       WordXL next_pc = rg_mepc;
-`ifdef ISA_PRIV_S
+#ifdef ISA_PRIV_S
       if (from_priv != priv_M)
 	 next_pc = rg_sepc;
-`endif
+#endif
       if (misa.c == 1'b0)
 	 next_pc = next_pc & (~ 2);
       return tuple3 (next_pc, to_priv, new_mstatus);
@@ -1319,9 +1319,9 @@ module mkCSR_RegFile (CSR_RegFile_IFC);
 		  || ((csr_addr == csr_time)    && (rg_mcounteren.tm == 0))
 		  || ((csr_addr == csr_instret) && (rg_mcounteren.ir == 0))
 		  || ((csr_hpmcounter3  <= csr_addr) && (csr_addr <= csr_hpmcounter31))
-`ifdef RV32
+#ifdef RV32
 		  || ((csr_hpmcounter3h <= csr_addr) && (csr_addr <= csr_hpmcounter31h))
-`endif
+#endif
 		  ));
    endmethod
 
@@ -1394,7 +1394,7 @@ module mkCSR_RegFile (CSR_RegFile_IFC);
    // ----------------
    // Methods when Debug Module is present
 
-`ifdef INCLUDE_GDB_CONTROL
+#ifdef INCLUDE_GDB_CONTROL
    // Read dpc
    method WordXL read_dpc ();
       return rg_dpc;
@@ -1425,24 +1425,24 @@ module mkCSR_RegFile (CSR_RegFile_IFC);
       rg_dcsr <= { rg_dcsr [31:9], b3, rg_dcsr [5:2], priv };
    endmethod
 
-`endif
+#endif
 
    // ----------------
    // Debugging this module
 
    method Action debug;
       $display ("mstatus = 0x%0h", csr_mstatus.mv_read);
-`ifdef ISA_PRIV_S
+#ifdef ISA_PRIV_S
       $display ("sstatus = 0x%0h", csr_mstatus.mv_sstatus_read);
-`endif
+#endif
       $display ("mip     = 0x%0h", csr_mip.mv_read);
-`ifdef ISA_PRIV_S
+#ifdef ISA_PRIV_S
       $display ("sip     = 0x%0h", csr_mip.mv_sip_read);
-`endif
+#endif
       $display ("mie     = 0x%0h", csr_mie.mv_read);
-`ifdef ISA_PRIV_S
+#ifdef ISA_PRIV_S
       $display ("sie     = 0x%0h", csr_mie.mv_sie_read);
-`endif
+#endif
    endmethod      
 endmodule
 

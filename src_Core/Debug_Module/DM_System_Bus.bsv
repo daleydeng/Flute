@@ -227,12 +227,12 @@ module mkDM_System_Bus (DM_System_Bus_IFC);
 			   pack (rg_sbcs_sbautoincrement),
 			   pack (rg_sbcs_sbreadondata),
 			   pack (rg_sbcs_sberror),
-`ifdef RV64
+#ifdef RV64
 			   7'd64,    // sbasize -- address size
-`endif
-`ifdef RV32
+#endif
+#ifdef RV32
 			   7'd32,    // sbasize -- address size
-`endif
+#endif
 			   1'b0,     // sbaccess128
 			   1'b0,     // sbaccess64
 			   1'b1,     // sbaccess32
@@ -247,11 +247,11 @@ module mkDM_System_Bus (DM_System_Bus_IFC);
    function Action fa_sbaddress_incr (Bit#(64) addr64);
       action
 	 Bit#(64) next_sbaddress = addr64 + fromInteger (addr_incr);
-`ifdef RV64
+#ifdef RV64
 	 rg_sbaddress1 <= next_sbaddress [63:32];
-`else
+#else
 	 rg_sbaddress1 <= 0;
-`endif
+#endif
 	 rg_sbaddress0 <= next_sbaddress [31:0];
 
 	 if (verbosity != 0)
@@ -437,16 +437,16 @@ module mkDM_System_Bus (DM_System_Bus_IFC);
 	 end
 
 	 else begin // (dm_addr == dm_addr_sbaddress1)
-`ifdef RV32
+#ifdef RV32
 	    rg_sbaddress1 <= 0;
 	    if (verbosity != 0)
 	       $display ("DM_System_Bus.write: [sbaddress1] <= 0 (RV32: ignoring arg value 0x%08h)",
 			 dm_word);
-`else
+#else
 	    rg_sbaddress1 <= dm_word;
 	    if (verbosity != 0)
 	       $display ("DM_System_Bus.write: [sbaddress1] <= 0x%08h", dm_word);
-`endif
+#endif
 	 end
       endaction
    endfunction

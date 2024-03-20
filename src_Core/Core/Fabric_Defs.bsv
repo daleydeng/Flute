@@ -34,13 +34,13 @@ typedef  Bit#(Wd_Id)  Fabric_Id;
 
 // ----------------
 // Width of fabric 'addr' buses
-`ifdef FABRIC64
+#ifdef FABRIC64
 typedef 64   Wd_Addr;
-`endif
+#endif
 
-`ifdef FABRIC32
+#ifdef FABRIC32
 typedef 32   Wd_Addr;
-`endif
+#endif
 
 typedef  Bit#(Wd_Addr)      Fabric_Addr;
 typedef  TDiv #(Wd_Addr, 8)  Bytes_per_Fabric_Addr;
@@ -49,13 +49,13 @@ Integer  bytes_per_fabric_addr = valueOf (Bytes_per_Fabric_Addr);
 
 // ----------------
 // Width of fabric 'data' buses
-`ifdef FABRIC64
+#ifdef FABRIC64
 typedef 64   Wd_Data;
-`endif
+#endif
 
-`ifdef FABRIC32
+#ifdef FABRIC32
 typedef 32   Wd_Data;
-`endif
+#endif
 
 typedef  Bit#(Wd_Data)             Fabric_Data;
 typedef  Bit#(TDiv #(Wd_Data, 8))  Fabric_Strb;

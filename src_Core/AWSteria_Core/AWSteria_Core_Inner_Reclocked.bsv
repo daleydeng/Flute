@@ -148,13 +148,13 @@ module mkAWSteria_Core_Inner_Reclocked
    mkConnection (toGet (f_gpr_req), core_inner.hart0_gpr_mem_server.request);
    mkConnection (toPut (f_gpr_rsp), core_inner.hart0_gpr_mem_server.response);
 
-`ifdef ISA_F
+#ifdef ISA_F
    // FPR access
    SyncFIFOIfc #(DM_CPU_Req #(5,  XLEN)) f_fpr_req <- mkSyncFIFO (depth, clk_fast,rst_fast,clk_slow);
    SyncFIFOIfc #(DM_CPU_Rsp #(XLEN))     f_fpr_rsp <- mkSyncFIFO (depth, clk_slow,rst_slow,clk_fast);
    mkConnection (toGet (f_fpr_req), core_inner.hart0_fpr_mem_server.request);
    mkConnection (toPut (f_fpr_rsp), core_inner.hart0_fpr_mem_server.response);
-`endif
+#endif
 
    // CSR access
    SyncFIFOIfc #(DM_CPU_Req #(12, XLEN)) f_csr_req <- mkSyncFIFO (depth, clk_fast,rst_fast,clk_slow);
@@ -190,7 +190,7 @@ module mkAWSteria_Core_Inner_Reclocked
 
 
 
-`ifdef WATCH_TOHOST
+#ifdef WATCH_TOHOST
    // Set watch-tohost on/off with tohost address
    SyncFIFOIfc #(Tuple2 #(Bool, Bit#(64))) f_watch_tohost_control <- mkSyncFIFO (depth,
 										  clk_fast, rst_fast,
@@ -247,10 +247,10 @@ module mkAWSteria_Core_Inner_Reclocked
 
    // GPR access
    interface Server hart0_gpr_mem_server = toGPServer (f_gpr_req, f_gpr_rsp);
-`ifdef ISA_F
+#ifdef ISA_F
    // FPR access
    interface Server hart0_fpr_mem_server = toGPServer (f_fpr_req, f_fpr_rsp);
-`endif
+#endif
    // CSR access
    interface Server hart0_csr_mem_server = toGPServer (f_csr_req, f_csr_rsp);
 
@@ -266,12 +266,12 @@ module mkAWSteria_Core_Inner_Reclocked
    // Set core's verbosity and logdelay
    interface FIFOF_I fi_verbosity_control = fn_SyncFIFOIfc_to_FIFOF_I (f_verbosity_control);
 
-`ifdef WATCH_TOHOST
+#ifdef WATCH_TOHOST
    // Set watch-tohost on/off with tohost address
    interface FIFOF_I fi_watch_tohost_control = fn_SyncFIFOIfc_to_FIFOF_I (f_watch_tohost_control);
    // Get tohost value
    interface FIFOF_O fo_tohost_value  = fn_SyncFIFOIfc_to_FIFOF_O (f_tohost_value);
-`endif
+#endif
 endmodule
 
 // ================================================================

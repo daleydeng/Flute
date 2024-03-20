@@ -40,28 +40,28 @@ import AXI4_Types       :: *;
 import AXI_Widths       :: *;
 import Fabric_Defs      :: *;
 
-`ifdef INCLUDE_DMEM_SLAVE
+#ifdef INCLUDE_DMEM_SLAVE
 import AXI4_Lite_Types :: *;
-`endif
+#endif
 
 // ================================================================
 // This part of the interface is lifted out to surrounding modules.
 
-`ifdef MEM_512b
+#ifdef MEM_512b
 
 typedef 16   Wd_Id_Mem;
 typedef 64   Wd_Addr_Mem;
 typedef 512  Wd_Data_Mem;
 typedef 0    Wd_User_Mem;
 
-`else
+#else
 
 typedef Wd_Id    Wd_Id_Mem;
 typedef Wd_Addr  Wd_Addr_Mem;
 typedef Wd_Data  Wd_Data_Mem;
 typedef Wd_User  Wd_User_Mem;
 
-`endif
+#endif
 
 typedef AXI4_Master_IFC #(Wd_Id_Mem,
 			  Wd_Addr_Mem,
@@ -95,9 +95,9 @@ interface Near_Mem_IFC;
    // ----------------------------------------------------------------
    // Optional AXI4-Lite DMem slave interface
 
-`ifdef INCLUDE_DMEM_SLAVE
+#ifdef INCLUDE_DMEM_SLAVE
    interface AXI4_Lite_Slave_IFC #(Wd_Addr, Wd_Data, Wd_User) dmem_slave;
-`endif
+#endif
 
    // ----------------
    // Fences
@@ -106,9 +106,9 @@ interface Near_Mem_IFC;
 
    interface Server #(FenceOrdering, Token) server_fence;
 
-`ifdef ISA_PRIV_S
+#ifdef ISA_PRIV_S
    interface Server #(Token, Token) sfence_vma_server;
-`endif
+#endif
 
    // ----------------------------------------------------------------
    // Interface to 'coherent DMA' port of optional L2 cache
@@ -121,10 +121,10 @@ interface Near_Mem_IFC;
    // ----------------
    // For ISA tests: watch memory writes to <tohost> addr
 
-`ifdef WATCH_TOHOST
+#ifdef WATCH_TOHOST
    method Action set_watch_tohost (Bool watch_tohost, Bit#(64) tohost_addr);
    method Bit#(64) mv_tohost_value;
-`endif
+#endif
 
    // Inform core that DDR4 has been initialized and is ready to accept requests
    method Action ma_ddr4_ready;
@@ -173,9 +173,9 @@ interface DMem_IFC;
    (* always_ready *)
    method Action  req (CacheOp op,
 		       Bit#(3) f3,
-`ifdef ISA_A
+#ifdef ISA_A
 		       Bit#(7) amo_funct7,
-`endif
+#endif
 		       WordXL addr,
 		       Bit#(64) store_value,
 		       // The following  args for VM

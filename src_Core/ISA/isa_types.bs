@@ -1,9 +1,9 @@
 package isa_types(
     package isa_types
-    ,package isa_defines_bh
+    ,package defines_bh
 ) where
 
-import isa_defines_bh
+import defines_bh
 
 infixl 0 ??
 
@@ -18,13 +18,6 @@ type XLEN_MINUS_2 = TSub XLEN 2
 
 xlen:: Integer
 xlen = valueOf XLEN
-
-data RVVersion = RV32 | RV64 deriving (Eq, Bits)
-rv_version:: RVVersion
-rv_version = case xlen of {
-    32 -> RV32;
-    64 -> RV64;
-}
 
 type BitsPerByte = 8
 type Byte = Bit BitsPerByte

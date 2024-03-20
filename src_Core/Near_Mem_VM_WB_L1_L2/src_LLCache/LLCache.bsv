@@ -21,7 +21,7 @@
 // CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-`include "ProcConfig.bsv"
+#include "ProcConfig.bsv"
 
 import Vector::*;
 import FIFO::*;
@@ -53,24 +53,24 @@ import LLCache_Aux :: *;
 // Last-Level
 
 // whether we model the effect of MSHR partition for security purpose
-`ifdef SECURITY
-`ifndef DISABLE_SECURE_LLC_MSHR
-`define USE_LLC_MSHR_SECURE_MODEL
-`endif
-`endif
+#ifdef SECURITY
+#ifndef DISABLE_SECURE_LLC_MSHR
+#define USE_LLC_MSHR_SECURE_MODEL
+#endif
+#endif
 
 // whether we model the effect of the circular/fair arbiter at the entry point
 // of LLC pipeline for security purpose
-`ifdef SECURITY
-`ifndef DISABLE_SECURE_LLC_ARBITER
-`ifndef DISABLE_SECURE_BW
-`define USE_LLC_ARBITER_SECURE_MODEL
-`endif
-`endif
-`endif
+#ifdef SECURITY
+#ifndef DISABLE_SECURE_LLC_ARBITER
+#ifndef DISABLE_SECURE_BW
+#define USE_LLC_ARBITER_SECURE_MODEL
+#endif
+#endif
+#endif
 
-typedef `LOG_LLC_LINES LgLLLineNum;
-typedef `LOG_LLC_WAYS LgLLWayNum;
+typedef LOG_LLC_LINES LgLLLineNum;
+typedef LOG_LLC_WAYS LgLLWayNum;
 typedef TExp#(LgLLWayNum) LLWayNum;
 typedef 0 LgLLBankNum;
 typedef TSub#(LgLLLineNum, TAdd#(LgLLWayNum, LgLLBankNum)) LgLLSetNum;
@@ -83,15 +83,15 @@ typedef Bit#(LLTagSz) LLTag;
 typedef Bit#(TLog#(LLWayNum)) LLWay;
 
 
-`ifdef USE_LLC_MSHR_SECURE_MODEL
-`ifndef DISABLE_SECURE_BW
+#ifdef USE_LLC_MSHR_SECURE_MODEL
+#ifndef DISABLE_SECURE_BW
 typedef TDiv#(DramMaxReqs, 2) LLCRqNum; // SECURITY: limit MSHR size <= DRAM bandwidth
-`else // DISABLE_SECURE_BW
+#else // DISABLE_SECURE_BW
 typedef LLWayNum LLCRqNum; // ignore DRAM bandwidth contention, keep using the old mshr size
-`endif // DISABLE_SECURE_BW
-`else // !USE_LLC_MSHR_SECURE_MODEL
+#endif // DISABLE_SECURE_BW
+#else // !USE_LLC_MSHR_SECURE_MODEL
 typedef LLWayNum LLCRqNum;
-`endif // USE_LLC_MSHR_SECURE_MODEL
+#endif // USE_LLC_MSHR_SECURE_MODEL
 typedef Bit#(TLog#(LLCRqNum)) LLCRqMshrIdx;
 
 // all L1$ are children
@@ -99,7 +99,7 @@ typedef L1Num LLChildNum;
 typedef Bit#(TLog#(LLChildNum)) LLChild;
 typedef L1Way LLCRqId;
 
-`ifdef USE_LLC_MSHR_SECURE_MODEL
+#ifdef USE_LLC_MSHR_SECURE_MODEL
 module mkLastLvCRqMshr(
     LLCRqMshr#(LLChildNum, LLCRqNum, LLWay, LLTag, cRqT)
 ) provisos(
@@ -107,14 +107,14 @@ module mkLastLvCRqMshr(
 );
     function Addr getAddr(cRqT r) = r.addr;
     LLCRqMshrSecureModel#(
-        `SIM_LOG_LLC_MSHR_BANK_NUM, LLCRqNum, LLWay, LLTag, Vector#(LLChildNum, DirPend), cRqT
+        SIM_LOG_LLC_MSHR_BANK_NUM, LLCRqNum, LLWay, LLTag, Vector#(LLChildNum, DirPend), cRqT
     ) m <- mkLLCRqMshrSecureModel(getAddr, getNeedReqChild, getDirPendInitVal);
     return m.mshr;
 endmodule
 
-`else // !USE_LLC_MSHR_SECURE_MODEL
+#else // !USE_LLC_MSHR_SECURE_MODEL
 
-`ifdef SELF_INV_CACHE
+#ifdef SELF_INV_CACHE
 
 (* synthesize *)
 module mkLastLvCRqMshr(
@@ -127,7 +127,7 @@ module mkLastLvCRqMshr(
     return m;
 endmodule
 
-`else // !SELF_INV_CACHE
+#else // !SELF_INV_CACHE
 
 (* synthesize *)
 module mkLastLvCRqMshr(
@@ -140,18 +140,18 @@ module mkLastLvCRqMshr(
     return m;
 endmodule
 
-`endif // SELF_INV_CACHE
+#endif // SELF_INV_CACHE
 
-`endif // USE_LLC_MSHR_SECURE_MODEL
+#endif // USE_LLC_MSHR_SECURE_MODEL
 
 
-`ifdef USE_LLC_ARBITER_SECURE_MODEL
+#ifdef USE_LLC_ARBITER_SECURE_MODEL
 
-`ifdef SIM_LLC_ARBITER_NUM // Model a real arbiter at the pipeline input
-typedef `SIM_LLC_ARBITER_NUM SimLLCArbNum;
-`else // Only model added latency at the pipline input, no bandwidth loss
-typedef `SIM_LLC_ARBITER_LAT SimLLCArbLat;
-`endif
+#ifdef SIM_LLC_ARBITER_NUM // Model a real arbiter at the pipeline input
+typedef SIM_LLC_ARBITER_NUM SimLLCArbNum;
+#else // Only model added latency at the pipline input, no bandwidth loss
+typedef SIM_LLC_ARBITER_LAT SimLLCArbLat;
+#endif
 (* synthesize *)
 module mkLLPipeline(
     LLPipe#(LgLLBankNum, LLChildNum, LLWayNum, LLIndex, LLTag, LLCRqMshrIdx)
@@ -161,20 +161,20 @@ module mkLLPipeline(
     // pipeline
     LLPipe#(LgLLBankNum, LLChildNum, LLWayNum, LLIndex, LLTag, LLCRqMshrIdx) m <- mkLLPipe;
 
-`ifdef BSIM
+#ifdef BSIM
     // print the arbiter num
     Reg#(Bool) showArbiter <- mkReg(True);
     rule doShowArbiter(showArbiter);
-`ifdef SIM_LLC_ARBITER_NUM
+#ifdef SIM_LLC_ARBITER_NUM
         $display("[LLPipe] Arbiter size %d", valueof(SimLLCArbNum));
-`else
+#else
         $display("[LLPipe] Arbiter latency %d", valueof(SimLLCArbLat));
-`endif
+#endif
         showArbiter <= False;
     endrule
-`endif // BSIM
+#endif // BSIM
 
-`ifdef SIM_LLC_ARBITER_NUM
+#ifdef SIM_LLC_ARBITER_NUM
     // round-robin reg: only allow entry to pipeline when turn == 0. This
     // models the effect of a circular/fair arbiter.
     Reg#(Bit#(TLog#(SimLLCArbNum))) turn <- mkReg(0);
@@ -187,7 +187,7 @@ module mkLLPipeline(
     method Action send(pipeInT r) if(turn == 0);
         m.send(r);
     endmethod
-`else // !SIM_LLC_ARBITER_NUM
+#else // !SIM_LLC_ARBITER_NUM
     // delay input
     Vector#(SimLLCArbLat, FIFO#(pipeInT)) delayQ <- replicateM(mkFIFO);
 
@@ -197,7 +197,7 @@ module mkLLPipeline(
     mkConnection(toGet(delayQ[valueof(SimLLCArbLat) - 1]).get, m.send);
 
     method send = delayQ[0].enq;
-`endif // SIM_LLC_ARBITER_NUM
+#endif // SIM_LLC_ARBITER_NUM
 
     method notEmpty = m.notEmpty;
     method first = m.first;
@@ -205,9 +205,9 @@ module mkLLPipeline(
     method deqWrite = m.deqWrite;
 endmodule
 
-`else // !USE_LLC_ARBITER_SECURE_MODEL
+#else // !USE_LLC_ARBITER_SECURE_MODEL
 
-`ifdef SELF_INV_CACHE
+#ifdef SELF_INV_CACHE
 
 (* synthesize *)
 module mkLLPipeline(
@@ -217,7 +217,7 @@ module mkLLPipeline(
     return m;
 endmodule
 
-`else // !SELF_INV_CACHE
+#else // !SELF_INV_CACHE
 
 (* synthesize *)
 module mkLLPipeline(
@@ -227,18 +227,18 @@ module mkLLPipeline(
     return m;
 endmodule
 
-`endif // SELF_INV_CACHE
+#endif // SELF_INV_CACHE
 
-`endif // USE_LLC_ARBITER_SECURE_MODEL
+#endif // USE_LLC_ARBITER_SECURE_MODEL
 
 
-`ifdef SELF_INV_CACHE
+#ifdef SELF_INV_CACHE
 typedef SelfInvLLBank#(LgLLBankNum, LLChildNum, LLWayNum, LLIndexSz, LLTagSz, LLCRqNum, LLCRqId, LLCDmaReqId) LLBankWrapper;
 typedef SelfInvLLCRqStuck#(LLChildNum, LLCRqId, LLCDmaReqId) LLCStuck;
-`else // !SELF_INV_CACHE
+#else // !SELF_INV_CACHE
 typedef LLBank#(LgLLBankNum, LLChildNum, LLWayNum, LLIndexSz, LLTagSz, LLCRqNum, LLCRqId, LLCDmaReqId) LLBankWrapper;
 typedef LLCRqStuck#(LLChildNum, LLCRqId, LLCDmaReqId) LLCStuck;
-`endif // SELF_INV_CACHE
+#endif // SELF_INV_CACHE
 
 interface LLCache;
     interface ParentCacheToChild#(LLCRqId, LLChild) to_child;
@@ -250,17 +250,17 @@ interface LLCache;
     interface Perf#(LLCPerfType) perf;
 endinterface
 
-`ifdef SECURITY
+#ifdef SECURITY
 // We rotate the addr in/out LLC to achieve set partition
 // FIXME This is a hack: we simulate the performance of partitioning a large
 // LLC using a smaller LLC with less partitions. So LgLLCPartitionNum should
 // NOT be viewed as the number of DRAM regions.
-`ifdef SIM_LOG_LLC_PARTITION_NUM
-typedef `SIM_LOG_LLC_PARTITION_NUM LgLLCPartitionNum;
-`else
-typedef `LOG_DRAM_REGION_NUM LgLLCPartitionNum;
-`endif
-typedef `LOG_DRAM_REGION_SIZE LgDramRegionSz;
+#ifdef SIM_LOG_LLC_PARTITION_NUM
+typedef SIM_LOG_LLC_PARTITION_NUM LgLLCPartitionNum;
+#else
+typedef LOG_DRAM_REGION_NUM LgLLCPartitionNum;
+#endif
+typedef LOG_DRAM_REGION_SIZE LgDramRegionSz;
 typedef TAdd#(TAdd#(LLIndexSz, LgLLBankNum), LgLineSzBytes) LLIndexBankOffsetSz;
 
 function Addr secureRotateAddr(Addr addr) provisos(
@@ -282,28 +282,28 @@ function Addr secureRotateAddr(Addr addr) provisos(
     // exchange swap bits with region bits
     return {high, swap, mid, region, low};
 endfunction
-`endif // SECURITY
+#endif // SECURITY
 
 (* synthesize *)
 module mkLLCache(LLCache);
-`ifdef DEBUG_DMA
+#ifdef DEBUG_DMA
     staticAssert(False, "DEBUG_DMA should not be defined");
-`endif
+#endif
 
-`ifdef SELF_INV_CACHE
+#ifdef SELF_INV_CACHE
     LLBankWrapper cache <- mkSelfInvLLBank(mkLastLvCRqMshr, mkLLPipeline);
-`else // !SELF_INV_CACHE
-`ifdef NO_LOAD_RESP_E
+#else // !SELF_INV_CACHE
+#ifdef NO_LOAD_RESP_E
     function Bool respLoadWithE(Bool fromMem) = False;
-`else
+#else
     function Bool respLoadWithE(Bool fromMem) = fromMem;
-`endif
+#endif
     LLBankWrapper cache <- mkLLBank(mkLastLvCRqMshr, mkLLPipeline, respLoadWithE);
-`endif // SELF_INV_CACHE
+#endif // SELF_INV_CACHE
 
     // perf counters
     Fifo#(1, LLCPerfType) perfReqQ <- mkCFFifo;
-`ifdef PERF_COUNT
+#ifdef PERF_COUNT
     Fifo#(1, PerfResp#(LLCPerfType)) perfRespQ <- mkCFFifo;
 
     rule doPerf;
@@ -314,19 +314,19 @@ module mkLLCache(LLCache);
             data: d
         });
     endrule
-`endif
+#endif
 
-`ifdef SECURITY
-`ifndef DISABLE_SECURE_LLC
+#ifdef SECURITY
+#ifndef DISABLE_SECURE_LLC
 
-`ifdef BSIM
+#ifdef BSIM
     // print the LLC partition in simulation
     Reg#(Bool) showLLCPartition <- mkReg(True);
     rule doShowLLCPartition(showLLCPartition);
         $fdisplay(stderr, "[LLCache] log LLC partition = %d", valueof(LgLLCPartitionNum));
         showLLCPartition <= False;
     endrule
-`endif // BSIM
+#endif // BSIM
 
     // rotate addr to achieve LLC set partition
     interface ParentCacheToChild to_child;
@@ -412,22 +412,22 @@ module mkLLCache(LLCache);
         endmethod
     endinterface
 
-`else // DISABLE_SECURE_LLC
+#else // DISABLE_SECURE_LLC
 
     interface to_child = cache.to_child;
     interface dma = cache.dma;
     interface to_mem = cache.to_mem;
     interface cRqStuck = cache.cRqStuck;
 
-`endif // DISABLE_SECURE_LLC
-`else // !SECURITY
+#endif // DISABLE_SECURE_LLC
+#else // !SECURITY
 
     interface to_child = cache.to_child;
     interface dma = cache.dma;
     interface to_mem = cache.to_mem;
     interface cRqStuck = cache.cRqStuck;
 
-`endif // SECURITY
+#endif // SECURITY
 
     interface Perf perf;
         method Action setStatus(Bool stats);
@@ -437,23 +437,23 @@ module mkLLCache(LLCache);
             perfReqQ.enq(r);
         endmethod
         method ActionValue#(PerfResp#(LLCPerfType)) resp;
-`ifdef PERF_COUNT
+#ifdef PERF_COUNT
             perfRespQ.deq;
             return perfRespQ.first;
-`else
+#else
             perfReqQ.deq;
             return PerfResp {
                 pType: perfReqQ.first,
                 data: 0
             };
-`endif
+#endif
         endmethod
         method Bool respValid;
-`ifdef PERF_COUNT
+#ifdef PERF_COUNT
             return perfRespQ.notEmpty;
-`else
+#else
             return perfReqQ.notEmpty;
-`endif
+#endif
         endmethod
     endinterface
 endmodule

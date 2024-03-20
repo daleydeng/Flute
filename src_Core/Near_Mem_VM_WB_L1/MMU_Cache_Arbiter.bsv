@@ -123,9 +123,9 @@ module mkMMU_Cache_Arbiter #(MMU_Cache_IFC cache)
    Vector #(num_masters, Array #(Reg #(Bool)))      v_req_valid       <- replicateM (mkCReg (2, False));
    Vector #(num_masters, Array #(Reg #(CacheOp)))   v_req_op          <- replicateM (mkCRegU (2));
    Vector #(num_masters, Array #(Reg #(Bit#(3))))  v_req_f3          <- replicateM (mkCRegU (2));
-`ifdef ISA_A
+#ifdef ISA_A
    Vector #(num_masters, Array #(Reg #(Bit#(7))))  v_req_amo_funct7  <- replicateM (mkCRegU (2));
-`endif
+#endif
    Vector #(num_masters, Array #(Reg #(WordXL)))    v_req_addr        <- replicateM (mkCRegU (2));
    Vector #(num_masters, Array #(Reg #(Bit#(64)))) v_req_st_value    <- replicateM (mkCRegU (2));
    Vector #(num_masters, Array #(Reg #(PrivMode))) v_req_priv        <- replicateM (mkCRegU (2));
@@ -267,9 +267,9 @@ module mkMMU_Cache_Arbiter #(MMU_Cache_IFC cache)
 
 	 method Action req (CacheOp   op,
 			    Bit#(3)  f3,
-`ifdef ISA_A
+#ifdef ISA_A
 			    Bit#(7)  amo_funct7,
-`endif
+#endif
 			    WordXL    addr,
 			    Bit#(64) st_value,
 			    PrivMode priv,
@@ -279,9 +279,9 @@ module mkMMU_Cache_Arbiter #(MMU_Cache_IFC cache)
 	    v_req_valid       [i][0] <= True;
 	    v_req_op          [i][0] <= op;
 	    v_req_f3          [i][0] <= f3;
-`ifdef ISA_A
+#ifdef ISA_A
 	    v_req_amo_funct7  [i][0] <= amo_funct7;
-`endif
+#endif
 	    v_req_addr        [i][0] <= addr;
 	    v_req_st_value    [i][0] <= st_value;
 	    v_req_priv        [i][0] <= priv;

@@ -110,7 +110,7 @@ module mkAWSteria_Core #(Clock clk1,        // extra clock
    // TODO: ndm_reset should be a signal, not a token (event).
    // First fix this in Debug Module, then plumb it through to here.
 
-`ifdef INCLUDE_GDB_CONTROL
+#ifdef INCLUDE_GDB_CONTROL
    Debug_Module_IFC  debug_module <- mkDebug_Module;
 
    // NDM reset from Debug Module
@@ -122,12 +122,12 @@ module mkAWSteria_Core #(Clock clk1,        // extra clock
       debug_module.ndm_reset_client.response.put (b);
       rg_debug_module_ndm_reset <= True;
    endrule
-`endif
+#endif
 
    // ================================================================
    // Defines 'core_inner' interface to mkCore_Inner, with or without reclocking
 
-`ifndef INCLUDE_AWSTERIA_CORE_IFC_CLOCK_CROSSING
+#ifndef INCLUDE_AWSTERIA_CORE_IFC_CLOCK_CROSSING
    // ----------------
    // Instantiate inner core with with controllable reset on current clock
 
@@ -143,7 +143,7 @@ module mkAWSteria_Core #(Clock clk1,        // extra clock
    AWSteria_Core_Inner_IFC
    core_inner <- mkAWSteria_Core_Inner (reset_by  innerReset);
 
-`else
+#else
    // ----------------
    // Instantiate inner core with with controllable reset and slower clock
 
@@ -151,16 +151,16 @@ module mkAWSteria_Core #(Clock clk1,        // extra clock
 
    // Choose clock, depending on target platform.
    // One of these must be defined.
-`ifdef PLATFORM_AWSF1
+#ifdef PLATFORM_AWSF1
    let innerCLK = clk4;    //  75 MHz
    messageM ("\nINFO: Core clock is clk4");
-`endif
-`ifdef PLATFORM_VCU118
+#endif
+#ifdef PLATFORM_VCU118
    // let innerCLK = clk2;    // 100 MHz
    // messageM ("\nINFO: Core clock is clk2");
    let innerCLK = clk3;    // 50 MHz
    messageM ("\nINFO: Core clock is clk3");
-`endif
+#endif
 
    MakeResetIfc innerRstIfc <- mkReset (2,            // # of delay stages
 					True,         // start in reset
@@ -178,7 +178,7 @@ module mkAWSteria_Core #(Clock clk1,        // extra clock
    core_inner <- mkAWSteria_Core_Inner_Reclocked (clk_cur,  rstn_cur,
 						  innerCLK, innerReset,
 						  core_inner_reclocked);
-`endif
+#endif
 
    // ================================================================
    // Assert inner reset if commanded by host_cs or by Debug Module's NDM reset
@@ -230,10 +230,10 @@ module mkAWSteria_Core #(Clock clk1,        // extra clock
 
    // GPR access
    mkConnection (debug_module.hart0_gpr_mem_client, core_inner.hart0_gpr_mem_server);
-`ifdef ISA_F
+#ifdef ISA_F
    // FPR access
    mkConnection (debug_module.hart0_fpr_mem_client, core_inner.hart0_fpr_mem_server);
-`endif
+#endif
    // CSR access
    mkConnection (debug_module.hart0_csr_mem_client, core_inner.hart0_csr_mem_server);
    // System Bus access

@@ -80,10 +80,10 @@ import SoC_Map :: *;
 
 import MMU_Cache_Common :: *;
 
-`ifdef ISA_PRIV_S
+#ifdef ISA_PRIV_S
 import TLB :: *;
 import PTW :: *;
-`endif
+#endif
 
 import Cache :: *;
 import MMIO  :: *;
@@ -100,9 +100,9 @@ interface D_MMU_Cache_IFC;
    (* always_ready *)
    method Action  ma_req (CacheOp    op,
 			  Bit#(3)   f3,
-`ifdef ISA_A
+#ifdef ISA_A
 			  Bit#(7)   amo_funct7,
-`endif
+#endif
 			  WordXL     va,
 			  Bit#(64)  st_value,
 			  // The following args for VM
@@ -122,14 +122,14 @@ interface D_MMU_Cache_IFC;
    // Cache flush request/response
    interface Server #(Bit#(1), Token) flush_server;
 
-`ifdef ISA_PRIV_S
+#ifdef ISA_PRIV_S
    // TLB flush
    method Action tlb_flush;
 
    // PTW and PTE-writeback requests from I_MMU_Cache are serviced by D_MMU_Cache
    interface Server #(PTW_Req, PTW_Rsp)  imem_ptw_server;
    interface Put #(Tuple2 #(PA, WordXL)) imem_pte_writeback_p;
-`endif
+#endif
 
    // ----------------
    // Cache-line interface facing next level cache or memory
@@ -143,13 +143,13 @@ interface D_MMU_Cache_IFC;
 
    interface Client #(Single_Req, Single_Rsp) mmio_client;
 
-`ifdef WATCH_TOHOST
+#ifdef WATCH_TOHOST
    // ----------------------------------------------------------------
    // For ISA tests: watch memory writes to <tohost> addr (see NOTE: "tohost" above)
 
    method Action set_watch_tohost (Bool watch_tohost, Bit#(64) tohost_addr);
    method Bit#(64) mv_tohost_value;
-`endif
+#endif
 
 endinterface
 
@@ -196,7 +196,7 @@ typedef enum {STATE_MAIN,               // Ready to service CPU requests
 	      STATE_MAIN_MMIO_WAIT,     // Wait for MMIO response
 	      STATE_FLUSH_WAIT
 
-`ifdef ISA_PRIV_S
+#ifdef ISA_PRIV_S
 	    , STATE_PTW_WAIT,
 
 	      STATE_PTE_RD_B,           // Handle PTW read-PTE req
@@ -204,7 +204,7 @@ typedef enum {STATE_MAIN,               // Ready to service CPU requests
 
 	      STATE_PTE_WR_B,           // Handle modified-PTE writeback
 	      STATE_PTE_WR_CACHE_WAIT   // Wait for cache during modified-PTE writeback
-`endif
+#endif
    } State
 deriving (Bits, Eq, FShow);
 
@@ -254,14 +254,14 @@ module mkD_MMU_Cache (D_MMU_Cache_IFC);
 
    MMIO_IFC   mmio  <- mkMMIO (fromInteger (verbosity_mmio));
 
-`ifdef ISA_PRIV_S
+#ifdef ISA_PRIV_S
    TLB_IFC    tlb   <- mkTLB (dmem_not_imem,
 			      fromInteger (verbosity_cache));
    PTW_IFC    ptw   <- mkPTW (fromInteger (verbosity_ptw));
 
    // Writebacks to mem of PTEs whose PTE.A and/or PTE.D have been modified
    FIFOF #(Tuple2 #(PA, WordXL)) f_dmem_pte_writebacks <- mkFIFOF;
-`endif
+#endif
 
    // ----------------------------------------------------------------
    // Overall state of this module
@@ -282,7 +282,7 @@ module mkD_MMU_Cache (D_MMU_Cache_IFC);
    Reg #(Bit#(64)) crg_ld_val [2]       <- mkCRegU (2);  // Load-val for LOAD/LR/AMO, success/fail for SC
    Reg #(Bit#(64)) crg_final_st_val [2] <- mkCRegU (2);
 
-`ifdef WATCH_TOHOST
+#ifdef WATCH_TOHOST
    // See NOTE: "tohost" above.
    // "tohost" addr on which to monitor writes, for standard ISA tests.
    // These are set by the 'set_watch_tohost' method but are otherwise read-only.
@@ -290,7 +290,7 @@ module mkD_MMU_Cache (D_MMU_Cache_IFC);
    // Reg #(Bit#(64)) rg_tohost_addr  <- mkReg ('h_8000_1000);    // Default for ISA tests
    Reg #(Bit#(64)) rg_tohost_addr  <- mkReg ('h_6FFF_0010);    // Default for ISA tests
    Reg #(Bit#(64)) rg_tohost_value <- mkReg (0);
-`endif
+#endif
 
    // ****************************************************************
    // ****************************************************************
@@ -306,7 +306,7 @@ module mkD_MMU_Cache (D_MMU_Cache_IFC);
 
    function Action fa_watch_tohost (Bit#(64) addr, Bit#(64) final_st_val);
       action
-`ifdef WATCH_TOHOST
+#ifdef WATCH_TOHOST
 	 if (rg_watch_tohost && (addr == rg_tohost_addr)) begin
 	    rg_tohost_value <= final_st_val;
 	    if (rg_tohost_value != final_st_val) begin
@@ -316,7 +316,7 @@ module mkD_MMU_Cache (D_MMU_Cache_IFC);
 	       else               $display ("    = FAIL on test_%0d", test_num);
 	    end
 	 end
-`endif
+#endif
       endaction
    endfunction
 
@@ -396,7 +396,7 @@ module mkD_MMU_Cache (D_MMU_Cache_IFC);
    // ================================================================
    // CPU request-handling: Perform cache step B for CPU request
 
-`ifdef ISA_PRIV_S
+#ifdef ISA_PRIV_S
    // VM translation (VA to PA)
    VM_Xlate_Result vm_xlate_result = tlb.mv_vm_xlate (crg_mmu_cache_req [0].va,
 						      crg_mmu_cache_req [0].satp,
@@ -405,11 +405,11 @@ module mkD_MMU_Cache (D_MMU_Cache_IFC);
 						      crg_mmu_cache_req [0].priv,
 						      crg_mmu_cache_req [0].sstatus_SUM,
 						      crg_mmu_cache_req [0].mstatus_MXR);
-`else
+#else
    // In non-VM, translation result (PA) is same as VA
    VM_Xlate_Result vm_xlate_result = VM_Xlate_Result {outcome: VM_XLATE_OK,
 						      pa:      crg_mmu_cache_req [0].va};
-`endif
+#endif
 
    rule rl_CPU_req_B ((crg_state [0] == STATE_MAIN)
 		      && (crg_mmu_cache_req_state [0] == REQ_STATE_FULL_B));
@@ -436,7 +436,7 @@ module mkD_MMU_Cache (D_MMU_Cache_IFC);
 	    $display ("    MISALIGNED exception");
       end
 
-`ifdef ISA_PRIV_S
+#ifdef ISA_PRIV_S
       // ---- TLB miss
       else if (vm_xlate_result.outcome == VM_XLATE_TLB_MISS) begin
 	 // Start a Page Table Walk
@@ -460,13 +460,13 @@ module mkD_MMU_Cache (D_MMU_Cache_IFC);
 	 crg_exc_code [0]            <= vm_xlate_result.exc_code;
 	 crg_mmu_cache_req_state [0] <= REQ_STATE_EMPTY;
       end
-`endif
+#endif
 
       // ---- TLB success
       else begin
 	 dynamicAssert ((vm_xlate_result.outcome == VM_XLATE_OK), "FAIL: unknown vm_xlate result");
 
-`ifdef ISA_PRIV_S
+#ifdef ISA_PRIV_S
 	 // If PTE A, D bits modified ...
 	 if (vm_xlate_result.pte_modified) begin
 	    // Update the TLB
@@ -485,7 +485,7 @@ module mkD_MMU_Cache (D_MMU_Cache_IFC);
 			 vm_xlate_result.pte_pa,
 			 vm_xlate_result.pte);
 	 end
-`endif
+#endif
 	 // Triage cached (memory) vs. uncached (IO, other non-mem) addresses
 	 let is_mem_addr = soc_map.m_is_mem_addr (fv_PA_to_Fabric_Addr (vm_xlate_result.pa));
 
@@ -595,7 +595,7 @@ module mkD_MMU_Cache (D_MMU_Cache_IFC);
    // ================================================================
    // On TLB miss, do a PTW, then try again or go to exception.
 
-`ifdef ISA_PRIV_S
+#ifdef ISA_PRIV_S
    rule rl_PTW_wait (crg_state [0] == STATE_PTW_WAIT);
       if (verbosity >= 2)
 	 $display ("%0d: %m.rl_PTW_wait", cur_cycle);
@@ -630,7 +630,7 @@ module mkD_MMU_Cache (D_MMU_Cache_IFC);
 	 crg_state [0]              <= STATE_MAIN;
       end
    endrule
-`endif
+#endif
 
    // ****************************************************************
    // ****************************************************************
@@ -664,7 +664,7 @@ module mkD_MMU_Cache (D_MMU_Cache_IFC);
    // PTW (Page Table Walks) service PTW memory requests (which are reads, only)
    // from the cache
 
-`ifdef ISA_PRIV_S
+#ifdef ISA_PRIV_S
    // Holds request between _A and _B rules
    // TODO: if PTW had a SemiFIFOF interface instead of Get, we wouldn't need this reg.
    Reg #(PTW_Mem_Req) rg_ptw_mem_req <- mkRegU;
@@ -749,14 +749,14 @@ module mkD_MMU_Cache (D_MMU_Cache_IFC);
 	 crg_state [0] <= STATE_MAIN;
       end
    endrule
-`endif
+#endif
 
    // ****************************************************************
    // ****************************************************************
    // Modified-PTE write-backs: Service PTE writebacks to the cache
    // (PTE 'A' (accessed) and 'D' (dirty) bits can be modified)
 
-`ifdef ISA_PRIV_S
+#ifdef ISA_PRIV_S
    // ----------------
    // Merge PTE writeback requests from IMem and DMem
    // From I_MMU_Cache
@@ -832,7 +832,7 @@ module mkD_MMU_Cache (D_MMU_Cache_IFC);
       end
       crg_state [0] <= STATE_PTE_WR_B;
    endrule
-`endif
+#endif
 
    // ****************************************************************
    // ****************************************************************
@@ -845,9 +845,9 @@ module mkD_MMU_Cache (D_MMU_Cache_IFC);
    // As soon as this method is called, the module starts working on this new request.
    method Action ma_req (CacheOp    op,
 			 Bit#(3)   f3,
-`ifdef ISA_A
+#ifdef ISA_A
 			 Bit#(7)   amo_funct7,
-`endif
+#endif
 			 WordXL     va,
 			 Bit#(64)  st_value,
 			 // The following  args for VM
@@ -860,15 +860,15 @@ module mkD_MMU_Cache (D_MMU_Cache_IFC);
 					 f3:          f3,
 					 va:          va,
 					 st_value:    st_value
-`ifdef ISA_A
+#ifdef ISA_A
 				       , amo_funct7:  amo_funct7
-`endif
-`ifdef ISA_PRIV_S
+#endif
+#ifdef ISA_PRIV_S
 				       , priv:        priv,
 					 sstatus_SUM: sstatus_SUM,
 					 mstatus_MXR: mstatus_MXR,
 					 satp:        satp
-`endif
+#endif
 					 };
       wire_mmu_cache_req <= mmu_cache_req;
    endmethod
@@ -900,7 +900,7 @@ module mkD_MMU_Cache (D_MMU_Cache_IFC);
    // Flush request/response
    interface Server flush_server = toGPServer (f_cache_flush_reqs, f_cache_flush_rsps);
 
-`ifdef ISA_PRIV_S
+#ifdef ISA_PRIV_S
    // TLB flush
    method Action tlb_flush () = tlb.ma_flush;
 
@@ -909,7 +909,7 @@ module mkD_MMU_Cache (D_MMU_Cache_IFC);
 
    // Service PTE-writeback requests from I_MMU_Cache
    interface Put    imem_pte_writeback_p = toPut (f_imem_pte_writebacks);
-`endif
+#endif
 
    // ----------------
    // Cache-line interface facing next level cache or memory
@@ -926,7 +926,7 @@ module mkD_MMU_Cache (D_MMU_Cache_IFC);
    // ----------------------------------------------------------------
    // For ISA tests: watch memory writes to <tohost> addr (see NOTE: "tohost" above)
 
-`ifdef WATCH_TOHOST
+#ifdef WATCH_TOHOST
    method Action set_watch_tohost (Bool watch_tohost, Bit#(64) tohost_addr);
       rg_watch_tohost <= watch_tohost;
       rg_tohost_addr  <= tohost_addr;
@@ -938,7 +938,7 @@ module mkD_MMU_Cache (D_MMU_Cache_IFC);
    method Bit#(64) mv_tohost_value;
       return rg_tohost_value;
    endmethod
-`endif
+#endif
 
 endmodule: mkD_MMU_Cache
 

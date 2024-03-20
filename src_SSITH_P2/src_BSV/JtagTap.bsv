@@ -13,39 +13,39 @@ import ClockHacks ::*;
 import Giraffe_IFC ::*;
 
 typedef 6 ABITS;
-`ifdef XILINX_BSCAN
-`ifdef XILINX_XCVU095
+#ifdef XILINX_BSCAN
+#ifdef XILINX_XCVU095
 typedef 6 IR_LENGTH;
-`elsif XILINX_XCVU9P
+#elif defined XILINX_XCVU9P
 typedef 18 IR_LENGTH;
-`elsif XILINX_XC7K325T
+#elif defined XILINX_XC7K325T
 typedef 6 IR_LENGTH;
-`endif
-`else
+#endif
+#else
 typedef 5 IR_LENGTH;
-`endif
+#endif
 typedef TAdd#(ABITS,34) DR_LENGTH;
 Bit#(IR_LENGTH) irmask = zExtendLSB(1'b1);
 Bit#(IR_LENGTH) ir_bypass0 = 0;
 Bit#(IR_LENGTH) ir_idcode = 1;
-`ifdef XILINX_BSCAN
-`ifdef XILINX_XCVU095
+#ifdef XILINX_BSCAN
+#ifdef XILINX_XCVU095
 Bit#(IR_LENGTH) ir_dtmcs = 'h02;
 Bit#(IR_LENGTH) ir_dmi = 'h03;
-`elsif XILINX_XCVU9P
+#elif defined XILINX_XCVU9P
 
 Bit#(IR_LENGTH) ir_dtmcs = 'b100010100100100100;    // USER3
                         // 'b000010100100100100;    USER1
 
 Bit#(IR_LENGTH) ir_dmi = 'b000011100100100100;
-`elsif XILINX_XC7K325T
+#elif defined XILINX_XC7K325T
 Bit#(IR_LENGTH) ir_dtmcs = 'h22;
 Bit#(IR_LENGTH) ir_dmi = 'h03;
-`endif
-`else
+#endif
+#else
 Bit#(IR_LENGTH) ir_dtmcs = 'h10;
 Bit#(IR_LENGTH) ir_dmi = 'h11;
-`endif
+#endif
 Bit#(IR_LENGTH) ir_reserved12 = 'h12;
 Bit#(IR_LENGTH) ir_reserved13 = 'h13;
 Bit#(IR_LENGTH) ir_reserved14 = 'h14;

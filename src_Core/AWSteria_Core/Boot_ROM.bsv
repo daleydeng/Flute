@@ -33,7 +33,7 @@ import Fabric_Defs :: *;
 // ================================================================
 // Include the auto-generated BSV-include file with the ROM function
 
-`include  "fn_read_ROM_RV64.bsvi"
+#include  "fn_read_ROM_RV64.bsvi"
 
 // ================================================================
 // Interface

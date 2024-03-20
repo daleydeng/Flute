@@ -50,30 +50,30 @@ module mkFabric_AXI4 (Fabric_AXI4_IFC);
 	  && (addr < soc_map.m_boot_rom_addr_lim))
 	 return tuple2 (True, fromInteger (boot_rom_slave_num));
 
-`ifdef Near_Mem_TCM
+#ifdef Near_Mem_TCM
       // TCM
       else if (   (soc_map.m_tcm_addr_base <= addr)
 	       && (addr < soc_map.m_tcm_addr_lim))
 	 return tuple2 (True, fromInteger (tcm_back_door_slave_num));
-`endif
+#endif
 
       // UART
       else if (   (soc_map.m_uart0_addr_base <= addr)
 	       && (addr < soc_map.m_uart0_addr_lim))
 	 return tuple2 (True, fromInteger (uart0_slave_num));
 
-`ifdef HTIF_MEMORY
+#ifdef HTIF_MEMORY
       else if (   (soc_map.m_htif_addr_base <= addr)
 	       && (addr < soc_map.m_htif_addr_lim))
 	 return tuple2 (True, fromInteger (htif_slave_num));
-`endif
+#endif
 
-`ifdef INCLUDE_ACCEL0
+#ifdef INCLUDE_ACCEL0
       // Accelerator 0
       else if (   (soc_map.m_accel0_addr_base <= addr)
 	       && (addr < soc_map.m_accel0_addr_lim))
 	 return tuple2 (True, fromInteger (accel0_slave_num));
-`endif
+#endif
 
       else
 	 return tuple2 (False, ?);

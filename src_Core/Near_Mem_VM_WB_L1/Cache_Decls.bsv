@@ -9,24 +9,24 @@ package Cache_Decls;
 
 // ================================================================
 
-`ifdef RV32
-`ifdef SV32
+#ifdef RV32
+#ifdef SV32
 import Cache_Decls_RV32_Sv32_8KB_2way :: *;
 export Cache_Decls_RV32_Sv32_8KB_2way :: *;
-`else
+#else
 import Cache_Decls_RV32_8KB_2way :: *;
 export Cache_Decls_RV32_8KB_2way :: *;
-`endif
-`endif
+#endif
+#endif
 
-`ifdef RV64
-`ifdef SV39
+#ifdef RV64
+#ifdef SV39
 import Cache_Decls_RV64_Sv39_8KB_2way :: *;
 export Cache_Decls_RV64_Sv39_8KB_2way :: *;
-`else
+#else
 import Cache_Decls_RV64_8KB_2way :: *;
 export Cache_Decls_RV64_8KB_2way :: *;
-`endif
-`endif
+#endif
+#endif
 
 endpackage

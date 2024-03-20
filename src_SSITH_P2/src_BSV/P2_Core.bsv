@@ -49,20 +49,20 @@ import AXI4_Types   :: *;
 import AXI4_Fabric  :: *;
 import Fabric_Defs  :: *;
 
-`ifdef INCLUDE_DMEM_SLAVE
+#ifdef INCLUDE_DMEM_SLAVE
 import AXI4_Lite_Types :: *;
-`endif
+#endif
 
-`ifdef INCLUDE_TANDEM_VERIF
+#ifdef INCLUDE_TANDEM_VERIF
 import tv_buffer :: *;
 import AXI4_Stream ::*;
-`endif
+#endif
 
-`ifdef INCLUDE_GDB_CONTROL
+#ifdef INCLUDE_GDB_CONTROL
 import Debug_Module :: *;
 import JtagTap      :: *;
 import Giraffe_IFC  :: *;
-`endif
+#endif
 
 // ================================================================
 // The P2_Core interface
@@ -82,30 +82,30 @@ interface P2_Core_IFC;
    (* always_ready, always_enabled, prefix="" *)
    method  Action interrupt_reqs ((* port="cpu_external_interrupt_req" *) Bit#(N_External_Interrupt_Sources)  reqs);
 
-`ifdef INCLUDE_DMEM_SLAVE
+#ifdef INCLUDE_DMEM_SLAVE
    // ----------------------------------------------------------------
    // Optional AXI4-Lite D-cache slave interface
 
    interface AXI4_Lite_Slave_IFC #(Wd_Addr, Wd_Data, Wd_User) slave0;
-`endif
+#endif
 
-`ifdef INCLUDE_TANDEM_VERIF
+#ifdef INCLUDE_TANDEM_VERIF
    // ----------------------------------------------------------------
    // Optional Tandem Verifier interface.  The data signal is
    // packed output tuples (n,vb),/ where 'vb' is a vector of
    // bytes with relevant bytes in locations [0]..[n-1]
 
       interface AXI4_Stream_Master_IFC #(Wd_SId, Wd_SDest, Wd_SData, Wd_SUser)  tv_verifier_info_tx;
-`endif
+#endif
 
-`ifdef INCLUDE_GDB_CONTROL
+#ifdef INCLUDE_GDB_CONTROL
    // ----------------
    // JTAG interface
 
-`ifdef JTAG_TAP
+#ifdef JTAG_TAP
    interface JTAG_IFC jtag;
-`endif
-`endif
+#endif
+#endif
 endinterface
 
 // ================================================================
@@ -153,28 +153,28 @@ module mkP2_Core (P2_Core_IFC);
    rule rl_reset_response;
       let running <- core.cpu_reset_server.response.get;
 
-`ifdef INCLUDE_GDB_CONTROL
+#ifdef INCLUDE_GDB_CONTROL
       // Respond to Debug module if this is an ndm-reset
       if (rg_ndm_reset matches tagged Valid .x)
 	 core.ndm_reset_client.response.put (running);
       rg_ndm_reset <= tagged Invalid;
-`endif
+#endif
    endrule
 
    // ----------------
    // Also do a reset if requested from Debug Module (NDM = Non-Debug-Module reset)
 
    rule rl_ndmreset (rg_once);
-`ifdef INCLUDE_GDB_CONTROL
+#ifdef INCLUDE_GDB_CONTROL
       let running <- core.ndm_reset_client.request.get;
       rg_ndm_reset <= tagged Valid running;
-`endif
+#endif
 
       rg_once <= False;
    endrule
 
    // ================================================================
-`ifdef INCLUDE_GDB_CONTROL
+#ifdef INCLUDE_GDB_CONTROL
 
    // Instantiate JTAG TAP controller,
    // connect to core.dm_dmi;
@@ -190,7 +190,7 @@ module mkP2_Core (P2_Core_IFC);
    BusReceiver#(Tuple3#(Bit#(7),Bit#(32),Bit#(2))) bus_dmi_req <- mkBusReceiver;
    BusSender#(Tuple2#(Bit#(32),Bit#(2))) bus_dmi_rsp <- mkBusSender(unpack(0));
 
-`ifdef JTAG_TAP
+#ifdef JTAG_TAP
    let jtagtap <- mkJtagTap;
 
    mkConnection(jtagtap.dmi.req_ready, pack(bus_dmi_req.in.ready));
@@ -202,7 +202,7 @@ module mkP2_Core (P2_Core_IFC);
    mkConnection(jtagtap.dmi.rsp_ready, compose(bus_dmi_rsp.out.ready, unpack));
    mkConnection(jtagtap.dmi.rsp_data, w_dmi_rsp_data);
    mkConnection(jtagtap.dmi.rsp_response, w_dmi_rsp_response);
-`endif
+#endif
 
    rule rl_dmi_req;
       bus_dmi_req.in.data(tuple3(w_dmi_req_addr, w_dmi_req_data, w_dmi_req_op));
@@ -233,12 +233,12 @@ module mkP2_Core (P2_Core_IFC);
       bus_dmi_rsp.in.enq(tuple2(data, 0));
    endrule
 
-`endif
+#endif
 
-`ifdef INCLUDE_TANDEM_VERIF
+#ifdef INCLUDE_TANDEM_VERIF
    let tv_xactor <- mkTV_Xactor;
    mkConnection (core.tv_verifier_info_get, tv_xactor.tv_in);
-`endif
+#endif
 
    // ================================================================
    // INTERFACE
@@ -257,37 +257,37 @@ module mkP2_Core (P2_Core_IFC);
       end
    endmethod
 
-`ifdef INCLUDE_DMEM_SLAVE
+#ifdef INCLUDE_DMEM_SLAVE
    // ----------------------------------------------------------------
    // Optional AXI4-Lite D-cache slave interface
 
    interface AXI4_Lite_Slave_IFC slave0 = core.cpu_dmem_slave;
-`endif
+#endif
 
-`ifdef INCLUDE_TANDEM_VERIF
+#ifdef INCLUDE_TANDEM_VERIF
    // ----------------------------------------------------------------
    // Optional Tandem Verifier interface.  The data signal is
    // packed output tuples (n,vb),/ where 'vb' is a vector of
    // bytes with relevant bytes in locations [0]..[n-1]
 
    interface tv_verifier_info_tx = tv_xactor.axi_out;
-`endif
+#endif
 
-`ifdef INCLUDE_GDB_CONTROL
+#ifdef INCLUDE_GDB_CONTROL
    // ----------------------------------------------------------------
    // Optional Debug Module interfaces
 
-`ifdef JTAG_TAP
+#ifdef JTAG_TAP
    interface JTAG_IFC jtag = jtagtap.jtag;
-`endif
+#endif
 
-`endif
+#endif
 endmodule
 
 // ================================================================
 // The TV to AXI4 Stream transactor
 
-`ifdef INCLUDE_TANDEM_VERIF
+#ifdef INCLUDE_TANDEM_VERIF
 
 // ================================================================
 // TV AXI4 Stream Parameters
@@ -327,7 +327,7 @@ module mkTV_Xactor (TV_Xactor);
 
    interface axi_out = tv_xactor.axi_side;
 endmodule
-`endif
+#endif
 
 // ================================================================
 

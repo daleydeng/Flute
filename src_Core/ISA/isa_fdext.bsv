@@ -9,7 +9,7 @@ export isa_types:: *, isa_fdext:: *;
 
 import isa_types:: *;
 
-`ifdef ISA_F
+#ifdef ISA_F
 // ================================================================
 // Floating Point Instructions
 
@@ -140,34 +140,34 @@ Bit#(7) f7_FMV_D_X     = 7'h79; Bit#(5) rs2_FMV_D_X   = 5'b00000; Bit#(3) f3_FMV
 // should be written into the GPR
 function Bool is_fop_rd_in_gpr (Bit#(7) funct7, RegIdx rs2);
 
-`ifdef ISA_D
+#ifdef ISA_D
     let is_FCVT_W_D  =    (funct7 == f7_FCVT_W_D)
                        && (rs2 == 0);
     let is_FCVT_WU_D =    (funct7 == f7_FCVT_WU_D)
                        && (rs2 == 1);
-`ifdef RV64
+#ifdef RV64
     let is_FCVT_L_D  =    (funct7 == f7_FCVT_L_D)
                        && (rs2 == 2);
     let is_FCVT_LU_D =    (funct7 == f7_FCVT_LU_D)
                        && (rs2 == 3);
 
-`endif
+#endif
    // FCLASS.D also maps to this -- both write to GPR
    let is_FMV_X_D    =    (funct7 == f7_FMV_X_D);
    // FEQ.D, FLE.D, FLT.D map to this
    let is_FCMP_D     =    (funct7 == f7_FCMP_D);
-`endif
+#endif
 
     let is_FCVT_W_S  =    (funct7 == f7_FCVT_W_S)
                        && (rs2 == 0);
     let is_FCVT_WU_S =    (funct7 == f7_FCVT_WU_S)
                        && (rs2 == 1);
-`ifdef RV64
+#ifdef RV64
     let is_FCVT_L_S  =    (funct7 == f7_FCVT_L_S)
                        && (rs2 == 2);
     let is_FCVT_LU_S =    (funct7 == f7_FCVT_LU_S)
                        && (rs2 == 3);
-`endif
+#endif
 
    // FCLASS.S also maps to this -- both write to GPR
    let is_FMV_X_W    =    (funct7 == f7_FMV_X_W);
@@ -177,20 +177,20 @@ function Bool is_fop_rd_in_gpr (Bit#(7) funct7, RegIdx rs2);
 
     return (
           False
-`ifdef ISA_D
+#ifdef ISA_D
        || is_FCVT_W_D
        || is_FCVT_WU_D
-`ifdef RV64
+#ifdef RV64
        || is_FCVT_L_D
        || is_FCVT_LU_D
-`endif
+#endif
        || is_FMV_X_D
        || is_FCMP_D
-`endif
-`ifdef RV64
+#endif
+#ifdef RV64
        || is_FCVT_L_S
        || is_FCVT_LU_S
-`endif
+#endif
        || is_FCVT_W_S
        || is_FCVT_WU_S
        || is_FMV_X_W
@@ -231,18 +231,18 @@ function Bool is_fp_instr_legal (Bit#(7) funct7,
 				    Opcode   opcode);
    // These compile-time constants (which will be optimized out) avoid ugly ifdefs later
    Bool rv64 = False;
-`ifdef RV64
+#ifdef RV64
    rv64 = True;
-`endif
+#endif
 
    Bool isa_F = False;
    Bool isa_D = False;
-`ifdef ISA_F
+#ifdef ISA_F
    isa_F = True;
-`ifdef ISA_D
+#ifdef ISA_D
    isa_D = True;
-`endif
-`endif
+#endif
+#endif
 
    // ----------------
    // For FM.../FNM... check funct7 [1:0] (i.e., instr[26:25])
@@ -263,12 +263,12 @@ function Bool is_fp_instr_legal (Bit#(7) funct7,
       && (   (funct7== f7_FADD_S)
 	  || (funct7== f7_FSUB_S)
 	  || (funct7== f7_FMUL_S)
-`ifdef INCLUDE_FDIV
+#ifdef INCLUDE_FDIV
 	  || (funct7== f7_FDIV_S)
-`endif
-`ifdef INCLUDE_FSQRT
+#endif
+#ifdef INCLUDE_FSQRT
 	  || ((funct7== f7_FSQRT_S)   && (rs2 == rs2_FSQRT_S))
-`endif
+#endif
 	  || ((funct7== f7_FSGNJ_S)                              && (rm == f3_FSGNJ_S))
 	  || ((funct7== f7_FSGNJN_S)                             && (rm == f3_FSGNJN_S))
 	  || ((funct7== f7_FSGNJX_S)                             && (rm == f3_FSGNJX_S))
@@ -304,12 +304,12 @@ function Bool is_fp_instr_legal (Bit#(7) funct7,
       && (   (funct7== f7_FADD_D)
 	  || (funct7== f7_FSUB_D)
 	  || (funct7== f7_FMUL_D)
-`ifdef INCLUDE_FDIV
+#ifdef INCLUDE_FDIV
 	  || (funct7== f7_FDIV_D)
-`endif
-`ifdef INCLUDE_FSQRT
+#endif
+#ifdef INCLUDE_FSQRT
 	  || ((funct7== f7_FSQRT_D)   && (rs2 == rs2_FSQRT_D))
-`endif
+#endif
 	  || ((funct7== f7_FSGNJ_D)                              && (rm == f3_FSGNJ_D))
 	  || ((funct7== f7_FSGNJN_D)                             && (rm == f3_FSGNJN_D))
 	  || ((funct7== f7_FSGNJX_D)                             && (rm == f3_FSGNJX_D))
@@ -354,25 +354,25 @@ function Bool is_fp_val1_from_gpr (Opcode opcode, Bit#(7) f7, RegIdx rs2);
    return (
          (opcode == op_FP)
       && (   False
-`ifdef ISA_D
+#ifdef ISA_D
           || ((f7 == f7_FCVT_D_W)  && (rs2 == 0))
           || ((f7 == f7_FCVT_D_WU) && (rs2 == 1))
-`ifdef RV64
+#ifdef RV64
           || ((f7 == f7_FCVT_D_L)  && (rs2 == 2))
           || ((f7 == f7_FCVT_D_LU) && (rs2 == 3))
-`endif
+#endif
           || ((f7 == f7_FMV_D_X))
-`endif
+#endif
           || ((f7 == f7_FCVT_S_W)  && (rs2 == 0))
           || ((f7 == f7_FCVT_S_WU) && (rs2 == 1))
-`ifdef RV64
+#ifdef RV64
           || ((f7 == f7_FCVT_S_L)  && (rs2 == 2))
           || ((f7 == f7_FCVT_S_LU) && (rs2 == 3))
-`endif
+#endif
           || ((f7 == f7_FMV_W_X))
           )
    );
 endfunction
-`endif
+#endif
 
 endpackage

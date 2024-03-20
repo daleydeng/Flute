@@ -685,9 +685,9 @@ module mkTest(Empty);
 
    Integer n = 1;
 
-`ifdef TESTCASE
-   n = `TESTCASE;
-`endif
+#ifdef TESTCASE
+   n = TESTCASE;
+#endif
 
    let test <- mkTestCase(n);
 

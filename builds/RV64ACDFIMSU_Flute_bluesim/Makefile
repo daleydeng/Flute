@@ -26,7 +26,7 @@ BSC_COMPILATION_FLAGS += \
 	-D SV39  \
 	-D SHIFT_BARREL    \
 	-D MULT_SYNTH    \
-	-D Near_Mem_Caches    \
+	-D NEAR_MEM_CACHES    \
 	-D FABRIC64    \
 	-D WATCH_TOHOST    \
 	-D INCLUDE_TANDEM_VERIF    \

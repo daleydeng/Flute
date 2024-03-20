@@ -67,10 +67,10 @@ import SoC_Map :: *;
 
 import MMU_Cache_Common :: *;
 
-`ifdef ISA_PRIV_S
+#ifdef ISA_PRIV_S
 import TLB :: *;
 import PTW :: *;
-`endif
+#endif
 
 import Cache :: *;
 import MMIO  :: *;
@@ -102,14 +102,14 @@ interface I_MMU_Cache_IFC;
    // Cache flush request/response
    interface Server #(Bit#(1), Token) flush_server;
 
-`ifdef ISA_PRIV_S
+#ifdef ISA_PRIV_S
    // TLB flush
    method Action tlb_flush;
 
    // PTW and PTE-writeback requests from I_MMU_Cache are serviced by D_MMU_Cache
    interface Client #(PTW_Req, PTW_Rsp)  ptw_client;
    interface Get #(Tuple2 #(PA, WordXL)) pte_writeback_g;
-`endif
+#endif
 
    // ----------------
    // Cache-line interface facing next level cache or memory
@@ -161,9 +161,9 @@ typedef enum {STATE_MAIN,               // Ready to service CPU requests
 	      STATE_MAIN_MMIO_WAIT,     // Wait for MMIO response
 	      STATE_FLUSH_WAIT
 
-`ifdef ISA_PRIV_S
+#ifdef ISA_PRIV_S
 	    , STATE_PTW_WAIT
-`endif
+#endif
    } State
 deriving (Bits, Eq, FShow);
 
@@ -207,7 +207,7 @@ module mkI_MMU_Cache (I_MMU_Cache_IFC);
 
    MMIO_IFC   mmio  <- mkMMIO (fromInteger (verbosity_mmio));
 
-`ifdef ISA_PRIV_S
+#ifdef ISA_PRIV_S
    TLB_IFC    tlb   <- mkTLB ((! dmem_not_imem),
 			      fromInteger (verbosity_tlb));
 
@@ -217,7 +217,7 @@ module mkI_MMU_Cache (I_MMU_Cache_IFC);
 
    // Writebacks to mem of PTEs whose PTE.A and/or PTE.D have been modified
    FIFOF #(Tuple2 #(PA, WordXL)) f_imem_pte_writebacks <- mkFIFOF;
-`endif
+#endif
 
    // ----------------------------------------------------------------
    // Overall state of this module
@@ -316,7 +316,7 @@ module mkI_MMU_Cache (I_MMU_Cache_IFC);
    // ================================================================
    // CPU request-handling: Perform cache step B for CPU request
 
-`ifdef ISA_PRIV_S
+#ifdef ISA_PRIV_S
    // VM translation (VA to PA)
    VM_Xlate_Result vm_xlate_result = tlb.mv_vm_xlate (crg_mmu_cache_req [0].va,
 						      crg_mmu_cache_req [0].satp,
@@ -324,11 +324,11 @@ module mkI_MMU_Cache (I_MMU_Cache_IFC);
 						      crg_mmu_cache_req [0].priv,
 						      crg_mmu_cache_req [0].sstatus_SUM,
 						      crg_mmu_cache_req [0].mstatus_MXR);
-`else
+#else
    // In non-VM, translation result (PA) is same as VA
    VM_Xlate_Result vm_xlate_result = VM_Xlate_Result {outcome: VM_XLATE_OK,
 						      pa:      crg_mmu_cache_req [0].va};
-`endif
+#endif
 
    rule rl_CPU_req_B ((crg_state [0] == STATE_MAIN)
 		      && (crg_mmu_cache_req_state [0] == REQ_STATE_FULL_B));
@@ -355,7 +355,7 @@ module mkI_MMU_Cache (I_MMU_Cache_IFC);
 	    $display ("    MISALIGNED exception");
       end
 
-`ifdef ISA_PRIV_S
+#ifdef ISA_PRIV_S
       // ---- TLB miss
       else if (vm_xlate_result.outcome == VM_XLATE_TLB_MISS) begin
 	 // Start a Page Table Walk
@@ -379,13 +379,13 @@ module mkI_MMU_Cache (I_MMU_Cache_IFC);
 	 crg_exc_code [0]            <= vm_xlate_result.exc_code;
 	 crg_mmu_cache_req_state [0] <= REQ_STATE_EMPTY;
       end
-`endif
+#endif
 
       // ---- TLB success
       else begin
 	 dynamicAssert ((vm_xlate_result.outcome == VM_XLATE_OK), "FAIL: unknown vm_xlate result");
 
-`ifdef ISA_PRIV_S
+#ifdef ISA_PRIV_S
 	 // If PTE A, D bits modified ...
 	 if (vm_xlate_result.pte_modified) begin
 	    // Update the TLB
@@ -404,7 +404,7 @@ module mkI_MMU_Cache (I_MMU_Cache_IFC);
 			 vm_xlate_result.pte_pa,
 			 vm_xlate_result.pte);
 	 end
-`endif
+#endif
 	 // Triage cached (memory) vs. uncached (IO, other non-mem) addresses
 	 let is_mem_addr = soc_map.m_is_mem_addr (fv_PA_to_Fabric_Addr (vm_xlate_result.pa));
 
@@ -505,7 +505,7 @@ module mkI_MMU_Cache (I_MMU_Cache_IFC);
    // ================================================================
    // On TLB miss, do a PTW, then try again or go to exception.
 
-`ifdef ISA_PRIV_S
+#ifdef ISA_PRIV_S
    rule rl_PTW_wait (crg_state [0] == STATE_PTW_WAIT);
       if (verbosity >= 2)
 	 $display ("%0d: %m.rl_PTW_wait", cur_cycle);
@@ -540,7 +540,7 @@ module mkI_MMU_Cache (I_MMU_Cache_IFC);
 	 crg_state [0]              <= STATE_MAIN;
       end
    endrule
-`endif
+#endif
 
    // ****************************************************************
    // ****************************************************************
@@ -589,15 +589,15 @@ module mkI_MMU_Cache (I_MMU_Cache_IFC);
 					 f3:          3'b010,    // = 'W' (32-bit word)
 					 va:          va,
 					 st_value:    ?
-`ifdef ISA_A
+#ifdef ISA_A
 				       , amo_funct7:  ?
-`endif
-`ifdef ISA_PRIV_S
+#endif
+#ifdef ISA_PRIV_S
 				       , priv:        priv,
 					 sstatus_SUM: sstatus_SUM,
 					 mstatus_MXR: mstatus_MXR,
 					 satp:        satp
-`endif
+#endif
 					 };
       wire_mmu_cache_req <= mmu_cache_req;
    endmethod
@@ -625,13 +625,13 @@ module mkI_MMU_Cache (I_MMU_Cache_IFC);
    // Flush request/response
    interface Server flush_server = toGPServer (f_cache_flush_reqs, f_cache_flush_rsps);
 
-`ifdef ISA_PRIV_S
+#ifdef ISA_PRIV_S
    // TLB flush
    method Action tlb_flush () = tlb.ma_flush;
 
    interface Client ptw_client      = toGPClient (f_ptw_reqs, f_ptw_rsps);
    interface Get    pte_writeback_g = toGet (f_imem_pte_writebacks);
-`endif
+#endif
 
    // ----------------
    // Cache-line interface facing next level cache or memory

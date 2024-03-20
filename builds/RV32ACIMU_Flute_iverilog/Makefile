@@ -17,7 +17,7 @@ BSC_COMPILATION_FLAGS += \
 	-D ISA_I  -D ISA_M  -D ISA_A  -D ISA_C  \
 	-D SHIFT_BARREL    \
 	-D MULT_SYNTH    \
-	-D Near_Mem_Caches    \
+	-D NEAR_MEM_CACHES    \
 	-D FABRIC64    \
 	-D WATCH_TOHOST    \
 

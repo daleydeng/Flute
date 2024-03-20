@@ -40,9 +40,9 @@ interface DM_Abstract_Commands_IFC;
    // ----------------
    // Facing CPU/hart
    interface Client #(DM_CPU_Req #(5,  XLEN), DM_CPU_Rsp #(XLEN)) hart0_gpr_mem_client;
-`ifdef ISA_F
+#ifdef ISA_F
    interface Client #(DM_CPU_Req #(5,  FLEN), DM_CPU_Rsp #(FLEN)) hart0_fpr_mem_client;
-`endif
+#endif
    interface Client #(DM_CPU_Req #(12, XLEN), DM_CPU_Rsp #(XLEN)) hart0_csr_mem_client;
 endinterface
 
@@ -62,10 +62,10 @@ module mkDM_Abstract_Commands (DM_Abstract_Commands_IFC);
    FIFOF #(DM_CPU_Rsp #(XLEN))     f_hart0_gpr_rsps <- mkFIFOF;
 
    // FIFOs for request/response to access FPRs
-`ifdef ISA_F
+#ifdef ISA_F
    FIFOF #(DM_CPU_Req #(5,  FLEN)) f_hart0_fpr_reqs <- mkFIFOF;
    FIFOF #(DM_CPU_Rsp #(FLEN))     f_hart0_fpr_rsps <- mkFIFOF;
-`endif
+#endif
 
    // FIFOs for request/response to access CSRs
    FIFOF #(DM_CPU_Req #(12, XLEN)) f_hart0_csr_reqs <- mkFIFOF;
@@ -176,7 +176,7 @@ module mkDM_Abstract_Commands (DM_Abstract_Commands_IFC);
 	       $display ("    ", fshow (fn_command_cmdtype (dm_word)), " not supported");
 	    end
 
-`ifdef RV32
+#ifdef RV32
 	    // Only lower 32-bit access is supported
 	    else if (size != DM_COMMAND_ACCESS_SIZE_LOWER32) begin
 	       cmderr = DM_ABSTRACTCS_CMDERR_NOT_SUPPORTED;
@@ -186,8 +186,8 @@ module mkDM_Abstract_Commands (DM_Abstract_Commands_IFC);
 			 fshow (fn_command_access_size (dm_word)),
 			 " not supported in RV32 mode");
 	    end
-`endif
-`ifdef RV64
+#endif
+#ifdef RV64
 	    // Only lower 32-bit and 64-bit access is supported
 	    else if (size != DM_COMMAND_ACCESS_SIZE_LOWER64)
 	       begin
@@ -198,7 +198,7 @@ module mkDM_Abstract_Commands (DM_Abstract_Commands_IFC);
 			    fshow (fn_command_access_size (dm_word)),
 			    " not supported in RV64 mode");
 	       end
-`endif
+#endif
 
 	    // 'postexec' is not supported
 	    else if (fn_command_access_reg_postexec (dm_word) == True) begin
@@ -247,13 +247,13 @@ module mkDM_Abstract_Commands (DM_Abstract_Commands_IFC);
    = (   (fromInteger (dm_command_access_reg_regno_gpr_0) <= rg_command_access_reg_regno)
       && (rg_command_access_reg_regno <= fromInteger (dm_command_access_reg_regno_gpr_1F)));
 
-`ifdef ISA_F
+#ifdef ISA_F
    Bool is_fpr
    = (   (fromInteger (dm_command_access_reg_regno_fpr_0) <= rg_command_access_reg_regno)
       && (rg_command_access_reg_regno <= fromInteger (dm_command_access_reg_regno_fpr_1F)));
-`else
+#else
    Bool is_fpr = False;
-`endif
+#endif
 
    Bit#(12) csr_addr = truncate (rg_command_access_reg_regno
 				  - fromInteger (dm_command_access_reg_regno_csr_0));
@@ -273,12 +273,12 @@ module mkDM_Abstract_Commands (DM_Abstract_Commands_IFC);
 			    && is_csr);
       let req = DM_CPU_Req {write:   True,
 			    address: csr_addr,
-`ifdef RV32
+#ifdef RV32
 			    data:    rg_data0
-`endif
-`ifdef RV64
+#endif
+#ifdef RV64
 			    data:    {rg_data1, rg_data0}
-`endif
+#endif
 			    };
       f_hart0_csr_reqs.enq (req);
       rg_start_reg_access <= False;
@@ -333,13 +333,13 @@ module mkDM_Abstract_Commands (DM_Abstract_Commands_IFC);
       rg_abstractcs_cmderr <= (rsp.ok
 			       ? DM_ABSTRACTCS_CMDERR_NONE
 			       : DM_ABSTRACTCS_CMDERR_HALT_RESUME);
-`ifdef RV32
+#ifdef RV32
       rg_data0 <= rsp.data;
-`endif
-`ifdef RV64
+#endif
+#ifdef RV64
       rg_data0 <= truncate (rsp.data);
       rg_data1 <= rsp.data [63:32];
-`endif
+#endif
       rg_abstractcs_busy <= False;
 
       if (verbosity != 0)
@@ -357,12 +357,12 @@ module mkDM_Abstract_Commands (DM_Abstract_Commands_IFC);
 			    && is_gpr);
       let req = DM_CPU_Req {write:   True,
 			    address: gpr_addr,
-`ifdef RV32
+#ifdef RV32
 			    data:    rg_data0
-`endif
-`ifdef RV64
+#endif
+#ifdef RV64
 			    data:    {rg_data1, rg_data0}
-`endif
+#endif
 			    };
       f_hart0_gpr_reqs.enq (req);
       rg_start_reg_access <= False;
@@ -413,13 +413,13 @@ module mkDM_Abstract_Commands (DM_Abstract_Commands_IFC);
 			    && (! rg_command_access_reg_write)
 			    && is_gpr);
       let rsp <- pop (f_hart0_gpr_rsps);
-`ifdef RV32
+#ifdef RV32
       rg_data0 <= rsp.data;
-`endif
-`ifdef RV64
+#endif
+#ifdef RV64
       rg_data0 <= truncate (rsp.data);
       rg_data1 <= rsp.data [63:32];
-`endif
+#endif
       rg_abstractcs_cmderr <= (rsp.ok
 			       ? DM_ABSTRACTCS_CMDERR_NONE
 			       : DM_ABSTRACTCS_CMDERR_HALT_RESUME);
@@ -434,7 +434,7 @@ module mkDM_Abstract_Commands (DM_Abstract_Commands_IFC);
    // ----------------------------------------------------------------
    // Write FPR
 
-`ifdef ISA_F
+#ifdef ISA_F
 
    rule rl_fpr_write_start (   rg_abstractcs_busy
 			    && rg_start_reg_access
@@ -442,11 +442,11 @@ module mkDM_Abstract_Commands (DM_Abstract_Commands_IFC);
 			    && is_fpr);
       let req = DM_CPU_Req {write:   True,
 			    address: fpr_addr,
-`ifdef ISA_D
+#ifdef ISA_D
 			    data:    {rg_data1, rg_data0}
-`else
+#else
 			    data:    rg_data0
-`endif
+#endif
 			    };
       f_hart0_fpr_reqs.enq (req);
       rg_start_reg_access <= False;
@@ -498,12 +498,12 @@ module mkDM_Abstract_Commands (DM_Abstract_Commands_IFC);
 			    && is_fpr);
       let rsp <- pop (f_hart0_fpr_rsps);
 
-`ifdef ISA_D
+#ifdef ISA_D
       rg_data0 <= truncate (rsp.data);
       rg_data1 <= rsp.data [63:32];
-`else
+#else
       rg_data0 <= rsp.data;
-`endif
+#endif
       rg_abstractcs_cmderr <= (rsp.ok
 			       ? DM_ABSTRACTCS_CMDERR_NONE
 			       : DM_ABSTRACTCS_CMDERR_HALT_RESUME);
@@ -515,7 +515,7 @@ module mkDM_Abstract_Commands (DM_Abstract_Commands_IFC);
       if (verbosity != 0) $display ("rl_fpr_read_finish");
    endrule
 
-`endif
+#endif
 
    // ----------------------------------------------------------------
    // Read/Write unknown address
@@ -644,9 +644,9 @@ module mkDM_Abstract_Commands (DM_Abstract_Commands_IFC);
    // ----------------
    // Facing CPU/hart
       interface Client hart0_gpr_mem_client = toGPClient (f_hart0_gpr_reqs, f_hart0_gpr_rsps);
-`ifdef ISA_F
+#ifdef ISA_F
       interface Client hart0_fpr_mem_client = toGPClient (f_hart0_fpr_reqs, f_hart0_fpr_rsps);
-`endif
+#endif
       interface Client hart0_csr_mem_client = toGPClient (f_hart0_csr_reqs, f_hart0_csr_rsps);
 endmodule
 

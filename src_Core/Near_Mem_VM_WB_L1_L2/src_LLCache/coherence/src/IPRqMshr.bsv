@@ -61,9 +61,9 @@ interface IPRqMshr_pipelineResp#(numeric type pRqNum);
     method PRqMsg#(void) getRq(Bit#(TLog#(pRqNum)) n);
     method Action releaseEntry(Bit#(TLog#(pRqNum)) n);
     method Action setDone(Bit#(TLog#(pRqNum)) n);
-`ifdef SECURITY
+#ifdef SECURITY
     method Action setFlushAddr(Bit#(TLog#(pRqNum)) n, Addr a);
-`endif
+#endif
 endinterface
 
 interface IPRqMshr#(numeric type pRqNum);
@@ -121,7 +121,7 @@ module mkIPRqMshrSafe(
         end
     endrule
 
-`ifdef CHECK_DEADLOCK
+#ifdef CHECK_DEADLOCK
     MshrDeadlockChecker#(pRqNum) checker <- mkMshrDeadlockChecker;
     FIFO#(IPRqMshrStuck) stuckQ <- mkFIFO1;
 
@@ -136,23 +136,23 @@ module mkIPRqMshrSafe(
             });
         end
     endrule
-`endif
+#endif
 
     rule doReleaseEntry_sendRsToP_pRq(inited);
         let n <- toGet(releaseEntryQ_sendRsToP_pRq).get;
         emptyEntryQ.enq(n);
-`ifdef CHECK_DEADLOCK
+#ifdef CHECK_DEADLOCK
         checker.releaseEntry(n);
-`endif
+#endif
     endrule
 
     (* descending_urgency = "doReleaseEntry_sendRsToP_pRq, doReleaseEntry_pipelineResp" *)
     rule doReleaseEntry_pipelineResp(inited);
         let n <- toGet(releaseEntryQ_pipelineResp).get;
         emptyEntryQ.enq(n);
-`ifdef CHECK_DEADLOCK
+#ifdef CHECK_DEADLOCK
         checker.releaseEntry(n);
-`endif
+#endif
     endrule
 
     method ActionValue#(pRqIndexT) getEmptyEntryInit(PRqMsg#(void) r) if(inited);
@@ -160,9 +160,9 @@ module mkIPRqMshrSafe(
         pRqIndexT n = emptyEntryQ.first;
         stateVec[n][pRqTransfer_port] <= Init;
         reqVec[n][pRqTransfer_port] <= r;
-`ifdef CHECK_DEADLOCK
+#ifdef CHECK_DEADLOCK
         checker.initEntry(n);
-`endif
+#endif
         return n;
     endmethod
 
@@ -191,7 +191,7 @@ module mkIPRqMshrSafe(
             stateVec[n][pipelineResp_port] <= Empty;
         endmethod
 
-`ifdef SECURITY
+#ifdef SECURITY
         method Action setFlushAddr(Bit#(TLog#(pRqNum)) n, Addr a);
             reqVec[n][pipelineResp_port] <= PRqMsg {
                 addr: a,
@@ -199,14 +199,14 @@ module mkIPRqMshrSafe(
                 child: ?
             };
         endmethod
-`endif
+#endif
     endinterface
 
-`ifdef CHECK_DEADLOCK
+#ifdef CHECK_DEADLOCK
     interface stuck = toGet(stuckQ);
-`else
+#else
     interface stuck = nullGet;
-`endif
+#endif
 endmodule
 
 

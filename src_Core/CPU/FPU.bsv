@@ -24,11 +24,11 @@ typedef union tagged {
 typedef Tuple5#( FloatU,FloatU,FloatU, RoundMode, FpuOp) Fpu_Req;
 typedef Tuple2#( FloatU, FloatingPoint::Exception )       Fpu_Rsp;
 
-`ifdef ISA_D
+#ifdef ISA_D
 typedef Tuple2#( FDouble, FloatingPoint::Exception )      FpuR;
-`else
+#else
 typedef Tuple2#( FSingle, FloatingPoint::Exception )      FpuR;
-`endif
+#endif
 
 interface FPU_IFC;
    interface Server #( Fpu_Req, Fpu_Rsp ) server_core;
@@ -39,41 +39,41 @@ endinterface
 
 (* synthesize *)
 module mkFPU ( FPU_IFC );
-`ifdef INCLUDE_FDIV
-`ifdef ISA_D
+#ifdef INCLUDE_FDIV
+#ifdef ISA_D
    Server# (Tuple2# (UInt# (114), UInt# (57))
           , Tuple2# (UInt# (57) , UInt# (57))) _div <- mkNonPipelinedDivider(2);
    Server# (Tuple3#(FDouble, FDouble, RoundMode)
           , FpuR) fpu_div  <- mkFloatingPointDivider(_div);
-`else
+#else
    Server# (Tuple2# (UInt #(56), UInt #(28))
           , Tuple2# (UInt #(28), UInt #(28))) _div <- mkDivider(1);
    Server# (Tuple3# (FSingle, FSingle, RoundMode)
           , FpuR) fpu_div <- mkFloatingPointDivider(_div);
-`endif
-`endif
+#endif
+#endif
 
-`ifdef INCLUDE_FSQRT
-`ifdef ISA_D
+#ifdef INCLUDE_FSQRT
+#ifdef ISA_D
    Server# (UInt# (116)
           , Tuple2# (UInt# (116), Bool)) _sqrt <- mkNonPipelinedSquareRooter(2);
    Server# (Tuple2# (FDouble, RoundMode)
           , FpuR) fpu_sqr <- mkFloatingPointSquareRooter(_sqrt);
-`else
+#else
    Server# (UInt# (60)
           , Tuple2# (UInt# (60), Bool)) _sqrt <- mkNonPipelinedSquareRooter(2);
    Server# (Tuple2# (FSingle, FRoundMode)
           , FpuR) fpu_sqr <- mkFloatingPointSquareRooter(_sqrt);
-`endif
-`endif
+#endif
+#endif
 
-`ifdef ISA_D
+#ifdef ISA_D
    Server# (Tuple4# (Maybe# (FDouble), FDouble, FDouble, RoundMode)
           , FpuR ) fpu_madd <- mkFloatingPointFusedMultiplyAccumulate;
-`else
+#else
    Server# (Tuple4# (Maybe# (FSingle), FSingle, FSingle, RoundMode)
           , FpuR ) fpu_madd <- mkFloatingPointFusedMultiplyAccumulate;
-`endif
+#endif
 
    FIFOF #(Token)          resetReqsF           <- mkFIFOF;
    FIFOF #(Token)          resetRspsF           <- mkFIFOF;
@@ -81,9 +81,9 @@ module mkFPU ( FPU_IFC );
    FIFOF#( Fpu_Req )  iFifo        <- mkFIFOF; // TODO: bypass fifos?
    FIFOF#( Fpu_Rsp )  oFifo        <- mkFIFOF; // TODO: bypass fifos?
    FIFOF#( RoundMode ) rmdFifo     <- mkFIFOF; // TODO: bypass fifos?
-`ifdef ISA_D
+#ifdef ISA_D
    FIFOF#( Bool )     isDoubleFifo <- mkFIFOF; // TODO: bypass fifos?
-`endif
+#endif
    FIFOF#( Bool )     isNegateFifo <- mkFIFOF; // TODO: bypass fifos?
    Reg#(FpuR)         resWire      <- mkWire;
 
@@ -105,22 +105,22 @@ module mkFPU ( FPU_IFC );
    let rmd  = tpl_4(x);
    let iop  = tpl_5(x);
 
-`ifdef ISA_D
+#ifdef ISA_D
    FDouble opd1 = toDouble(op1, rmd);
    FDouble opd2 = toDouble(op2, rmd);
    FDouble opd3 = toDouble(op3, rmd);
-`else
+#else
    FSingle opd1 = op1.S;
    FSingle opd2 = op2.S;
    FSingle opd3 = op3.S;
-`endif
+#endif
 
    rule start_op;
       iFifo.deq();
-`ifdef ISA_D
+#ifdef ISA_D
       if (op1 matches tagged D .val) isDoubleFifo.enq(True);
       else                           isDoubleFifo.enq(False);
-`endif
+#endif
 
       if      (iop == FPNMAdd)    isNegateFifo.enq(True);
       else if (iop == FPNMSub)    isNegateFifo.enq(True);
@@ -132,12 +132,12 @@ module mkFPU ( FPU_IFC );
          FPAdd:   fpu_madd.request.put (tuple4(Valid(opd1), opd2,         one(False), rmd) );
          FPSub:   fpu_madd.request.put (tuple4(Valid(opd1), negate(opd2), one(False), rmd) );
          FPMul:   fpu_madd.request.put (tuple4(Invalid,     opd1,         opd2,       rmd) );
-`ifdef INCLUDE_FDIV
+#ifdef INCLUDE_FDIV
          FPDiv:   fpu_div.request.put (tuple3 (opd1, opd2, rmd) );
-`endif
-`ifdef INCLUDE_FSQRT
+#endif
+#ifdef INCLUDE_FSQRT
          FPSqrt:  fpu_sqr.request.put (tuple2(opd1, rmd) );
-`endif
+#endif
          FPMAdd:  fpu_madd.request.put(  tuple4(Valid(opd3),         opd1, opd2, rmd) );
          FPMSub:  fpu_madd.request.put(  tuple4(Valid(negate(opd3)), opd1, opd2, rmd) );
          FPNMAdd: fpu_madd.request.put(  tuple4(Valid(opd3),         opd1, opd2, rmd) );
@@ -158,19 +158,19 @@ module mkFPU ( FPU_IFC );
 
    let rl_resRules = emptyRules;
    rl_resRules = rJoin (rl_resRules, fn_genMultCycResRules (fpu_madd));
-`ifdef INCLUDE_FDIV
+#ifdef INCLUDE_FDIV
    rl_resRules = rJoinMutuallyExclusive (rl_resRules, fn_genMultCycResRules (fpu_div));
-`endif
-`ifdef INCLUDE_FSQRT
+#endif
+#ifdef INCLUDE_FSQRT
    rl_resRules = rJoinMutuallyExclusive (rl_resRules, fn_genMultCycResRules (fpu_sqr));
-`endif
+#endif
    addRules (rl_resRules);
 
    rule passResult;
-`ifdef ISA_D
+#ifdef ISA_D
       isDoubleFifo.deq();
       let is64Bits = isDoubleFifo.first();
-`endif
+#endif
 
       isNegateFifo.deq();
       let negateResult = isNegateFifo.first();
@@ -178,7 +178,7 @@ module mkFPU ( FPU_IFC );
       rmdFifo.deq();
       let rmode = rmdFifo.first();
 
-`ifdef ISA_D
+#ifdef ISA_D
       if (is64Bits) begin
          FDouble   v  = tpl_1(resWire);
          FloatingPoint::Exception ex = tpl_2(resWire);
@@ -196,14 +196,14 @@ module mkFPU ( FPU_IFC );
          FloatU res = tagged S v;
          oFifo.enq( tuple2( res, ex ) );
       end
-`else
+#else
       FSingle   v  = tpl_1(resWire);
       FloatingPoint::Exception ex = tpl_2(resWire);
       if (negateResult)
          v = negate( v );
       FloatU res = tagged S v;
       oFifo.enq( tuple2( res, ex ) );
-`endif
+#endif
    endrule
 
    rule rl_reset;
@@ -211,9 +211,9 @@ module mkFPU ( FPU_IFC );
       iFifo.clear;
       oFifo.clear;
       rmdFifo.clear;
-`ifdef ISA_D
+#ifdef ISA_D
       isDoubleFifo.clear;
-`endif
+#endif
       isNegateFifo.clear;
       resetRspsF.enq (?);
    endrule

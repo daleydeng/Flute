@@ -21,7 +21,7 @@
 // CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-`include "ProcConfig.bsv"
+#include "ProcConfig.bsv"
 
 import Types::*;
 import MemoryTypes::*;
@@ -145,27 +145,27 @@ module mkIBank#(
     // index Q to order all in flight cRq for in-order resp
     FIFO#(cRqIdxT) cRqIndexQ <- mkSizedFIFO(valueof(cRqNum));
    
-`ifdef DEBUG_ICACHE
+#ifdef DEBUG_ICACHE
     // id for each cRq, incremented when each new req comes
     Reg#(Bit#(64)) cRqId <- mkReg(0);
     // FIFO to signal the id of cRq that is performed
     // FIFO has 0 cycle latency to match L1 D$ resp latency
     Fifo#(1, DebugICacheResp) cRqDoneQ <- mkBypassFifo; 
-`endif
+#endif
 
     // security flush
-`ifdef SECURITY
+#ifdef SECURITY
     Reg#(Bool) flushDone <- mkReg(True);
     Reg#(Bool) flushReqStart <- mkReg(False);
     Reg#(Bool) flushReqDone <- mkReg(False);
     Reg#(Bool) flushRespDone <- mkReg(False);
     Reg#(indexT) flushIndex <- mkReg(0);
     Reg#(wayT) flushWay <- mkReg(0);
-`else
+#else
     Bool flushDone = True;
-`endif
+#endif
 
-`ifdef PERF_COUNT
+#ifdef PERF_COUNT
     Reg#(Bool) doStats <- mkConfigReg(False);
     Count#(Data) ldCnt <- mkCount(0);
     Count#(Data) ldMissCnt <- mkCount(0);
@@ -190,7 +190,7 @@ module mkIBank#(
         end
     endaction
     endfunction
-`endif
+#endif
 
     function tagT getTag(Addr a) = truncateLSB(a);
 
@@ -200,12 +200,12 @@ module mkIBank#(
     // we stop accepting cRq when we need to flush for security
     rule cRqTransfer(flushDone);
         Addr addr <- toGet(rqFromCQ).get;
-`ifdef DEBUG_ICACHE
+#ifdef DEBUG_ICACHE
         procRqT r = ProcRqToI {addr: addr, id: cRqId};
         cRqId <= cRqId + 1;
-`else
+#else
         procRqT r = ProcRqToI {addr: addr};
-`endif
+#endif
         cRqIdxT n <- cRqMshr.getEmptyEntryInit(r);
         // send to pipeline
         pipeline.send(CRq (L1PipeRqIn {
@@ -214,10 +214,10 @@ module mkIBank#(
         }));
         // enq to indexQ for in order resp
         cRqIndexQ.enq(n);
-`ifdef PERF_COUNT
+#ifdef PERF_COUNT
         // performance counter: cRq type
         incrReqCnt;
-`endif
+#endif
        if (verbose)
         $display("%t I %m cRqTransfer: ", $time,
             fshow(n), " ; ",
@@ -257,7 +257,7 @@ module mkIBank#(
         doAssert(resp.toState == S && isValid(resp.data), "I$ must upgrade to S with data");
     endrule
     
-`ifdef SECURITY
+#ifdef SECURITY
     // start flush when cRq MSHR is empty
     rule startFlushReq(!flushDone && !flushReqStart && cRqMshr.emptyForFlush);
         flushReqStart <= True;
@@ -295,7 +295,7 @@ module mkIBank#(
         $display("%t I %m flushTransfer: ", $time, fshow(n), " ; ",
                  fshow(flushIndex), " ; ", fshow(flushWay));
     endrule
-`endif
+#endif
 
     rule sendRsToP_cRq(rsToPIndexQ.first matches tagged CRq .n);
         rsToPIndexQ.deq;
@@ -364,10 +364,10 @@ module mkIBank#(
             fshow(slot), " ; ", 
             fshow(cRqToP)
         );
-`ifdef PERF_COUNT
+#ifdef PERF_COUNT
         // performance counter: start miss timer
         latTimer.start(n);
-`endif
+#endif
     endrule
 
     // last stage of pipeline: process req
@@ -445,13 +445,13 @@ module mkIBank#(
         $display("%t I %m pipelineResp: Hit func: update ram: ", $time,
             fshow(succ), " ; ", fshow(instResult)
         );
-`ifdef DEBUG_ICACHE
+#ifdef DEBUG_ICACHE
         // signal that this req is performed
         cRqDoneQ.enq(DebugICacheResp {
             id: req.id,
             line: ram.line
         });
-`endif
+#endif
     endaction
     endfunction
 
@@ -604,10 +604,10 @@ module mkIBank#(
                 "pRs must be a hit"
             );
             cRqHit(cOwner, procRq);
-`ifdef PERF_COUNT
+#ifdef PERF_COUNT
             // performance counter: miss cRq
             incrMissCnt(cOwner);
-`endif
+#endif
         end
         else begin
             doAssert(False, ("pRs owner must match some cRq"));
@@ -662,7 +662,7 @@ module mkIBank#(
         end
     endrule
 
-`ifdef SECURITY
+#ifdef SECURITY
     rule pipelineResp_flush(
         !flushDone &&& !flushRespDone &&&
         pipeOut.cmd matches tagged L1Flush .flush
@@ -719,7 +719,7 @@ module mkIBank#(
         flushReqDone <= False;
         flushRespDone <= False;
     endrule
-`endif
+#endif
 
     // merge rq to parent index into indexQ
     rule rqIndexFromPipelineResp;
@@ -759,9 +759,9 @@ module mkIBank#(
                 return inst;
             endmethod
         endinterface
-`ifdef DEBUG_ICACHE
+#ifdef DEBUG_ICACHE
         interface done = toGet(cRqDoneQ);
-`endif
+#endif
     endinterface
 
     interface Get cRqStuck;
@@ -777,31 +777,31 @@ module mkIBank#(
                 
     interface pRqStuck = pRqMshr.stuck;
 
-`ifdef SECURITY
+#ifdef SECURITY
     method Action flush if(flushDone);
         flushDone <= False;
     endmethod
     method flush_done = flushDone._read;
-`else
+#else
     method flush = noAction;
     method flush_done = True;
-`endif
+#endif
 
     method Action setPerfStatus(Bool stats);
-`ifdef PERF_COUNT
+#ifdef PERF_COUNT
         doStats <= stats;
-`else
+#else
         noAction;
-`endif
+#endif
     endmethod
 
     method Data getPerfData(L1IPerfType t);
         return (case(t)
-`ifdef PERF_COUNT
+#ifdef PERF_COUNT
             L1ILdCnt: ldCnt;
             L1ILdMissCnt: ldMissCnt;
             L1ILdMissLat: ldMissLat;
-`endif
+#endif
             default: 0;
         endcase);
     endmethod

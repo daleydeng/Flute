@@ -70,7 +70,7 @@ module mkDM_Mem_Tap (DM_Mem_Tap_IFC);
       MemReqSize   sz    = ?;
 
       case (wr_data.wstrb)
-`ifdef FABRIC64
+#ifdef FABRIC64
 	 'hFF: begin sh= 0; mask = 'hFFFF_FFFF_FFFF_FFFF; sz=f3_SIZE_D; end
 	 'hF0: begin sh=32; mask =           'hFFFF_FFFF; sz=f3_SIZE_W; end
 	 'hC0: begin sh=48; mask =                'hFFFF; sz=f3_SIZE_H; end
@@ -79,7 +79,7 @@ module mkDM_Mem_Tap (DM_Mem_Tap_IFC);
 	 'h40: begin sh=48; mask =                  'hFF; sz=f3_SIZE_B; end
 	 'h20: begin sh=40; mask =                  'hFF; sz=f3_SIZE_B; end
 	 'h10: begin sh=32; mask =                  'hFF; sz=f3_SIZE_B; end
-`endif
+#endif
 	 'hF:  begin sh= 0; mask =           'hFFFF_FFFF; sz=f3_SIZE_W; end
 	 'hC:  begin sh=16; mask =                'hFFFF; sz=f3_SIZE_H; end
 	 'h3:  begin sh= 0; mask =                'hFFFF; sz=f3_SIZE_H; end
@@ -155,7 +155,7 @@ endmodule: mkDM_GPR_Tap
 // ================================================================
 // DM-to-CPU FPR tap (for writes to FPRs)
 
-`ifdef ISA_F
+#ifdef ISA_F
 
 interface DM_FPR_Tap_IFC;
    interface Client #(DM_CPU_Req #(5,  FLEN), DM_CPU_Rsp #(FLEN)) client;
@@ -194,7 +194,7 @@ module mkDM_FPR_Tap (DM_FPR_Tap_IFC);
    interface Get trace_data_out = toGet (f_trace_data);
 endmodule: mkDM_FPR_Tap
 
-`endif
+#endif
 
 // ================================================================
 // DM-to-CPU CSR tap (for writes to CSRs)

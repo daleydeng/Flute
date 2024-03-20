@@ -109,9 +109,9 @@ endinterface
 // FSM state
 
 typedef enum {FSM_IDLE,       // No PTW in progress
-`ifdef RV64
+#ifdef RV64
 	      FSM_LEVEL_2,    // Page Table Walk, Request Level 2
-`endif
+#endif
 	      FSM_LEVEL_1,    // Page Table Walk, Request Level 1
 	      FSM_LEVEL_0     // Page Table Walk, Request Level 0
    } PTW_State
@@ -175,9 +175,9 @@ module mkPTW #(parameter Bit#(3) verbosity) (PTW_IFC);
    // Derivations from ptw_req.va
    VA      va     = fn_WordXL_to_VA (ptw_req.va);
    VPN     vpn    = fn_Addr_to_VPN (va);
-`ifdef RV64
+#ifdef RV64
    VPN_J   vpn_2  = fn_Addr_to_VPN_2 (va);
-`endif
+#endif
    VPN_J   vpn_1  = fn_Addr_to_VPN_1 (va);
    VPN_J   vpn_0  = fn_Addr_to_VPN_0 (va);
    Offset  offset = fn_Addr_to_Offset (ptw_req.va);
@@ -212,7 +212,7 @@ module mkPTW #(parameter Bit#(3) verbosity) (PTW_IFC);
 	 else               $write ("    for I_Mem:");
 	 $display (" satp_pa %0h  va %0h", satp_pa, va);
       end
-`ifdef RV32
+#ifdef RV32
       PA           vpn_1_pa            = (zeroExtend (vpn_1) << bits_per_byte_in_wordxl);
       PA           lev_1_pte_pa        = satp_pa + vpn_1_pa;
       let mem_req = PTW_Mem_Req {pte_pa: lev_1_pte_pa};
@@ -223,7 +223,7 @@ module mkPTW #(parameter Bit#(3) verbosity) (PTW_IFC);
       if (verbosity >= 1)
 	 $display ("    Sv32: mem_req level 1 PTE for PA %0h", lev_1_pte_pa);
 
-`elsif SV39
+#elif defined SV39
 
       PA           vpn_2_pa            = (zeroExtend (vpn_2) << bits_per_byte_in_wordxl);
       PA           lev_2_pte_pa        = satp_pa + vpn_2_pa;
@@ -234,13 +234,13 @@ module mkPTW #(parameter Bit#(3) verbosity) (PTW_IFC);
 
       if (verbosity >= 1)
 	 $display ("    Sv39/Sv48: mem_req level 2 PTE for PA %0h", lev_2_pte_pa);
-`endif
+#endif
    endrule
 
    // ----------------
    // Receive Level 2 PTE and process it (Sv39 or Sv48 only)
 
-`ifdef SV39
+#ifdef SV39
    rule rl_ptw_level_2 (rg_state == FSM_LEVEL_2);
       if (verbosity >= 1) begin
 	 $display ("%0d: %m.rl_ptw_level_2:", cur_cycle);
@@ -309,7 +309,7 @@ module mkPTW #(parameter Bit#(3) verbosity) (PTW_IFC);
 	 end
       end
    endrule: rl_ptw_level_2
-`endif      // ifdef SV39
+#endif      // ifdef SV39
 
    // ----------------
    // Receive Level 1 PTE and process it (Sv32, Sv39 or Sv48)

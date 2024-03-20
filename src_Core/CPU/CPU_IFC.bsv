@@ -18,21 +18,21 @@ import AXI_Widths   :: *;    // For Wd_Id/Addr/Data/User_Dma
 import Fabric_Defs  :: *;
 import Near_Mem_IFC :: *;
 
-`ifdef INCLUDE_DMEM_SLAVE
+#ifdef INCLUDE_DMEM_SLAVE
 import AXI4_Lite_Types :: *;
-`endif
+#endif
 
-`ifdef INCLUDE_GDB_CONTROL
+#ifdef INCLUDE_GDB_CONTROL
 import DM_CPU_Req_Rsp :: *;
-`endif
+#endif
 
-`ifdef INCLUDE_PC_TRACE
+#ifdef INCLUDE_PC_TRACE
 import PCTrace :: *;
-`endif
+#endif
 
-`ifdef INCLUDE_TANDEM_VERIF
+#ifdef INCLUDE_TANDEM_VERIF
 import tv_trace_data :: *;
-`endif
+#endif
 
 // ================================================================
 // CPU interface
@@ -53,9 +53,9 @@ interface CPU_IFC;
    // ----------------------------------------------------------------
    // Optional AXI4-Lite D-cache slave interface
 
-`ifdef INCLUDE_DMEM_SLAVE
+#ifdef INCLUDE_DMEM_SLAVE
    interface AXI4_Lite_Slave_IFC #(Wd_Addr, Wd_Data, Wd_User)  dmem_slave;
-`endif
+#endif
 
    // ----------------
    // Interface to 'coherent DMA' port of optional L2 cache
@@ -96,21 +96,21 @@ interface CPU_IFC;
    // Optional PC trace interface
    // Outputs a stream of 2-tuples: (cycle_count, pc)
 
-`ifdef INCLUDE_PC_TRACE
+#ifdef INCLUDE_PC_TRACE
    interface Get #(PCTrace)  g_pc_trace;
-`endif
+#endif
 
    // ----------------
    // Optional interface to Tandem Verifier
 
-`ifdef INCLUDE_TANDEM_VERIF
+#ifdef INCLUDE_TANDEM_VERIF
    interface Get #(TraceData)  trace_data_out;
-`endif
+#endif
 
    // ----------------
    // Optional interface to Debug Module
 
-`ifdef INCLUDE_GDB_CONTROL
+#ifdef INCLUDE_GDB_CONTROL
    // run-control, other
    interface Server #(Bool, Bool)  hart0_server_run_halt;
    interface Put #(Bit#(4))       hart0_put_other_req;
@@ -118,14 +118,14 @@ interface CPU_IFC;
    // GPR access
    interface Server #(DM_CPU_Req #(5,  XLEN), DM_CPU_Rsp #(XLEN)) hart0_gpr_mem_server;
 
-`ifdef ISA_F
+#ifdef ISA_F
    // FPR access
    interface Server #(DM_CPU_Req #(5,  FLEN), DM_CPU_Rsp #(FLEN)) hart0_fpr_mem_server;
-`endif
+#endif
 
    // CSR access
    interface Server #(DM_CPU_Req #(12, XLEN), DM_CPU_Rsp #(XLEN)) hart0_csr_mem_server;
-`endif
+#endif
 
    // ----------------------------------------------------------------
    // Misc. control and status
@@ -138,10 +138,10 @@ interface CPU_IFC;
    // ----------------
    // For ISA tests: watch memory writes to <tohost> addr
 
-`ifdef WATCH_TOHOST
+#ifdef WATCH_TOHOST
    method Action set_watch_tohost (Bool watch_tohost, Bit#(64) tohost_addr);
    method Bit#(64) mv_tohost_value;
-`endif
+#endif
 
    // Inform core that DDR4 has been initialized and is ready to accept requests
    method Action ma_ddr4_ready;

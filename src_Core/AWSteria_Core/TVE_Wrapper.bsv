@@ -66,10 +66,10 @@ typedef struct {
    // CPU's register debug interfaces
    Server #(DM_CPU_Req #(5,  XLEN),
 	    DM_CPU_Rsp #(XLEN))     cpu_hart0_gpr_mem_server;
-`ifdef ISA_F
+#ifdef ISA_F
    Server #(DM_CPU_Req #(5,  FLEN),
 	    DM_CPU_Rsp #(FLEN))     cpu_hart0_fpr_mem_server;
-`endif
+#endif
    Server #(DM_CPU_Req #(12, XLEN),
 	    DM_CPU_Rsp #(XLEN))     cpu_hart0_csr_mem_server;
 
@@ -87,11 +87,11 @@ interface TVE_Wrapper_IFC;
    // GPR mem server to Debug Module
    interface Server #(DM_CPU_Req #(5,  XLEN),
 		      DM_CPU_Rsp #(XLEN))     hart0_gpr_mem_server;
-`ifdef ISA_F
+#ifdef ISA_F
    // FPR mem server to Debug Module
    interface Server #(DM_CPU_Req #(5,  FLEN),
 		      DM_CPU_Rsp #(FLEN))     hart0_fpr_mem_server;
-`endif
+#endif
    // CSR mem server to Debug Module
    interface Server #(DM_CPU_Req #(12, XLEN),
 		      DM_CPU_Rsp #(XLEN))     hart0_csr_mem_server;
@@ -118,23 +118,23 @@ endinterface
 module mkTVE_Wrapper #(TVE_Wrapper_Param param) (TVE_Wrapper_IFC);
 
    let tve_wrapper_module =
-`ifdef INCLUDE_TANDEM_VERIF
+#ifdef INCLUDE_TANDEM_VERIF
 
-  `ifdef INCLUDE_GDB_CONTROL
+  #ifdef INCLUDE_GDB_CONTROL
        mkTVE_Wrapper1;    // TV, DM
-  `else
+  #else
        mkTVE_Wrapper2;    // TV, no DM
-  `endif
+  #endif
 
-`else
+#else
 
-  `ifdef INCLUDE_GDB_CONTROL
+  #ifdef INCLUDE_GDB_CONTROL
        mkTVE_Wrapper3;    // no TV, DM
-  `else
+  #else
        mkTVE_Wrapper4;    // no TV, no DM
-  `endif
+  #endif
 
-`endif
+#endif
 
    TVE_Wrapper_IFC ifc <- tve_wrapper_module (param);
    return ifc;
@@ -150,18 +150,18 @@ module mkTVE_Wrapper1 #(TVE_Wrapper_Param param)
    // Instantiate taps. Each 'tap' siphons off a record for the Tandem Verifier,
    // for each Debug-Module write to a CPU CSR, FPR, GPR, or memory.
    DM_GPR_Tap_IFC dm_gpr_tap <- mkDM_GPR_Tap;
-`ifdef ISA_F
+#ifdef ISA_F
    DM_FPR_Tap_IFC dm_fpr_tap <- mkDM_FPR_Tap;
-`endif
+#endif
    DM_CSR_Tap_IFC dm_csr_tap <- mkDM_CSR_Tap;
    DM_Mem_Tap_IFC dm_mem_tap <- mkDM_Mem_Tap;
 
    // ----------------
    // Connect register taps to CPU GPR/FPR/CSR servers
    mkConnection (dm_gpr_tap.client, param.cpu_hart0_gpr_mem_server);
-`ifdef ISA_F
+#ifdef ISA_F
    mkConnection (dm_fpr_tap.client, param.cpu_hart0_fpr_mem_server);
-`endif
+#endif
    mkConnection (dm_csr_tap.client, param.cpu_hart0_csr_mem_server);
 
    // ----------------
@@ -202,12 +202,12 @@ module mkTVE_Wrapper1 #(TVE_Wrapper_Param param)
       f_trace_data_merged.enq (tmp);
    endrule
 
-`ifdef ISA_F
+#ifdef ISA_F
    rule merge_dm_fpr_trace_data;
       let tmp <- dm_fpr_tap.trace_data_out.get;
       f_trace_data_merged.enq (tmp);
    endrule
-`endif
+#endif
 
    rule merge_dm_csr_trace_data;
       let tmp <- dm_csr_tap.trace_data_out.get;
@@ -221,9 +221,9 @@ module mkTVE_Wrapper1 #(TVE_Wrapper_Param param)
    endrule
 
    (* descending_urgency = "merge_dm_csr_trace_data, merge_dm_mem_trace_data" *)
-`ifdef ISA_F
+#ifdef ISA_F
    (* descending_urgency = "merge_dm_fpr_trace_data, merge_dm_gpr_trace_data" *)
-`endif
+#endif
    (* descending_urgency = "merge_dm_gpr_trace_data, merge_dm_csr_trace_data" *)
    (* descending_urgency = "merge_dm_mem_trace_data, merge_cpu_trace_data"    *)
    rule rl_bogus_for_sched_attributes_only;
@@ -244,10 +244,10 @@ module mkTVE_Wrapper1 #(TVE_Wrapper_Param param)
 
    // GPR mem server to Debug Module
    interface Server  hart0_gpr_mem_server = dm_gpr_tap.server;
-`ifdef ISA_F
+#ifdef ISA_F
    // FPR mem server to Debug Module
    interface Server  hart0_fpr_mem_server = dm_fpr_tap.server;
-`endif
+#endif
    // CSR mem server to Debug Module
    interface Server  hart0_csr_mem_server = dm_csr_tap.server;
 
@@ -291,10 +291,10 @@ module mkTVE_Wrapper2 #(TVE_Wrapper_Param param)
 
    // GPR mem server to Debug Module
    interface Server  hart0_gpr_mem_server = param.cpu_hart0_gpr_mem_server;
-`ifdef ISA_F
+#ifdef ISA_F
    // FPR mem server to Debug Module
    interface Server  hart0_fpr_mem_server = param.cpu_hart0_fpr_mem_server;
-`endif
+#endif
    // CSR mem server to Debug Module
    interface Server  hart0_csr_mem_server = param.cpu_hart0_csr_mem_server;
 
@@ -325,10 +325,10 @@ module mkTVE_Wrapper3 #(TVE_Wrapper_Param param)
 
    // GPR mem server to Debug Module
    interface Server  hart0_gpr_mem_server = param.cpu_hart0_gpr_mem_server;
-`ifdef ISA_F
+#ifdef ISA_F
    // FPR mem server to Debug Module
    interface Server  hart0_fpr_mem_server = param.cpu_hart0_fpr_mem_server;
-`endif
+#endif
    // CSR mem server to Debug Module
    interface Server  hart0_csr_mem_server = param.cpu_hart0_csr_mem_server;
 
@@ -352,10 +352,10 @@ module mkTVE_Wrapper4 #(TVE_Wrapper_Param param)
 
    // GPR mem server to Debug Module
    interface Server  hart0_gpr_mem_server = param.cpu_hart0_gpr_mem_server;
-`ifdef ISA_F
+#ifdef ISA_F
    // FPR mem server to Debug Module
    interface Server  hart0_fpr_mem_server = param.cpu_hart0_fpr_mem_server;
-`endif
+#endif
    // CSR mem server to Debug Module
    interface Server  hart0_csr_mem_server = param.cpu_hart0_csr_mem_server;
 

@@ -43,22 +43,22 @@ typedef struct {
    Bool           is_compressed;
    Addr           pc;
    InstrBits      instr;
-`ifdef ISA_C
+#ifdef ISA_C
    InstrCBits        instr_C;
-`endif
+#endif
    Instruction   instruction;
    WordXL         rs1_val;
    WordXL         rs2_val;
    WordXL         mstatus;
-`ifdef ISA_F
+#ifdef ISA_F
    Bit#(3)       frm;
    WordFL         frs1_val;
    WordFL         frs2_val;
    WordFL         frs3_val;
-`ifdef INCLUDE_TANDEM_VERIF
+#ifdef INCLUDE_TANDEM_VERIF
    Bit#(5)       fflags;
-`endif
-`endif
+#endif
+#endif
    MISA           misa;
 } ALU_Inputs deriving (Bits, FShow);
 
@@ -72,10 +72,10 @@ endfunction
 
 function InstrBits get_instr (ALU_Inputs  inputs);
    InstrBits result = inputs.instr;
-`ifdef ISA_C
+#ifdef ISA_C
    if (inputs.is_compressed)
       result = zeroExtend (inputs.instr_C);
-`endif
+#endif
    return result;
 endfunction
 
@@ -98,7 +98,7 @@ typedef struct {
    WordXL     val2;           // Branch: branch target (for Tandem Verification)
 		                        // OP_Stage2_ST: store-val
                               // OP_Stage2_M: arg2
-`ifdef ISA_F
+#ifdef ISA_F
    WordFL     fval1;          // OP_Stage2_FD: arg1
    WordFL     fval2;          // OP_Stage2_FD: arg2
    WordFL     fval3;          // OP_Stage2_FD: arg3
@@ -106,13 +106,13 @@ typedef struct {
    Bool       rs_frm_fpr;     // src register is in fpr (for stores)
    Bool       val1_frm_gpr;   // first operand is in gpr (for some FP instrns)
    Bit#(3)   rm;             // rounding mode
-`endif
+#endif
 
    CF_Info    cf_info;        // For redirection and branch predictor
 
-`ifdef INCLUDE_TANDEM_VERIF
+#ifdef INCLUDE_TANDEM_VERIF
    TraceData trace_data;
-`endif
+#endif
    } ALU_Outputs
 deriving (Bits, FShow);
 
@@ -130,7 +130,7 @@ ALU_Outputs alu_outputs_base
 	       addr        : ?,
 	       val1        : ?,
 	       val2        : ?,
-`ifdef ISA_F
+#ifdef ISA_F
 	       fval1       : ?,
 	       fval2       : ?,
 	       fval3       : ?,
@@ -138,12 +138,12 @@ ALU_Outputs alu_outputs_base
 	       rs_frm_fpr  : False,
 	       val1_frm_gpr: False,
 	       rm          : ?,
-`endif
+#endif
 	       cf_info     : cf_info_base
 
-`ifdef INCLUDE_TANDEM_VERIF
+#ifdef INCLUDE_TANDEM_VERIF
 	     , trace_data  : ?
-`endif
+#endif
 };
 
 ALU_Outputs alu_outputs_default
@@ -154,7 +154,7 @@ ALU_Outputs alu_outputs_default
 	       addr        : ?,
 	       val1        : ?,
 	       val2        : ?,
-`ifdef ISA_F
+#ifdef ISA_F
 	       fval1       : ?,
 	       fval2       : ?,
 	       fval3       : ?,
@@ -162,12 +162,12 @@ ALU_Outputs alu_outputs_default
 	       rs_frm_fpr  : False,
 	       val1_frm_gpr: False,
 	       rm          : ?,
-`endif
+#endif
 	       cf_info     : cf_info_base
 
-`ifdef INCLUDE_TANDEM_VERIF
+#ifdef INCLUDE_TANDEM_VERIF
 	     , trace_data  : ?
-`endif
+#endif
 };
 
 function ALU_Outputs make_trap(Exc_Code exc);
@@ -179,7 +179,7 @@ function ALU_Outputs make_trap(Exc_Code exc);
       addr        : ?,
       val1        : ?,
       val2        : ?,
-`ifdef ISA_F
+#ifdef ISA_F
       fval1       : ?,
       fval2       : ?,
       fval3       : ?,
@@ -187,12 +187,12 @@ function ALU_Outputs make_trap(Exc_Code exc);
       rs_frm_fpr  : False,
       val1_frm_gpr: False,
       rm          : ?,
-`endif
+#endif
       cf_info     : cf_info_base
 
-`ifdef INCLUDE_TANDEM_VERIF
+#ifdef INCLUDE_TANDEM_VERIF
       , trace_data  : ?
-`endif
+#endif
 };
 endfunction
 
@@ -202,10 +202,10 @@ endfunction
 
 function Addr fall_through_pc (ALU_Inputs  inputs);
    Addr next_pc = inputs.pc + 4;
-`ifdef ISA_C
+#ifdef ISA_C
    if (inputs.is_compressed)
       next_pc = inputs.pc + 2;
-`endif
+#endif
    return next_pc;
 endfunction
 
@@ -299,9 +299,9 @@ function ALU_Outputs fv_BRANCH (ALU_Inputs inputs);
    else                        trap = True;
 
    Bool misaligned_target = (branch_target [1] == 1'b1);
-`ifdef ISA_C
+#ifdef ISA_C
    misaligned_target = False;
-`endif
+#endif
 
    Exc_Code exc_code = exc_code_ILLEGAL_INSTRUCTION;
    if ((! trap) && branch_taken && misaligned_target) begin
@@ -325,14 +325,14 @@ function ALU_Outputs fv_BRANCH (ALU_Inputs inputs);
    alu_outputs.val2      = extend (branch_target);    // For tandem verifier only
 
    alu_outputs.cf_info   = cf_info;
-`ifdef INCLUDE_TANDEM_VERIF
+#ifdef INCLUDE_TANDEM_VERIF
    // Normal trace output (if no trap)
    alu_outputs.trace_data = mkTrace_OTHER (
       inputs.pc,
       next_pc,
       fv_trace_isize (inputs),
       get_instr (inputs));
-`endif
+#endif
    return alu_outputs;
 endfunction
 
@@ -345,9 +345,9 @@ function ALU_Outputs fv_JAL (ALU_Inputs inputs);
    Addr  ret_pc  = fall_through_pc (inputs);
 
    Bool misaligned_target = (next_pc [1] == 1'b1);
-`ifdef ISA_C
+#ifdef ISA_C
    misaligned_target = False;
-`endif
+#endif
 
    let cf_info   = CF_Info {cf_op       : CF_JAL,
 			    from_PC     : inputs.pc,
@@ -364,7 +364,7 @@ function ALU_Outputs fv_JAL (ALU_Inputs inputs);
    alu_outputs.val1      = extend (ret_pc);
    alu_outputs.cf_info   = cf_info;
 
-`ifdef INCLUDE_TANDEM_VERIF
+#ifdef INCLUDE_TANDEM_VERIF
    // Normal trace output (if no trap)
    alu_outputs.trace_data = mkTrace_I_RD (
       inputs.pc,
@@ -373,7 +373,7 @@ function ALU_Outputs fv_JAL (ALU_Inputs inputs);
       get_instr (inputs),
       instr_rd(inputs.instr),
       ret_pc);
-`endif
+#endif
    return alu_outputs;
 endfunction
 
@@ -397,9 +397,9 @@ function ALU_Outputs fv_JALR (ALU_Inputs inputs);
    next_pc [0] = 1'b0;
 
    Bool misaligned_target = (next_pc [1] == 1'b1);
-`ifdef ISA_C
+#ifdef ISA_C
    misaligned_target = False;
-`endif
+#endif
 
    let cf_info   = CF_Info {cf_op       : CF_JALR,
 			    from_PC     : inputs.pc,
@@ -418,7 +418,7 @@ function ALU_Outputs fv_JALR (ALU_Inputs inputs);
    alu_outputs.val1      = extend (ret_pc);
    alu_outputs.cf_info   = cf_info;
 
-`ifdef INCLUDE_TANDEM_VERIF
+#ifdef INCLUDE_TANDEM_VERIF
    // Normal trace output (if no trap)
    alu_outputs.trace_data = mkTrace_I_RD (
       inputs.pc,
@@ -427,7 +427,7 @@ function ALU_Outputs fv_JALR (ALU_Inputs inputs);
       get_instr (inputs),
       instr_rd(inputs.instr),
       ret_pc);
-`endif
+#endif
    return alu_outputs;
 endfunction
 
@@ -451,7 +451,7 @@ function ALU_Outputs fv_OP_and_OP_IMM_shifts (ALU_Inputs inputs);
    let      funct3    = instr_funct3(inputs.instr);
    Bit#(1) instr_b30 = inputs.instr [30];
 
-`ifdef SHIFT_BARREL
+#ifdef SHIFT_BARREL
    // Shifts implemented by Verilog synthesis,
    // mapping to barrel shifters
    if (funct3 == f3_SLLI)
@@ -464,9 +464,9 @@ function ALU_Outputs fv_OP_and_OP_IMM_shifts (ALU_Inputs inputs);
 	 // SRA/SRAI
 	 rd_val = pack (s_rs1_val >> shamt);
    end
-`endif
+#endif
 
-`ifdef SHIFT_MULT
+#ifdef SHIFT_MULT
    // Shifts implemented using multiplication by 2^shamt,
    // mapping to DSPs in FPGA
    if (funct3 == f3_SLLI)
@@ -479,14 +479,14 @@ function ALU_Outputs fv_OP_and_OP_IMM_shifts (ALU_Inputs inputs);
 	 // SRA/SRAI
 	 rd_val = fn_shra (rs1_val, shamt);     // in LUTRAMs/DSPs
    end
-`endif
+#endif
 
    // Trap assertion:
    //     instr [31] and [29:26] Must Be Zero;;
    //     For RV32 with immediate shamt, [25] Must Be Zero (shamt <= 31)
    Bool trap = (   (inputs.instr [31]    != 1'b0)
 		|| (inputs.instr [29:26] != 4'b0)
-		|| (   (rv_version == RV32)
+		|| (   (xlen == 32)
 		    && (instr_opcode(inputs.instr) == op_OP_IMM)
 		    && (inputs.instr [25] != 1'b0)));
 
@@ -494,10 +494,10 @@ function ALU_Outputs fv_OP_and_OP_IMM_shifts (ALU_Inputs inputs);
    alu_outputs.control   = (trap ? CONTROL_TRAP : CONTROL_STRAIGHT);
    alu_outputs.rd        = instr_rd(inputs.instr);
 
-`ifndef SHIFT_SERIAL
+#ifndef SHIFT_SERIAL
    alu_outputs.op_stage2 = OP_Stage2_ALU;
    alu_outputs.val1      = rd_val;
-`else
+#else
    // Will be executed in serial Shifter_Box later
    alu_outputs.op_stage2 = OP_Stage2_SH;
    alu_outputs.val1      = rs1_val;
@@ -505,9 +505,9 @@ function ALU_Outputs fv_OP_and_OP_IMM_shifts (ALU_Inputs inputs);
    WordXL val2 = extend (shamt);
    val2 = (val2 | { 0, instr_b30, 7'b0});
    alu_outputs.val2 = val2;
-`endif
+#endif
 
-`ifdef INCLUDE_TANDEM_VERIF
+#ifdef INCLUDE_TANDEM_VERIF
    // Normal trace output (if no trap)
    alu_outputs.trace_data = mkTrace_I_RD (
       inputs.pc,
@@ -516,7 +516,7 @@ function ALU_Outputs fv_OP_and_OP_IMM_shifts (ALU_Inputs inputs);
       get_instr (inputs),
       instr_rd(inputs.instr),
       rd_val);
-`endif
+#endif
    return alu_outputs;
 endfunction: fv_OP_and_OP_IMM_shifts
 
@@ -590,7 +590,7 @@ function ALU_Outputs fv_OP_and_OP_IMM (ALU_Inputs inputs);
       out.rd        = rd;
       out.val1      = rd_val;
 
-   `ifdef INCLUDE_TANDEM_VERIF
+#ifdef INCLUDE_TANDEM_VERIF
       // Normal trace output (if no trap)
       out.trace_data = mkTrace_I_RD (
          inputs.pc,
@@ -599,7 +599,7 @@ function ALU_Outputs fv_OP_and_OP_IMM (ALU_Inputs inputs);
          get_instr (inputs),
          instr_rd(inputs.instr),
          rd_val);
-   `endif
+#endif
    end
 
    return out;
@@ -653,7 +653,7 @@ function ALU_Outputs fv_OP_IMM_32 (ALU_Inputs inputs);
    alu_outputs.rd        = instr_rd(inputs.instr);
    alu_outputs.val1      = rd_val;
 
-`ifdef INCLUDE_TANDEM_VERIF
+#ifdef INCLUDE_TANDEM_VERIF
    // Normal trace output (if no trap)
    alu_outputs.trace_data = mkTrace_I_RD (
       inputs.pc,
@@ -662,7 +662,7 @@ function ALU_Outputs fv_OP_IMM_32 (ALU_Inputs inputs);
       get_instr (inputs),
       instr_rd(inputs.instr),
       rd_val);
-`endif
+#endif
    return alu_outputs;
 endfunction: fv_OP_IMM_32
 
@@ -705,7 +705,7 @@ function ALU_Outputs fv_OP_32 (ALU_Inputs inputs);
    alu_outputs.rd        = instr_rd(inputs.instr);
    alu_outputs.val1      = rd_val;
 
-`ifdef INCLUDE_TANDEM_VERIF
+#ifdef INCLUDE_TANDEM_VERIF
    // Normal trace output (if no trap)
    alu_outputs.trace_data = mkTrace_I_RD (
       inputs.pc,
@@ -714,7 +714,7 @@ function ALU_Outputs fv_OP_32 (ALU_Inputs inputs);
       get_instr (inputs),
       instr_rd(inputs.instr),
       rd_val);
-`endif
+#endif
    return alu_outputs;
 endfunction: fv_OP_32
 
@@ -731,7 +731,7 @@ function ALU_Outputs fv_LUI (ALU_Inputs inputs);
    alu_outputs.rd        = instr_rd(inputs.instr);
    alu_outputs.val1      = rd_val;
 
-`ifdef INCLUDE_TANDEM_VERIF
+#ifdef INCLUDE_TANDEM_VERIF
    // Normal trace output (if no trap)
    alu_outputs.trace_data = mkTrace_I_RD (
       inputs.pc,
@@ -740,7 +740,7 @@ function ALU_Outputs fv_LUI (ALU_Inputs inputs);
       get_instr (inputs),
       instr_rd(inputs.instr),
       rd_val);
-`endif
+#endif
    return alu_outputs;
 endfunction
 
@@ -754,7 +754,7 @@ function ALU_Outputs fv_AUIPC (ALU_Inputs inputs);
    alu_outputs.rd        = instr_rd(inputs.instr);
    alu_outputs.val1      = rd_val;
 
-`ifdef INCLUDE_TANDEM_VERIF
+#ifdef INCLUDE_TANDEM_VERIF
    // Normal trace output (if no trap)
    alu_outputs.trace_data = mkTrace_I_RD (
       inputs.pc,
@@ -763,7 +763,7 @@ function ALU_Outputs fv_AUIPC (ALU_Inputs inputs);
       get_instr (inputs),
       instr_rd(inputs.instr),
       rd_val);
-`endif
+#endif
    return alu_outputs;
 endfunction
 
@@ -785,24 +785,24 @@ function ALU_Outputs fv_LOAD (ALU_Inputs inputs);
 		      && (   (funct3 == f3_LB) || (funct3 == f3_LBU)
 			  || (funct3 == f3_LH) || (funct3 == f3_LHU)
 			  || (funct3 == f3_LW)
-`ifdef RV64
+#ifdef RV64
 			  || (funct3 == f3_LWU)
 			  || (funct3 == f3_LD)
-`endif
+#endif
 			 ));
 
 
    Bool legal_LOAD_FP = False;
-`ifdef ISA_F
+#ifdef ISA_F
    if (opcode == op_LOAD_FP)
       // FP loads are not legal unless the MSTATUS.FS bit is set
       legal_LOAD_FP = (   (fv_mstatus_fs (inputs.mstatus) != fs_xs_off)
 		       && (  (funct3 == f3_FLW)
-`ifdef ISA_D
+#ifdef ISA_D
 			   || (funct3 == f3_FLD)
-`endif
+#endif
 			  ));
-`endif
+#endif
 
    let alu_outputs = alu_outputs_base;
 
@@ -812,14 +812,14 @@ function ALU_Outputs fv_LOAD (ALU_Inputs inputs);
    alu_outputs.op_stage2 = OP_Stage2_LD;
    alu_outputs.rd        = instr_rd(inputs.instr);
    alu_outputs.addr      = eaddr;
-`ifdef ISA_F
+#ifdef ISA_F
    // For LOAD_FP, destination register is in FP regs
    alu_outputs.rd_in_fpr = (opcode == op_LOAD_FP);
-`endif
+#endif
 
-`ifdef INCLUDE_TANDEM_VERIF
+#ifdef INCLUDE_TANDEM_VERIF
    // Normal trace output (if no trap)
-`ifdef ISA_F
+#ifdef ISA_F
    if (alu_outputs.rd_in_fpr)
       alu_outputs.trace_data = mkTrace_F_LOAD (
          inputs.pc,
@@ -831,7 +831,7 @@ function ALU_Outputs fv_LOAD (ALU_Inputs inputs);
          eaddr,
          inputs.mstatus);
    else
-`endif
+#endif
       alu_outputs.trace_data = mkTrace_I_LOAD (
          inputs.pc,
          fall_through_pc (inputs),
@@ -840,7 +840,7 @@ function ALU_Outputs fv_LOAD (ALU_Inputs inputs);
          instr_rd(inputs.instr),
          ?,
          eaddr);
-`endif
+#endif
    return alu_outputs;
 endfunction
 
@@ -860,23 +860,23 @@ function ALU_Outputs fv_STORE (ALU_Inputs inputs);
 		       && (   (funct3 == f3_SB)
 			   || (funct3 == f3_SH)
 			   || (funct3 == f3_SW)
-`ifdef RV64
+#ifdef RV64
 			   || (funct3 == f3_SD)
-`endif
+#endif
 			  ));
 
    Bool legal_STORE_FP = False;
-`ifdef ISA_F
+#ifdef ISA_F
    if (opcode == op_STORE_FP) begin
       // FP stores are not legal unless the MSTATUS.FS bit is set
       legal_STORE_FP = (   (fv_mstatus_fs (inputs.mstatus) != fs_xs_off)
 			&& (   (funct3 == f3_FSW)
-`ifdef ISA_D
+#ifdef ISA_D
 			    || (funct3 == f3_FSD)
-`endif
+#endif
 			   ));
    end
-`endif
+#endif
 
    let alu_outputs = alu_outputs_base;
 
@@ -888,15 +888,15 @@ function ALU_Outputs fv_STORE (ALU_Inputs inputs);
 
    alu_outputs.val2      = inputs.rs2_val;
 
-`ifdef ISA_F
+#ifdef ISA_F
    alu_outputs.fval2     = inputs.frs2_val;
    // For STORE_FP, source data register is in FP Regs
    alu_outputs.rs_frm_fpr = (opcode == op_STORE_FP);
-`endif
+#endif
 
-`ifdef INCLUDE_TANDEM_VERIF
+#ifdef INCLUDE_TANDEM_VERIF
    // Normal trace output (if no trap)
-`ifdef ISA_F
+#ifdef ISA_F
    if (opcode == op_STORE_FP)
       alu_outputs.trace_data = mkTrace_F_STORE (
          inputs.pc,
@@ -907,7 +907,7 @@ function ALU_Outputs fv_STORE (ALU_Inputs inputs);
          alu_outputs.fval2,
          eaddr);
    else
-`endif
+#endif
       alu_outputs.trace_data = mkTrace_I_STORE (
          inputs.pc,
          fall_through_pc (inputs),
@@ -916,7 +916,7 @@ function ALU_Outputs fv_STORE (ALU_Inputs inputs);
          get_instr (inputs),
          (alu_outputs.val2),
          eaddr);
-`endif
+#endif
    return alu_outputs;
 endfunction
 
@@ -944,14 +944,14 @@ function ALU_Outputs fv_MISC_MEM (ALU_Inputs inputs);
 			      ? CONTROL_FENCE
 			      : CONTROL_TRAP));
 
-`ifdef INCLUDE_TANDEM_VERIF
+#ifdef INCLUDE_TANDEM_VERIF
    // Normal trace output (if no trap)
    alu_outputs.trace_data = mkTrace_OTHER (
       inputs.pc,
       fall_through_pc (inputs),
       fv_trace_isize (inputs),
       get_instr (inputs));
-`endif
+#endif
    return alu_outputs;
 endfunction
 
@@ -962,17 +962,17 @@ function ALU_Outputs fv_SYSTEM (ALU_Inputs inputs);
    let funct3      = instr_funct3(inputs.instr);
    let alu_outputs = alu_outputs_base;
 
-`ifdef INCLUDE_TANDEM_VERIF
+#ifdef INCLUDE_TANDEM_VERIF
    // Normal trace output (if no trap)
    alu_outputs.trace_data = mkTrace_OTHER (
       inputs.pc,
       fall_through_pc (inputs),
       fv_trace_isize (inputs),
       get_instr (inputs));
-`endif
+#endif
 
    if (funct3  == f3_PRIV) begin
-`ifdef ISA_PRIV_S
+#ifdef ISA_PRIV_S
       // SFENCE.VMA instruction
       if (   (instr_rd(inputs.instr)  == 0)
 	  && (   (inputs.cur_priv == priv_M)
@@ -983,7 +983,7 @@ function ALU_Outputs fv_SYSTEM (ALU_Inputs inputs);
 	    alu_outputs.control = CONTROL_SFENCE_VMA;
 	 end
       else
-`endif
+#endif
       if (   (instr_rd(inputs.instr)  == 0)
 	  && (instr_rs1(inputs.instr) == 0))
 	 begin
@@ -1010,7 +1010,7 @@ function ALU_Outputs fv_SYSTEM (ALU_Inputs inputs);
 		  alu_outputs.control = CONTROL_MRET;
 	       end
 
-`ifdef ISA_PRIV_S
+#ifdef ISA_PRIV_S
 	    // SRET instruction
 	    else if (   (   (inputs.cur_priv == priv_M)
 			 || (   (inputs.cur_priv == priv_S)
@@ -1019,7 +1019,7 @@ function ALU_Outputs fv_SYSTEM (ALU_Inputs inputs);
 	       begin
 		  alu_outputs.control = CONTROL_SRET;
 	       end
-`endif
+#endif
 
 	    /*
 	    // URET instruction (future: support 'N' extension)
@@ -1083,7 +1083,7 @@ endfunction: fv_SYSTEM
 // FP Ops
 // Just pass through to the FP stage
 
-`ifdef ISA_F
+#ifdef ISA_F
 function ALU_Outputs fv_FP (ALU_Inputs inputs, Bit#(3) rm);
    let opcode = instr_opcode(inputs.instr);
    let funct3 = instr_funct3(inputs.instr);
@@ -1112,7 +1112,7 @@ function ALU_Outputs fv_FP (ALU_Inputs inputs, Bit#(3) rm);
 
    alu_outputs.rd_in_fpr = !is_fop_rd_in_gpr (funct7, rs2);
 
-`ifdef INCLUDE_TANDEM_VERIF
+#ifdef INCLUDE_TANDEM_VERIF
    // Normal trace output (if no trap)
    if (alu_outputs.rd_in_fpr)
       alu_outputs.trace_data = mkTrace_F_FRD (
@@ -1134,16 +1134,16 @@ function ALU_Outputs fv_FP (ALU_Inputs inputs, Bit#(3) rm);
          ?,
          inputs.fflags,
          inputs.mstatus);
-`endif
+#endif
    return alu_outputs;
 endfunction
-`endif
+#endif
 
 // ----------------------------------------------------------------
 // AMO
 // Just pass through to the memory stage
 
-`ifdef ISA_A
+#ifdef ISA_A
 function ALU_Outputs fv_AMO (ALU_Inputs inputs);
    let rs2    = instr_rs2(inputs.instr);
    let funct3 = instr_funct3(inputs.instr);
@@ -1173,7 +1173,7 @@ function ALU_Outputs fv_AMO (ALU_Inputs inputs);
    alu_outputs.val1      = zeroExtend (instr_funct7(inputs.instr));
    alu_outputs.val2      = inputs.rs2_val;
 
-`ifdef INCLUDE_TANDEM_VERIF
+#ifdef INCLUDE_TANDEM_VERIF
    // Normal trace output (if no trap)
    alu_outputs.trace_data = mkTrace_AMO (
       inputs.pc,
@@ -1184,23 +1184,23 @@ function ALU_Outputs fv_AMO (ALU_Inputs inputs);
       instr_rd(inputs.instr), ?,
       inputs.rs2_val,
       eaddr);
-`endif
+#endif
    return alu_outputs;
 endfunction
-`endif
+#endif
 
 // ----------------------------------------------------------------
 // Top-level ALU function
 
 function ALU_Outputs fv_ALU (ALU_Inputs inputs);
 
-`ifdef ISA_F
+#ifdef ISA_F
    // FP instructions are illegal if MSTATUS.FS = fs_xs_off
    let fp_insts_are_legal = (! (fv_mstatus_fs (inputs.mstatus) == fs_xs_off));
 
    // Is floating point rounding mode legal?
    match {.rm, .rm_is_legal} = fop_rmode_check (instr_funct3(inputs.instr), inputs.frm);
-`endif
+#endif
 
    let alu_outputs = alu_outputs_base;
 
@@ -1213,7 +1213,7 @@ function ALU_Outputs fv_ALU (ALU_Inputs inputs);
    else if (instr_opcode(inputs.instr) == op_JALR)
       alu_outputs = fv_JALR (inputs);
 
-`ifdef ISA_M
+#ifdef ISA_M
    // OP 'M' ops MUL/ MULH/ MULHSU/ MULHU/ DIV/ DIVU/ REM/ REMU
    else if (   (instr_opcode(inputs.instr) == op_OP)
 	    && instr_funct7(inputs.instr) == f7_MUL_DIV_REM)
@@ -1224,7 +1224,7 @@ function ALU_Outputs fv_ALU (ALU_Inputs inputs);
 	 alu_outputs.val1      = inputs.rs1_val;
 	 alu_outputs.val2      = inputs.rs2_val;
 
-`ifdef INCLUDE_TANDEM_VERIF
+#ifdef INCLUDE_TANDEM_VERIF
 	 // Normal trace output (if no trap)
 	 alu_outputs.trace_data = mkTrace_I_RD (
       inputs.pc,
@@ -1233,10 +1233,10 @@ function ALU_Outputs fv_ALU (ALU_Inputs inputs);
       get_instr (inputs),
       instr_rd(inputs.instr),
    ?);
-`endif
+#endif
       end
 
-`ifdef RV64
+#ifdef RV64
    // OP 'M' ops MULW/ DIVW/ DIVUW/ REMW/ REMUW
    else if (   (instr_opcode(inputs.instr) == op_OP_32)
 	    && instr_funct7(inputs.instr) == f7_MUL_DIV_REM
@@ -1250,7 +1250,7 @@ function ALU_Outputs fv_ALU (ALU_Inputs inputs);
 	 alu_outputs.val1      = inputs.rs1_val;
 	 alu_outputs.val2      = inputs.rs2_val;
 
-`ifdef INCLUDE_TANDEM_VERIF
+#ifdef INCLUDE_TANDEM_VERIF
 	 // Normal trace output (if no trap)
 	 alu_outputs.trace_data = mkTrace_I_RD (
       inputs.pc,
@@ -1259,10 +1259,10 @@ function ALU_Outputs fv_ALU (ALU_Inputs inputs);
       get_instr (inputs),
       instr_rd(inputs.instr),
       ?);
-`endif
+#endif
       end
-`endif
-`endif
+#endif
+#endif
 
    // OP_IMM and OP (shifts)
    else if (   (   (instr_opcode(inputs.instr) == op_OP_IMM)
@@ -1277,14 +1277,14 @@ function ALU_Outputs fv_ALU (ALU_Inputs inputs);
 	    || (instr_opcode(inputs.instr) == op_OP))
       alu_outputs = fv_OP_and_OP_IMM (inputs);
 
-`ifdef RV64
+#ifdef RV64
    else if (instr_opcode(inputs.instr) == op_OP_IMM_32)
       alu_outputs = fv_OP_IMM_32 (inputs);
 
    // Remaining op_OP_32 (excluding 'M' ops)
    else if (instr_opcode(inputs.instr) == op_OP_32)
       alu_outputs = fv_OP_32 (inputs);
-`endif
+#endif
 
    else if (instr_opcode(inputs.instr) == op_LUI)
       alu_outputs = fv_LUI (inputs);
@@ -1304,12 +1304,12 @@ function ALU_Outputs fv_ALU (ALU_Inputs inputs);
    else if (instr_opcode(inputs.instr) == op_SYSTEM)
       alu_outputs = fv_SYSTEM (inputs);
 
-`ifdef ISA_A
+#ifdef ISA_A
    else if (instr_opcode(inputs.instr) == op_AMO)
       alu_outputs = fv_AMO (inputs);
-`endif
+#endif
 
-`ifdef ISA_F
+#ifdef ISA_F
    else if (   (instr_opcode(inputs.instr) == op_LOAD_FP))
       alu_outputs = fv_LOAD (inputs);
 
@@ -1323,12 +1323,12 @@ function ALU_Outputs fv_ALU (ALU_Inputs inputs);
 				     instr_rs2(inputs.instr),
 				     instr_opcode(inputs.instr)))
       alu_outputs = fv_FP (inputs, rm);
-`endif
+#endif
 
    else begin
       alu_outputs.control = CONTROL_TRAP;
 
-`ifdef INCLUDE_TANDEM_VERIF
+#ifdef INCLUDE_TANDEM_VERIF
       // Normal trace output (if no trap)
       alu_outputs.trace_data = mkTrace_TRAP (
          inputs.pc,
@@ -1340,7 +1340,7 @@ function ALU_Outputs fv_ALU (ALU_Inputs inputs);
          ?,
          ?,
          ?);
-`endif
+#endif
    end
 
    return alu_outputs;

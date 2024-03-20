@@ -301,9 +301,9 @@ module mkCache #(parameter Bool      dcache_not_icache,
 
    Reg #(CacheOp)  rg_cache_op   <- mkRegU;
    Reg #(Bit#(3)) rg_f3         <- mkRegU;
-`ifdef ISA_A
+#ifdef ISA_A
    Reg #(Bit#(7)) rg_amo_funct7 <- mkRegU;
-`endif
+#endif
 
    // Phys addr
    Reg #(PA)       rg_pa <- mkRegU;             // Physical addr, 1 cycle later and sustained
@@ -324,11 +324,11 @@ module mkCache #(parameter Bool      dcache_not_icache,
    // ----------------
    // Reservation regs for AMO LR/SC (Load-Reserved/Store-Conditional)
 
-`ifdef ISA_A
+#ifdef ISA_A
    Reg #(Bool)       rg_lrsc_valid <- mkReg (False);
    Reg #(PA)         rg_lrsc_pa    <- mkRegU;    // Phys. address for an active LR
    Reg #(MemReqSize) rg_lrsc_size  <- mkRegU;
-`endif
+#endif
 
    // ----------------
    // State for choosing next eviction victim
@@ -649,9 +649,9 @@ module mkCache #(parameter Bool      dcache_not_icache,
       // Send read request for full cache line
       PA    cline_pa      = fn_align_Addr_to_CLine (rg_pa);
       Bool  for_write     = (   (rg_cache_op == CACHE_ST)
-`ifdef ISA_A
+#ifdef ISA_A
 			     || ((rg_cache_op == CACHE_AMO) && (rg_amo_funct7 [6:2] != f5_AMO_LR))
-`endif
+#endif
 			   );
       Meta_State to_state = (for_write ? META_EXCLUSIVE : META_SHARED);
 
@@ -1118,11 +1118,11 @@ module mkCache #(parameter Bool      dcache_not_icache,
 	    $display ("%0d: INFO: %m.rl_initialize", cur_cycle);
 	    $display ("    Size %0d KB, Associativity %0d, CLine size %0d bytes (= %0d XLEN words)",
 		      kb_per_cache, ways_per_cset, (cwords_per_cline * 8),
-`ifdef RV32
+#ifdef RV32
 		      (cwords_per_cline * 2)
-`else
+#else
 		      (cwords_per_cline * 1)
-`endif
+#endif
 		      );
 	 end
 	 if (verbosity >= 1)
@@ -1162,9 +1162,9 @@ module mkCache #(parameter Bool      dcache_not_icache,
 	 Cache_Result result = ?;
 	 rg_cache_op <= req.op;
 	 rg_f3       <= req.f3;
-`ifdef ISA_A
+#ifdef ISA_A
 	 rg_amo_funct7 <= req.amo_funct7;
-`endif
+#endif
 	 rg_pa <= pa;
 
 	 if (verbosity >= 1)
@@ -1210,7 +1210,7 @@ module mkCache #(parameter Bool      dcache_not_icache,
 	       rg_lrsc_valid <= False;
 	 end
 
-`ifdef ISA_A
+#ifdef ISA_A
 	 // AMO LR-hit
 	 else if (valid && fv_is_AMO_LR (req)) begin
 	    if (verbosity >= 1)
@@ -1277,16 +1277,16 @@ module mkCache #(parameter Bool      dcache_not_icache,
 	    if (rg_lrsc_pa == pa)
 	       rg_lrsc_valid <= False;
 	 end
-`endif
+#endif
 
 	 // MISS, or Store-upgrade
 	 else begin
 	    Bool upgrade = (   valid
 			    && (valid_info.valid_state == META_SHARED)
-`ifdef ISA_A
+#ifdef ISA_A
 			    && (   (req.op == CACHE_ST)
 				|| (req.op == CACHE_AMO))  // (valid && LR) handled as hit, earlier
-`endif
+#endif
 			       );
 	    if (upgrade) begin
 	       let cline_addr = zeroExtend (fn_align_Addr_to_CLine (pa));
@@ -1314,13 +1314,13 @@ module mkCache #(parameter Bool      dcache_not_icache,
 	    result = Cache_Result {outcome: CACHE_MISS,
 				   final_ld_val: ?,
 				   final_st_val: ?};
-`ifdef ISA_A
+#ifdef ISA_A
 	    // If the line being replaced/upgraded contains the LRSC reserved addr,
 	    // cancel the reservation.
 	    Bool cancel = (ram_A_cset_meta [valid_info.way].ctag == fn_PA_to_CTag (rg_lrsc_pa));
 	    if (cancel)
 	       rg_lrsc_valid <= False;
-`endif
+#endif
 	 end
 
 	 return result;

@@ -49,9 +49,9 @@ typedef struct {
    WordXL     word2;
    Bit#(64)   word3;    // Wider than WordXL because can contain paddr (in RV32, paddr can be 34 bits)
    WordXL     word4;
-`ifdef ISA_F
+#ifdef ISA_F
    Bit#(64)   word5;    // For changed RV64 MSTATUS in ISA_F system; for FPR val in RV32D
-`endif
+#endif
    } TraceData
 deriving (Bits);
 
@@ -75,7 +75,7 @@ function TraceData mkTrace_GPR_WRITE (RegIdx rd, WordXL rdval);
    return td;
 endfunction
 
-`ifdef ISA_F
+#ifdef ISA_F
 
 // FPR_WRITE
 // op    pc    instr_sz    instr    rd    word1    word2    word3    word4   word5
@@ -88,7 +88,7 @@ function TraceData mkTrace_FPR_WRITE (RegIdx rd, WordFL rdval);
    return td;
 endfunction
 
-`endif
+#endif
 
 // CSR_WRITE
 // op    pc    instr_sz    instr    rd    word1    word2    word3    word4
@@ -141,7 +141,7 @@ function TraceData mkTrace_I_RD (WordXL pc, WordXL next_pc, ISize isize, Bit#(32
    return td;
 endfunction
 
-`ifdef ISA_F
+#ifdef ISA_F
 // F_FRD
 // op    pc    instr_sz    instr    rd    word1    word2    word3    word4    word5
 // x     x     x           x        x              fflags            mstatus  rdval
@@ -155,11 +155,11 @@ function TraceData mkTrace_F_FRD (WordXL pc, WordXL next_pc, ISize isize, Bit#(3
    td.rd       = rd;
    td.word2    = extend (fflags);
    td.word4    = mstatus;
-`ifdef ISA_D
+#ifdef ISA_D
    td.word5    = rdval;
-`else
+#else
    td.word5    = extend (rdval);
-`endif
+#endif
    return td;
 endfunction
 
@@ -179,7 +179,7 @@ function TraceData mkTrace_F_GRD (WordXL pc, WordXL next_pc, ISize isize, Bit#(3
    td.word4    = mstatus;
    return td;
 endfunction
-`endif
+#endif
 
 // I_LOAD
 // op    pc    instr_sz    instr    rd    word1    word2    word3    word4
@@ -213,7 +213,7 @@ function TraceData mkTrace_I_STORE (WordXL pc, WordXL next_pc, Bit#(3) funct3, I
    return td;
 endfunction
 
-`ifdef ISA_F
+#ifdef ISA_F
 // F_LOAD
 // op    pc    instr_sz    instr    rd    word1    word2    word3    word4    word5
 // x     x     x           x        x                       eaddr    mstatus  rdval
@@ -227,11 +227,11 @@ function TraceData mkTrace_F_LOAD (WordXL pc, WordXL next_pc, ISize isize, Bit#(
    td.rd       = rd;
    td.word3    = zeroExtend (eaddr);
    td.word4    = mstatus;
-`ifdef ISA_D
+#ifdef ISA_D
    td.word5    = rdval;
-`else
+#else
    td.word5    = extend (rdval);
-`endif
+#endif
    return td;
 endfunction
 
@@ -246,11 +246,11 @@ function TraceData mkTrace_F_STORE (WordXL pc, WordXL next_pc, Bit#(3) funct3, I
    td.instr_sz = isize;
    td.instr    = instr;
    td.word3    = zeroExtend (eaddr);
-`ifdef ISA_D
+#ifdef ISA_D
    td.word5    = stval;
-`else
+#else
    td.word5    = extend (stval);
-`endif
+#endif
    return td;
 endfunction
 
@@ -265,7 +265,7 @@ function TraceData trace_update_fcsr_fflags (TraceData td, Bit#(5) fflags);
    ntd.word2 = (td.word2 | extend (fflags));
    return ntd;
 endfunction
-`endif
+#endif
 
 // AMO
 // op    pc    instr_sz    instr    rd    word1    word2    word3    word4
@@ -340,13 +340,13 @@ function TraceData mkTrace_CSRRX (WordXL pc, WordXL next_pc, ISize isize, Bit#(3
    td.word2    = ((mstatus_valid ? 2 : 0) | (csrvalid ? 1 : 0));
    td.word3    = zeroExtend (csraddr);
    td.word4    = csrval;
-`ifdef ISA_F
-`ifdef RV32
+#ifdef ISA_F
+#ifdef RV32
    td.word5    = extend (mstatus);
-`else
+#else
    td.word5    = mstatus;
-`endif
-`endif
+#endif
+#endif
    return td;
 endfunction
 
@@ -391,7 +391,7 @@ instance FShow#(TraceData);
 
 	 if (td.op == TRACE_I_RD)
 	    fmt = fmt + $format (" rd %0d  rdval %0h", td.rd, td.word1);
-`ifdef ISA_F
+#ifdef ISA_F
 	 else if (td.op == TRACE_F_FRD)
 	    fmt = fmt + $format (" rd %0d  rdval %0h  fflags %05b", td.rd, td.word5, td.word2);
 
@@ -404,7 +404,7 @@ instance FShow#(TraceData);
 
 	 else if (td.op == TRACE_F_STORE)
 	    fmt = fmt + $format (" stval %0h  eaddr %0h", td.word5, td.word3);
-`endif
+#endif
 	 else if (td.op == TRACE_I_LOAD)
 	    fmt = fmt + $format (" rd %0d  rdval %0h  eaddr %0h",
 				 td.rd, td.word1, td.word3);

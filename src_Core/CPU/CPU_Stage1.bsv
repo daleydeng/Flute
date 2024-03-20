@@ -22,16 +22,16 @@ import ConfigReg    :: *;
 import Cur_Cycle :: *;
 
 import isa_priv_M        :: *;
-`ifdef ISA_C
+#ifdef ISA_C
 import convert_instr_c     :: *;
-`endif
+#endif
 
 import CPU_Globals      :: *;
 import Near_Mem_IFC     :: *;
 import GPR_RegFile      :: *;
-`ifdef ISA_F
+#ifdef ISA_F
 import FPR_RegFile      :: *;
-`endif
+#endif
 import CSR_RegFile      :: *;
 import EX_ALU_functions :: *;
 
@@ -66,11 +66,11 @@ module mkCPU_Stage1 #(Bit#(4)         verbosity,
 		      GPR_RegFile_IFC  gpr_regfile,
 		      Bypass           bypass_from_stage2,
 		      Bypass           bypass_from_stage3,
-`ifdef ISA_F
+#ifdef ISA_F
 		      FPR_RegFile_IFC  fpr_regfile,
 		      FBypass          fbypass_from_stage2,
 		      FBypass          fbypass_from_stage3,
-`endif
+#endif
 		      CSR_RegFile_IFC  csr_regfile,
 		      Epoch            cur_epoch,
 		      PrivMode        cur_priv)
@@ -115,7 +115,7 @@ module mkCPU_Stage1 #(Bit#(4)         verbosity,
    Bool rs2_busy = (busy2a || busy2b);
    WordXL rs2_val_bypassed = ((rs2 == 0) ? 0 : rs2b);
 
-`ifdef ISA_F
+#ifdef ISA_F
    // FP Register rs1 read and bypass
    let frs1_val = fpr_regfile.read_rs1 (rs1);
    match { .fbusy1a, .frs1a } = fn_fpr_bypass (fbypass_from_stage3, rs1, frs1_val);
@@ -137,29 +137,29 @@ module mkCPU_Stage1 #(Bit#(4)         verbosity,
    match { .fbusy3b, .frs3b } = fn_fpr_bypass (fbypass_from_stage2, rs3, frs3a);
    Bool frs3_busy = (fbusy3a || fbusy3b);
    WordFL frs3_val_bypassed = frs3b;
-`endif
+#endif
 
    // ALU function
    let alu_inputs = ALU_Inputs {cur_priv       : cur_priv,
 				pc             : rg_stage_input.pc,
 				is_compressed : !rg_stage_input.is_i32_not_i16,
 				instr          : rg_stage_input.instr,
-`ifdef ISA_C
+#ifdef ISA_C
 				instr_C        : rg_stage_input.instr_C,
-`endif
+#endif
             instruction    : rg_stage_input.instruction,
             
 				rs1_val        : rs1_val_bypassed,
 				rs2_val        : rs2_val_bypassed,
-`ifdef ISA_F
+#ifdef ISA_F
 				frs1_val       : frs1_val_bypassed,
 				frs2_val       : frs2_val_bypassed,
 				frs3_val       : frs3_val_bypassed,
 				frm            : csr_regfile.read_frm,
-`ifdef INCLUDE_TANDEM_VERIF
+#ifdef INCLUDE_TANDEM_VERIF
                                 fflags         : csr_regfile.read_fflags,
-`endif
-`endif
+#endif
+#endif
 				mstatus        : csr_regfile.read_mstatus,
 				misa           : csr_regfile.read_misa };
 
@@ -172,7 +172,7 @@ module mkCPU_Stage1 #(Bit#(4)         verbosity,
 					       addr          : alu_outputs.addr,
 					       val1          : alu_outputs.val1,
 					       val2          : alu_outputs.val2,
-`ifdef ISA_F
+#ifdef ISA_F
 					       fval1         : alu_outputs.fval1,
 					       fval2         : alu_outputs.fval2,
 					       fval3         : alu_outputs.fval3,
@@ -180,10 +180,10 @@ module mkCPU_Stage1 #(Bit#(4)         verbosity,
 					       rs_frm_fpr    : alu_outputs.rs_frm_fpr,
 					       val1_frm_gpr  : alu_outputs.val1_frm_gpr,
 					       rounding_mode : alu_outputs.rm,
-`endif
-`ifdef INCLUDE_TANDEM_VERIF
+#endif
+#ifdef INCLUDE_TANDEM_VERIF
 					       trace_data    : alu_outputs.trace_data,
-`endif
+#endif
 					       priv          : cur_priv };
 
    // ----------------
@@ -210,7 +210,7 @@ module mkCPU_Stage1 #(Bit#(4)         verbosity,
 						     addr:      ?,
 						     val1:      ?,
 						     val2:      ?,
-`ifdef ISA_F
+#ifdef ISA_F
 						     fval1           : ?,
 						     fval2           : ?,
 						     fval3           : ?,
@@ -218,10 +218,10 @@ module mkCPU_Stage1 #(Bit#(4)         verbosity,
 					             rs_frm_fpr      : ?,
 					             val1_frm_gpr    : ?,
 						     rounding_mode   : ?,
-`endif
-`ifdef INCLUDE_TANDEM_VERIF
+#endif
+#ifdef INCLUDE_TANDEM_VERIF
 						     trace_data: alu_outputs.trace_data,
-`endif
+#endif
 						     priv:      cur_priv
 						     };
 
@@ -233,12 +233,12 @@ module mkCPU_Stage1 #(Bit#(4)         verbosity,
 	 output_stage1.ostatus = OSTATUS_BUSY;
       end
 
-`ifdef ISA_F
+#ifdef ISA_F
       // Stall if bypass pending for FPR rs1, rs2 or rs3
       else if (frs1_busy || frs2_busy || frs3_busy) begin
 	 output_stage1.ostatus = OSTATUS_BUSY;
       end
-`endif
+#endif
 
       // Trap on fetch-exception
       else if (rg_stage_input.exc) begin
@@ -262,13 +262,13 @@ module mkCPU_Stage1 #(Bit#(4)         verbosity,
 	 let tval = 0;
 	 if (alu_outputs.exc_code == exc_code_ILLEGAL_INSTRUCTION) begin
 	    // The instruction
-`ifdef ISA_C
+#ifdef ISA_C
 	    tval = (rg_stage_input.is_i32_not_i16
 		    ? zeroExtend (rg_stage_input.instr)
 		    : zeroExtend (rg_stage_input.instr_C));
-`else
+#else
 	    tval = zeroExtend (rg_stage_input.instr);
-`endif
+#endif
 	 end
 	 else if (alu_outputs.exc_code == exc_code_INSTR_ADDR_MISALIGNED)
 	    tval = alu_outputs.addr;                           // The branch target pc

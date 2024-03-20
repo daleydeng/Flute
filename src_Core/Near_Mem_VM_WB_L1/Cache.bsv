@@ -302,11 +302,11 @@ module mkCache #(parameter Bit#(3) verbosity)
    // ----------------
    // Reservation regs for AMO LR/SC (Load-Reserved/Store-Conditional)
 
-`ifdef ISA_A
+#ifdef ISA_A
    Reg #(Bool)       rg_lrsc_valid <- mkReg (False);
    Reg #(PA)         rg_lrsc_pa    <- mkRegU;    // Phys. address for an active LR
    Reg #(MemReqSize) rg_lrsc_size  <- mkRegU;
-`endif
+#endif
 
    // ----------------
    // State for choosing next eviction victim
@@ -822,11 +822,11 @@ module mkCache #(parameter Bit#(3) verbosity)
 	 $display ("%0d: INFO: %m.rl_initialize", cur_cycle);
 	 $display ("    Size %0d KB, Associativity %0d, Line size %0d bytes (= %0d XLEN words)",
 		   kb_per_cache, ways_per_cset, (cwords_per_cline * 8),
-`ifdef RV32
+#ifdef RV32
 		   (cwords_per_cline * 2)
-`else
+#else
 		   (cwords_per_cline * 1)
-`endif
+#endif
 		   );
 	 if (verbosity >= 1)
 	    $display ("    All lines (%0d sets %0d ways) initialized to INVALID",
@@ -880,14 +880,14 @@ module mkCache #(parameter Bit#(3) verbosity)
 				   final_ld_val: ?,
 				   final_st_val: ?};
 
-`ifdef ISA_A
+#ifdef ISA_A
 	    // If the line being replaced contains the LRSC reserved addr,
 	    // cancel the reservation.
 	    Bool cancel = (hit_miss_info.hit
 			   && (ram_A_cset_meta [hit_miss_info.way].ctag == fn_PA_to_CTag (rg_lrsc_pa)));
 	    if (cancel)
 	       rg_lrsc_valid <= False;
-`endif
+#endif
 	 end
 	 else begin
 	    // Hit
@@ -908,15 +908,15 @@ module mkCache #(parameter Bit#(3) verbosity)
 	       fa_write (pa, req.f3, req.st_value);
 	       result = Cache_Result {outcome: CACHE_WRITE_HIT, final_ld_val: 0, final_st_val: req.st_value};
 
-`ifdef ISA_A
+#ifdef ISA_A
 	       // Cancel LR/SC reservation if this store is for this addr
 	       // TODO: should we cancel it on ANY store?
 	       if (rg_lrsc_pa == pa)
 		  rg_lrsc_valid <= False;
-`endif
+#endif
 	    end
 
-`ifdef ISA_A
+#ifdef ISA_A
 	    // AMO LR
 	    else if (fv_is_AMO_LR (req)) begin
 	       if (verbosity >= 1)
@@ -978,7 +978,7 @@ module mkCache #(parameter Bit#(3) verbosity)
 	       if (rg_lrsc_pa == pa)
 		  rg_lrsc_valid <= False;
 	    end
-`endif
+#endif
 	 end
 	 return result;
       endactionvalue

@@ -64,9 +64,9 @@ import Near_Mem_IFC     :: *;
 import MMU_Cache_Common :: *;
 import Cache_Decls      :: *;
 
-`ifdef ISA_PRIV_S
+#ifdef ISA_PRIV_S
 import TLB :: *;
-`endif
+#endif
 
 import SoC_Map      :: *;
 import AXI4_Types   :: *;
@@ -89,9 +89,9 @@ interface MMU_Cache_IFC;
    (* always_ready *)
    method Action  req (CacheOp op,
 		       Bit#(3) f3,
-`ifdef ISA_A
+#ifdef ISA_A
 		       Bit#(7) amo_funct7,
-`endif
+#endif
 		       WordXL addr,
 		       CWord st_value,
 		       // The following  args for VM
@@ -123,10 +123,10 @@ interface MMU_Cache_IFC;
    // ----------------
    // For ISA tests: watch memory writes to <tohost> addr
 
-`ifdef WATCH_TOHOST
+#ifdef WATCH_TOHOST
    method Action set_watch_tohost (Bool watch_tohost, Bit#(64) tohost_addr);
    method Bit#(64) mv_tohost_value;
-`endif
+#endif
 
    // Inform core that DDR4 has been initialized and is ready to accept requests
    method Action ma_ddr4_ready;
@@ -161,9 +161,9 @@ typedef enum {MODULE_PRERESET,              // After power on reset, before soft
               MODULE_EXCEPTION_RSP,         // On misaligned and access exceptions
 
               PTW_START,                    // On TLB miss, initiate refill of PTE into TLB
-`ifdef RV64
+#ifdef RV64
 	      PTW_LEVEL_2,                  // Page Table Walk, Request Level 2
-`endif
+#endif
 	      PTW_LEVEL_1,                  // Page Table Walk, Request Level 1
 	      PTW_LEVEL_0,                  // Page Table Walk, Request Level 0
 
@@ -189,7 +189,7 @@ deriving (Bits, Eq, FShow);
 
 Bit#(Wd_User) dummy_user = ?;    // For AXI4 'user' field (here unused)
 
-`ifndef ISA_PRIV_S
+#ifndef ISA_PRIV_S
 
 // VM Xlate related definitions which are only for the case where there is no
 // VM, effectively making the following definitions, dummy ones. If VM, these
@@ -205,7 +205,7 @@ typedef struct {
    } VM_Xlate_Result
 deriving (Bits, FShow);
 
-`endif
+#endif
 
 // ================================================================
 // Convert RISC-V funct3 code into AXI4_Size code (number of bytes in a beat)
@@ -439,10 +439,10 @@ module mkMMU_Cache  #(parameter Bool dmem_not_imem)  (MMU_Cache_IFC);
    // Fabric request/response
    AXI4_Master_Xactor_IFC #(Wd_Id, Wd_Addr, Wd_Data, Wd_User) master_xactor <- mkAXI4_Master_Xactor;
 
-`ifdef ISA_PRIV_S
+#ifdef ISA_PRIV_S
    // The TLB
    TLB_IFC  tlb <- mkTLB (dmem_not_imem);
-`endif
+#endif
 
    // For discarding write-responses
    CreditCounter_IFC #(4) ctr_wr_rsps_pending <- mkCreditCounter; // Max 15 writes outstanding
@@ -463,20 +463,20 @@ module mkMMU_Cache  #(parameter Bool dmem_not_imem)  (MMU_Cache_IFC);
    // Registers holding incoming request args
    Reg #(CacheOp)    rg_op          <- mkRegU;    // CACHE_LD, CACHE_ST, CACHE_AMO
    Reg #(Bit#(3))   rg_f3          <- mkRegU;    // rg_f3[1:0] specifies B/H/W/D access size
-`ifdef ISA_A
+#ifdef ISA_A
    Reg #(Bit#(7))   rg_amo_funct7  <- mkRegU;    // specifies which kind of AMO op
-`endif
+#endif
    Reg #(WordXL)     rg_addr        <- mkRegU;    // VA or PA
    Reg #(Bit#(64))  rg_st_amo_val  <- mkRegU;    // Store-value for ST, SC, AMO
 
    // The following are needed for VM
-`ifdef ISA_PRIV_S
+#ifdef ISA_PRIV_S
    Reg #(PrivMode)  rg_priv        <- mkRegU;    // Privilege level for this request
    Reg #(Bit#(1))   rg_sstatus_SUM <- mkRegU;    // SUM bit in SSTATUS CSR
    Reg #(Bit#(1))   rg_mstatus_MXR <- mkRegU;    // MXR bit in MSTATUS CSR
 
    Reg #(WordXL)     rg_satp        <- mkRegU;    // Copy of value in SATP CSR { VM_Mode, ASID, PPN }
-`else
+#else
    // Dummy registers in non-VM mode
    PrivMode x = priv_M;
    Reg #(PrivMode)  rg_priv        = fn_genNullRegIfc (x);
@@ -487,29 +487,29 @@ module mkMMU_Cache  #(parameter Bool dmem_not_imem)  (MMU_Cache_IFC);
 
    WordXL z = ?;
    Reg #(WordXL)     rg_satp        = fn_genNullRegIfc (z);
-`endif
+#endif
 
    // Phys addr (initially taken from rg_addr; VM xlation may replace it)
    Reg #(PA)  rg_pa <- mkRegU;
 
-`ifdef ISA_PRIV_S
+#ifdef ISA_PRIV_S
    // Derivations from rg_addr (virtual addr)
    VA      va     = fn_WordXL_to_VA (rg_addr);
    VPN     vpn    = fn_Addr_to_VPN (va);
-`ifdef RV64
+#ifdef RV64
    VPN_J   vpn_2  = fn_Addr_to_VPN_2 (va);
-`endif
+#endif
    VPN_J   vpn_1  = fn_Addr_to_VPN_1 (va);
    VPN_J   vpn_0  = fn_Addr_to_VPN_0 (va);
    Offset  offset = fn_Addr_to_Offset (rg_addr);
-`endif
+#endif
 
    CSet_in_Cache                 cset_in_cache       = fn_Addr_to_CSet_in_Cache  (rg_addr);
    CSet_CWord_in_Cache           cset_cword_in_cache = fn_Addr_to_CSet_CWord_in_Cache (rg_addr);
    CWord_in_CLine                cword_in_cline      = fn_Addr_to_CWord_in_CLine (rg_addr);
    Bit#(Bits_per_Byte_in_CWord) byte_in_cword = fn_Addr_to_Byte_in_CWord  (rg_addr);
 
-`ifdef ISA_PRIV_S
+#ifdef ISA_PRIV_S
    // Derivations from rg_satp
    VM_Mode  vm_mode  = fn_satp_to_VM_Mode (rg_satp);
    ASID     asid     = fn_satp_to_ASID    (rg_satp);
@@ -518,7 +518,7 @@ module mkMMU_Cache  #(parameter Bool dmem_not_imem)  (MMU_Cache_IFC);
 
    // We continuously probe the TLB with (asid, vpn)
    TLB_Lookup_Result  tlb_result = tlb.lookup (asid, vpn);
-`endif
+#endif
 
    // Outputs
    Reg #(Bool)      dw_valid             <- mkDWire (False);
@@ -532,11 +532,11 @@ module mkMMU_Cache  #(parameter Bool dmem_not_imem)  (MMU_Cache_IFC);
    // This reg is used during PTWs
    Reg #(PA) rg_pte_pa <- mkRegU;
 
-`ifdef ISA_A
+#ifdef ISA_A
    // Reservation regs for AMO LR/SC (Load-Reserved/Store-Conditional)
    Reg #(Bool)     rg_lrsc_valid  <- mkReg (False);
    Reg #(PA)       rg_lrsc_pa     <- mkRegU;    // Phys. address for an active LR
-`endif
+#endif
 
    // This reg is used in the reset-loop when resetting all states
    Reg #(CSet_in_Cache)  rg_cset_in_cache   <- mkReg (0);
@@ -553,14 +553,14 @@ module mkMMU_Cache  #(parameter Bool dmem_not_imem)  (MMU_Cache_IFC);
    // the victim is picked 'randomly' according to this register
    Reg #(Way_in_CSet)  rg_victim_way <- mkRegU;
 
-`ifdef WATCH_TOHOST
+#ifdef WATCH_TOHOST
    // See NOTE: "tohost" above.
    // "tohost" addr on which to monitor writes, for standard ISA tests.
    // These are set by the 'set_watch_tohost' method but are otherwise read-only.
    Reg #(Bool)      rg_watch_tohost <- mkReg (False);
    Reg #(Bit#(64)) rg_tohost_addr  <- mkReg ('h_8000_1000);
    Reg #(Bit#(64)) rg_tohost_value <- mkReg (0);
-`endif
+#endif
 
    // ----------------------------------------------------------------
    // This function initiates a read request on the 'B' ports of the rams
@@ -616,21 +616,21 @@ module mkMMU_Cache  #(parameter Bool dmem_not_imem)  (MMU_Cache_IFC);
    endfunction
 
    // Abbreviations testing for LR and SC (avoids ifdef clutter later)
-`ifdef ISA_A
+#ifdef ISA_A
    Bool is_AMO    = (rg_op == CACHE_AMO);
    Bool is_AMO_LR = ((rg_op == CACHE_AMO) && (rg_amo_funct7 [6:2] == f5_AMO_LR));
    Bool is_AMO_SC = ((rg_op == CACHE_AMO) && (rg_amo_funct7 [6:2] == f5_AMO_SC));
-`else
+#else
    Bool is_AMO    = False;
    Bool is_AMO_LR = False;
    Bool is_AMO_SC = False;
-`endif
+#endif
 
    Exc_Code access_exc_code     = fn_access_exc_code     (dmem_not_imem, ((rg_op == CACHE_LD) || is_AMO_LR));
 
-`ifdef ISA_PRIV_S
+#ifdef ISA_PRIV_S
    Exc_Code page_fault_exc_code = fn_page_fault_exc_code (dmem_not_imem, ((rg_op == CACHE_LD) || is_AMO_LR));
-`endif
+#endif
 
    // ----------------------------------------------------------------
    // Functions to drive read-responses (outputs)
@@ -764,7 +764,7 @@ module mkMMU_Cache  #(parameter Bool dmem_not_imem)  (MMU_Cache_IFC);
    // When PTE.A or PTE.D is updated, this function records it in the TLB
    // and enqueues a writeback to memory.
 
-`ifdef ISA_PRIV_S
+#ifdef ISA_PRIV_S
    FIFOF #(Tuple2 #(PA, PTE)) f_pte_writebacks <- mkFIFOF;
 
    function Action fa_record_pte_A_D_updates (TLB_Lookup_Result  tlb_result1,  VM_Xlate_Result  vm_xlate_result);
@@ -788,7 +788,7 @@ module mkMMU_Cache  #(parameter Bool dmem_not_imem)  (MMU_Cache_IFC);
       let f3 = ((xlen == 32) ? f3_SW : f3_SD);
       fa_fabric_send_write_req (f3, pa, zeroExtend (pte));
    endrule
-`endif
+#endif
 
    // ================================================================
    // BEHAVIOR
@@ -802,13 +802,13 @@ module mkMMU_Cache  #(parameter Bool dmem_not_imem)  (MMU_Cache_IFC);
       rg_lower_word32_full <= False;
 
       // Flush the TLB
-`ifdef ISA_PRIV_S
+#ifdef ISA_PRIV_S
       tlb.flush;
-`endif
+#endif
 
-`ifdef ISA_A
+#ifdef ISA_A
       rg_lrsc_valid  <= False;
-`endif
+#endif
 
       if (f_reset_reqs.first == REQUESTOR_RESET_IFC) begin
 	 master_xactor.reset;
@@ -818,11 +818,11 @@ module mkMMU_Cache  #(parameter Bool dmem_not_imem)  (MMU_Cache_IFC);
       $display ("%0d: %s: cache size %0d KB, associativity %0d, line size %0d bytes (= %0d XLEN words)",
 		cur_cycle, d_or_i, kb_per_cache, ways_per_cset,
 		(cwords_per_cline * 8),
-`ifdef RV32
+#ifdef RV32
 		(cwords_per_cline * 2)
-`else
+#else
 		(cwords_per_cline * 1)
-`endif
+#endif
 		);
    endrule
 
@@ -854,9 +854,9 @@ module mkMMU_Cache  #(parameter Bool dmem_not_imem)  (MMU_Cache_IFC);
    // Otherwise, moves to other states that handle TLB misses, cache
    // misses, 1-cycle delayed responses for ST and AMO, I/O requests, etc.
 
-`ifdef ISA_PRIV_S
+#ifdef ISA_PRIV_S
    (* descending_urgency = "rl_probe_and_immed_rsp, rl_writeback_updated_PTE" *)
-`endif
+#endif
 
    rule rl_probe_and_immed_rsp (rg_ddr4_ready && (rg_state == MODULE_RUNNING));
 
@@ -864,17 +864,17 @@ module mkMMU_Cache  #(parameter Bool dmem_not_imem)  (MMU_Cache_IFC);
       if (cfg_verbosity > 1) begin
 	 $display ("%0d: %s: rl_probe_and_immed_rsp; eaddr %0h", cur_cycle, d_or_i, rg_addr);
 
-`ifdef ISA_PRIV_S
-`ifdef RV32
+#ifdef ISA_PRIV_S
+#ifdef RV32
 	 if (vm_mode != satp_mode_RV32_bare)
 	    $display ("        Priv:%0d  SATP:{mode %0d asid %0h pa %0h}  VA:%0h.%0h.%0h",
 		      rg_priv, vm_mode, asid, satp_pa, vpn_1, vpn_0, offset);
-`elsif SV39
+#elif defined SV39
 	 if (vm_mode != satp_mode_RV64_bare)
 	    $display ("        Priv:%0d  SATP:{mode %0d asid %0h pa %0h}  VA:%0h.%0h.%0h",
 		      rg_priv, vm_mode, asid, satp_pa, vpn_1, vpn_0, offset);
-`endif
-`endif
+#endif
+#endif
 	 $display ("        eaddr = {CTag 0x%0h  CSet 0x%0h  Word64 0x%0h  Byte 0x%0h}",
 		   fn_PA_to_CTag (fn_WordXL_to_PA (rg_addr)),
 		   cset_in_cache,
@@ -887,7 +887,7 @@ module mkMMU_Cache  #(parameter Bool dmem_not_imem)  (MMU_Cache_IFC);
       // ----------------
       // Virtual Memory translation
 
-`ifdef ISA_PRIV_S
+#ifdef ISA_PRIV_S
       VM_Xlate_Result vm_xlate_result <- fav_vm_xlate (rg_addr,
 						       rg_satp,
 						       tlb_result,
@@ -896,12 +896,12 @@ module mkMMU_Cache  #(parameter Bool dmem_not_imem)  (MMU_Cache_IFC);
 						       rg_priv,
 						       rg_sstatus_SUM,
 						       rg_mstatus_MXR);
-`else
+#else
       // In non-VM, PA is always WordXL
       VM_Xlate_Result vm_xlate_result = VM_Xlate_Result {outcome:      VM_XLATE_OK,
 							 pa:           rg_addr,
 							 exc_code:     ?};
-`endif
+#endif
 
       if (cfg_verbosity > 1)
 	 $display ("    TLB result: ", fshow (vm_xlate_result));
@@ -919,9 +919,9 @@ module mkMMU_Cache  #(parameter Bool dmem_not_imem)  (MMU_Cache_IFC);
 
       // ---- vm_xlate_result.outcome == VM_XLATE_OK
       else begin
-`ifdef ISA_PRIV_S
+#ifdef ISA_PRIV_S
 	 fa_record_pte_A_D_updates (tlb_result, vm_xlate_result);
-`endif
+#endif
 
 	 rg_pa <= vm_xlate_result.pa;
 	 let is_mem_addr = soc_map.m_is_mem_addr (fn_PA_to_Fabric_Addr (vm_xlate_result.pa));
@@ -948,14 +948,14 @@ module mkMMU_Cache  #(parameter Bool dmem_not_imem)  (MMU_Cache_IFC);
 		  // Cache hit; drive response
 		  fa_drive_mem_rsp (rg_f3, rg_addr, word64, 0);
 
-`ifdef ISA_A
+#ifdef ISA_A
 		  if (is_AMO_LR) begin
 		     rg_lrsc_valid <= True;
 		     rg_lrsc_pa    <= vm_xlate_result.pa;
 		     if (cfg_verbosity > 1)
 			$display ("        AMO LR: reserving PA 0x%0h", vm_xlate_result.pa);
 		  end
-`endif
+#endif
 		  if (cfg_verbosity > 1) begin
 		     $display ("        Read-hit: addr 0x%0h word64 0x%0h", rg_addr, word64);
 		  end
@@ -965,14 +965,14 @@ module mkMMU_Cache  #(parameter Bool dmem_not_imem)  (MMU_Cache_IFC);
 		  rg_state <= CACHE_START_REFILL;
 		  if (cfg_verbosity > 1)
 		     $display ("        Read Miss: -> CACHE_START_REFILL.");
-`ifdef ISA_A
+#ifdef ISA_A
 		  // TODO: this is pessimistic; unnecessary in a single-hart system?
 		  if (is_AMO_LR && (vm_xlate_result.pa == rg_lrsc_pa)) begin
 		     rg_lrsc_valid <= False;
 		     if (cfg_verbosity > 1)
 			$display ("        AMO LR: cache refill: cancelling LR/SC reservation for PA 0x%0h", rg_lrsc_pa);
 		  end
-`endif
+#endif
 	       end
 	    end
 
@@ -980,7 +980,7 @@ module mkMMU_Cache  #(parameter Bool dmem_not_imem)  (MMU_Cache_IFC);
 	    // Memory ST and AMO SC
 	    else if ((rg_op == CACHE_ST) || is_AMO_SC) begin
 	       Bool do_write = True;    // Always True for ST; success/fail for AMO_SC
-`ifdef ISA_A
+#ifdef ISA_A
 	       // ST: if to an LR/SC reserved address, invalidate the reservation
 	       if ((rg_op == CACHE_ST) && (vm_xlate_result.pa == rg_lrsc_pa)) begin
 		  rg_lrsc_valid <= False;
@@ -1011,7 +1011,7 @@ module mkMMU_Cache  #(parameter Bool dmem_not_imem)  (MMU_Cache_IFC);
 		  if (cfg_verbosity > 1)
 		     $display ("        AMO SC result = %0d", lrsc_result);
 	       end
-`endif
+#endif
 	       if (do_write) begin
 		  // ST, or successful SC
 		  if (hit) begin
@@ -1051,7 +1051,7 @@ module mkMMU_Cache  #(parameter Bool dmem_not_imem)  (MMU_Cache_IFC);
 	       end
 	    end
 
-`ifdef ISA_A
+#ifdef ISA_A
 	    // ----------------
 	    // Remaining AMOs
 	    else begin
@@ -1103,12 +1103,12 @@ module mkMMU_Cache  #(parameter Bool dmem_not_imem)  (MMU_Cache_IFC);
 		  rg_state      <= CACHE_ST_AMO_RSP;
 	       end
 	    end
-`endif
+#endif
 	 end
       end
    endrule: rl_probe_and_immed_rsp
 
-`ifdef ISA_PRIV_S
+#ifdef ISA_PRIV_S
    // ****************************************************************
    // TLB REFILLS (Page Table Walks)
    // ****************************************************************
@@ -1118,7 +1118,7 @@ module mkMMU_Cache  #(parameter Bool dmem_not_imem)  (MMU_Cache_IFC);
 
    rule rl_start_tlb_refill ((rg_state == PTW_START) && (ctr_wr_rsps_pending.value == 0));
 
-`ifdef RV32
+#ifdef RV32
 
       // RV32.Sv32: Page Table top is at Level 1
 
@@ -1134,7 +1134,8 @@ module mkMMU_Cache  #(parameter Bool dmem_not_imem)  (MMU_Cache_IFC);
 
       rg_pte_pa <= lev_1_pte_pa;
       rg_state  <= PTW_LEVEL_1;
-`elsif SV39    // ifdef RV32
+// ifdef RV32
+#elif defined SV39    
 
       // RV64.Sv39: Page Table top is at Level 2
 
@@ -1150,14 +1151,14 @@ module mkMMU_Cache  #(parameter Bool dmem_not_imem)  (MMU_Cache_IFC);
 
       rg_pte_pa <= lev_2_pte_pa;
       rg_state  <= PTW_LEVEL_2;
-`endif         // elsif SV39
+#endif         // elsif SV39
 
    endrule
 
    // ----------------
    // Receive Level 2 PTE and process it (Sv39 or Sv48 only)
 
-`ifdef SV39
+#ifdef SV39
    rule rl_ptw_level_2 (rg_state == PTW_LEVEL_2);
       // Memory read-response is a level 1 PTE
       let  mem_rsp <- pop_o (master_xactor.o_rd_data);
@@ -1240,7 +1241,7 @@ module mkMMU_Cache  #(parameter Bool dmem_not_imem)  (MMU_Cache_IFC);
 	 end
       end
    endrule: rl_ptw_level_2
-`endif      // ifdef SV39
+#endif      // ifdef SV39
 
    // ----------------
    // Receive Level 1 PTE and process it (Sv32, Sv39 or Sv48)
@@ -1251,17 +1252,17 @@ module mkMMU_Cache  #(parameter Bool dmem_not_imem)  (MMU_Cache_IFC);
 
       Bit#(64) x64 = zeroExtend (mem_rsp.rdata);
       WordXL pte;
-`ifdef RV32
+#ifdef RV32
       // PTE is lower or upper 32b word of 64b mem response
       pte = x64 [31:0];
       if ((valueOf (Wd_Data) == 64) && (rg_pte_pa [2] == 1'b1))
 	 pte = x64 [63:32];
-`else       // ifdef RV32
+#else       // ifdef RV32
       // PTE is 64b response
       // TODO: this is ok only when Wd_Data == 64
       // When Wd_Data == 32, have to do two transactions to get a PTE
       pte = mem_rsp.rdata;
-`endif      // ifndef RV32
+#endif      // ifndef RV32
 
       // Bus error
       if (mem_rsp.rresp != axi4_resp_okay) begin
@@ -1296,11 +1297,11 @@ module mkMMU_Cache  #(parameter Bool dmem_not_imem)  (MMU_Cache_IFC);
 	 PA           lev_0_pte_pa        = lev_0_PTN_pa + vpn_0_pa;
 	 PA           lev_0_pte_pa_w64    = { lev_0_pte_pa [pa_sz - 1 : 3], 3'b0 };    // 64b-aligned addr
 	 Fabric_Addr  lev_0_pte_pa_w64_fa = fn_PA_to_Fabric_Addr (lev_0_pte_pa_w64);
-`ifdef SV32
+#ifdef SV32
 	 AXI4_Size    axi4_size           = axsize_4;
-`else
+#else
 	 AXI4_Size    axi4_size           = axsize_8;
-`endif
+#endif
 	 fa_fabric_send_read_req (lev_0_pte_pa_w64_fa, axi4_size);
 
 	 rg_pte_pa <= lev_0_pte_pa;
@@ -1349,17 +1350,17 @@ module mkMMU_Cache  #(parameter Bool dmem_not_imem)  (MMU_Cache_IFC);
 
       Bit#(64) x64 = zeroExtend (mem_rsp.rdata);
       WordXL pte;
-`ifdef RV32
+#ifdef RV32
       // PTE is lower or upper 32b word of 64b mem response
       pte = x64 [31:0];
       if ((valueOf (Wd_Data) == 64) && (rg_pte_pa [2] == 1'b1))
 	 pte = x64 [63:32];
-`else       // ifdef RV32
+#else       // ifdef RV32
       // PTE is 64b response
       // TODO: this is ok only when Wd_Data == 64
       // When Wd_Data == 32, have to do two transactions to get a PTE
       pte = mem_rsp.rdata;
-`endif      // ifndef RV32
+#endif      // ifndef RV32
 
       // Bus error
       if (mem_rsp.rresp != axi4_resp_okay) begin
@@ -1405,7 +1406,7 @@ module mkMMU_Cache  #(parameter Bool dmem_not_imem)  (MMU_Cache_IFC);
 	 end
       end
    endrule
-`endif      // ifdef ISA_PRIV_S
+#endif      // ifdef ISA_PRIV_S
 
    // ****************************************************************
    // CACHE REFILLS
@@ -1586,7 +1587,7 @@ module mkMMU_Cache  #(parameter Bool dmem_not_imem)  (MMU_Cache_IFC);
       dw_output_ld_val     <= zeroExtend (rg_ld_val);        // Irrelevant for ST; relevant for SC, AMO
       dw_output_st_amo_val <= zeroExtend (rg_st_amo_val);
 
-`ifdef WATCH_TOHOST
+#ifdef WATCH_TOHOST
       // ----------------
       // "tohost" addr on which to monitor writes, for standard ISA tests.
       // See NOTE: "tohost" above.
@@ -1603,7 +1604,7 @@ module mkMMU_Cache  #(parameter Bool dmem_not_imem)  (MMU_Cache_IFC);
 	       $display ("  (<tohost>  addr %0h  data %0h)", rg_tohost_addr, rg_st_amo_val);
 	    end
 	 end
-`endif
+#endif
    endrule
 
    // ----------------------------------------------------------------
@@ -1624,10 +1625,10 @@ module mkMMU_Cache  #(parameter Bool dmem_not_imem)  (MMU_Cache_IFC);
       Fabric_Addr fabric_addr = fn_PA_to_Fabric_Addr (rg_pa);
       fa_fabric_send_read_req (fabric_addr, fn_f3_to_AXI4_Size (rg_f3));
 
-`ifdef ISA_A
+#ifdef ISA_A
       // Invalidate LR/SC reservation if AMO_LR
       if (is_AMO_LR) rg_lrsc_valid <= False;
-`endif
+#endif
       rg_state <= IO_AWAITING_READ_RSP;
    endrule
 
@@ -1674,9 +1675,9 @@ module mkMMU_Cache  #(parameter Bool dmem_not_imem)  (MMU_Cache_IFC);
    // No caching, send request directly to fabric.
    // TODO: Move this into rl_probe_and_immed_rsp, post MMU translation
 
-`ifdef ISA_PRIV_S
+#ifdef ISA_PRIV_S
    (* descending_urgency = "rl_io_write_req, rl_writeback_updated_PTE" *)
-`endif
+#endif
 
    rule rl_io_write_req ((rg_state == IO_REQ) && (rg_op == CACHE_ST));
       if (cfg_verbosity > 1)
@@ -1694,7 +1695,7 @@ module mkMMU_Cache  #(parameter Bool dmem_not_imem)  (MMU_Cache_IFC);
    // ----------------------------------------------------------------
    // Memory-mapped I/O AMO_SC requests. Always fail.
 
-`ifdef ISA_A
+#ifdef ISA_A
    rule rl_io_AMO_SC_req ((rg_state == IO_REQ) && is_AMO_SC);
 
       rg_ld_val <= 1;    // 1 is LR/SC failure value
@@ -1707,14 +1708,14 @@ module mkMMU_Cache  #(parameter Bool dmem_not_imem)  (MMU_Cache_IFC);
 	 $display ("    => rl_ST_AMO_response");
       end
    endrule
-`endif
+#endif
 
    // ----------------------------------------------------------------
    // Memory-mapped I/O AMO requests other than LR/SC
    // Fail with STORE/AMO Access fault exception
    // TODO: Extend fabric to do these ops at the I/O device?
 
-`ifdef ISA_A
+#ifdef ISA_A
    rule rl_io_AMO_op_req ((rg_state == IO_REQ) && is_AMO && (! is_AMO_LR) && (! is_AMO_SC));
       if (cfg_verbosity > 1)
 	 $display ("%0d: %s.rl_io_AMO_op_req; f3 0x%0h vaddr %0h  paddr %0h",
@@ -1726,16 +1727,16 @@ module mkMMU_Cache  #(parameter Bool dmem_not_imem)  (MMU_Cache_IFC);
       rg_state <= IO_AWAITING_AMO_READ_RSP;
 
    endrule
-`endif
+#endif
 
    // ----------------
    // Receive I/O AMO read response from fabric,
    // Do the AMO op, and send store to fabric
 
-`ifdef ISA_A
-`ifdef ISA_PRIV_S
+#ifdef ISA_A
+#ifdef ISA_PRIV_S
    (* descending_urgency = "rl_io_AMO_read_rsp, rl_writeback_updated_PTE" *)
-`endif
+#endif
 
    rule rl_io_AMO_read_rsp (rg_state == IO_AWAITING_AMO_READ_RSP);
       let rd_data <- pop_o (master_xactor.o_rd_data);
@@ -1775,7 +1776,7 @@ module mkMMU_Cache  #(parameter Bool dmem_not_imem)  (MMU_Cache_IFC);
 	    $display ("    => rl_ST_AMO_response");
       end
    endrule
-`endif
+#endif
 
    // ----------------------------------------------------------------
    // Discard write-responses from the fabric
@@ -1841,9 +1842,9 @@ module mkMMU_Cache  #(parameter Bool dmem_not_imem)  (MMU_Cache_IFC);
    // As soon as this method is called, the module starts working on this new request.
    method Action  req (CacheOp op,
 		       Bit#(3) f3,
-`ifdef ISA_A
+#ifdef ISA_A
 		       Bit#(7) amo_funct7,
-`endif
+#endif
 		       Addr addr,
 		       Bit#(64) st_value,
 		       // The following  args for VM
@@ -1858,16 +1859,16 @@ module mkMMU_Cache  #(parameter Bool dmem_not_imem)  (MMU_Cache_IFC);
 	 $display ("    priv:", fmt_PrivMode (priv),
 		   " sstatus_SUM:%0d mstatus_MXR:%0d satp:0x%0h",
 		   sstatus_SUM,    mstatus_MXR,    satp);
-`ifdef ISA_A
+#ifdef ISA_A
 	 $display ("    amo_funct7 = 0x%0h", amo_funct7);
-`endif
+#endif
       end
 
       rg_op          <= op;
       rg_f3          <= f3;
-`ifdef ISA_A
+#ifdef ISA_A
       rg_amo_funct7  <= amo_funct7;
-`endif
+#endif
       rg_addr        <= addr;
       rg_st_amo_val  <= st_value;
 
@@ -1931,14 +1932,14 @@ module mkMMU_Cache  #(parameter Bool dmem_not_imem)  (MMU_Cache_IFC);
 
    // TLB flush
    method Action tlb_flush;
-`ifdef ISA_PRIV_S
+#ifdef ISA_PRIV_S
       tlb.flush;
       rg_state <= MODULE_READY;
       if (cfg_verbosity > 1)
 	 $display ("%0d: %s.tlb_flush", cur_cycle, d_or_i);
-`else
+#else
       noAction;
-`endif
+#endif
    endmethod
 
    // Fabric master interface
@@ -1950,7 +1951,7 @@ module mkMMU_Cache  #(parameter Bool dmem_not_imem)  (MMU_Cache_IFC);
    // ----------------
    // For ISA tests: watch memory writes to <tohost> addr
 
-`ifdef WATCH_TOHOST
+#ifdef WATCH_TOHOST
    method Action set_watch_tohost (Bool watch_tohost, Bit#(64) tohost_addr);
       rg_watch_tohost <= watch_tohost;
       rg_tohost_addr  <= tohost_addr;
@@ -1960,7 +1961,7 @@ module mkMMU_Cache  #(parameter Bool dmem_not_imem)  (MMU_Cache_IFC);
    method Bit#(64) mv_tohost_value;
       return rg_tohost_value;
    endmethod
-`endif
+#endif
 
    // Inform core that DDR4 has been initialized and is ready to accept requests
    method Action ma_ddr4_ready;

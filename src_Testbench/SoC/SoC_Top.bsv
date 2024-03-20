@@ -37,9 +37,9 @@ import AXI4_Fabric    :: *;
 import AXI4_Deburster :: *;
 import AXI_Widths     :: *;
 
-`ifdef INCLUDE_DMEM_SLAVE
+#ifdef INCLUDE_DMEM_SLAVE
 import AXI4_Lite_Types :: *;
-`endif
+#endif
 
 import Fabric_Defs :: *;
 import SoC_Map     :: *;
@@ -56,37 +56,37 @@ import Boot_ROM       :: *;
 import Mem_Controller :: *;
 import UART_Model     :: *;
 
-`ifdef INCLUDE_CAMERA_MODEL
+#ifdef INCLUDE_CAMERA_MODEL
 import Camera_Model   :: *;
-`endif
+#endif
 
-`ifdef INCLUDE_ACCEL0
+#ifdef INCLUDE_ACCEL0
 import AXI4_Accel_IFC :: *;
 import AXI4_Accel     :: *;
-`endif
+#endif
 
-`ifdef INCLUDE_TANDEM_VERIF
+#ifdef INCLUDE_TANDEM_VERIF
 import tv_buffer :: *;
-`endif
+#endif
 
-`ifdef INCLUDE_GDB_CONTROL
+#ifdef INCLUDE_GDB_CONTROL
 import External_Control :: *;    // Control requests/responses from HSFE
 import Debug_Module     :: *;
-`endif
+#endif
 
 // ================================================================
 // The outermost interface of the SoC
 
 interface SoC_Top_IFC;
-`ifdef INCLUDE_GDB_CONTROL
+#ifdef INCLUDE_GDB_CONTROL
    // To external controller (E.g., GDB)
    interface Server #(Control_Req, Control_Rsp) server_external_control;
-`endif
+#endif
 
-`ifdef INCLUDE_TANDEM_VERIF
+#ifdef INCLUDE_TANDEM_VERIF
    // To tandem verifier
    interface Get #(TVBuffer) tv_verifier_info_get;
-`endif
+#endif
 
    // External real memory
    interface MemoryClient #(Bits_per_Raw_Mem_Addr, Bits_per_Raw_Mem_Word)  to_raw_mem;
@@ -108,10 +108,10 @@ interface SoC_Top_IFC;
 
    // ----------------
    // For ISA tests: watch memory writes to <tohost> addr
-`ifdef WATCH_TOHOST
+#ifdef WATCH_TOHOST
    method Action set_watch_tohost (Bool  watch_tohost, Fabric_Addr  tohost_addr);
    method Bit#(64) mv_tohost_value;
-`endif
+#endif
 
    // ----------------
    // Inform core that DDR4 has been initialized and is ready to accept requests
@@ -129,9 +129,9 @@ endinterface
 
 typedef enum {SOC_START,
 	      SOC_RESETTING,
-`ifdef INCLUDE_GDB_CONTROL
+#ifdef INCLUDE_GDB_CONTROL
 	      SOC_RESETTING_NDM,
-`endif
+#endif
 	      SOC_IDLE} SoC_State
 deriving (Bits, Eq, FShow);
 
@@ -173,10 +173,10 @@ module mkSoC_Top (SoC_Top_IFC);
    // SoC IPs
    UART_IFC   uart0  <- mkUART;
 
-`ifdef INCLUDE_ACCEL0
+#ifdef INCLUDE_ACCEL0
    // Accel0 master to fabric
    AXI4_Accel_IFC  accel0 <- mkAXI4_Accel;
-`endif
+#endif
 
    // ----------------
    // SoC fabric master connections
@@ -193,10 +193,10 @@ module mkSoC_Top (SoC_Top_IFC);
                    dummy_master = dummy_AXI4_Master_ifc;
    mkConnection (dummy_master, core.dma_server);
 
-`ifdef INCLUDE_ACCEL0
+#ifdef INCLUDE_ACCEL0
    // accel_aes0 to fabric
    mkConnection (accel0.master,  fabric.v_from_masters [accel0_master_num]);
-`endif
+#endif
 
    // ----------------
    // SoC fabric slave connections
@@ -213,21 +213,21 @@ module mkSoC_Top (SoC_Top_IFC);
    // Fabric to UART0
    mkConnection (fabric.v_to_slaves [uart0_slave_num],  uart0.slave);
 
-`ifdef INCLUDE_ACCEL0
+#ifdef INCLUDE_ACCEL0
    // Fabric to accel0
    mkConnection (fabric.v_to_slaves [accel0_slave_num], accel0.slave);
-`endif
+#endif
 
-`ifdef HTIF_MEMORY
+#ifdef HTIF_MEMORY
    AXI4_Slave_IFC#(Wd_Id, Wd_Addr, Wd_Data, Wd_User) htif <- mkAxi4LRegFile(bytes_per_htif);
 
    mkConnection (fabric.v_to_slaves [htif_slave_num], htif);
-`endif
+#endif
 
    // ----------------------------------------------------------------
    // Optional AXI4-Lite D-cache slave interface tie-off (not used)
 
-`ifdef INCLUDE_DMEM_SLAVE
+#ifdef INCLUDE_DMEM_SLAVE
    rule rl_always_dmem_slave (True);
       core.cpu_dmem_slave.m_arvalid (False, ?, ?, ?);
       core.cpu_dmem_slave.m_rready (False);
@@ -235,7 +235,7 @@ module mkSoC_Top (SoC_Top_IFC);
       core.cpu_dmem_slave.m_wvalid (False, ?, ?);
       core.cpu_dmem_slave.m_bready (False);
    endrule
-`endif
+#endif
 
    // ----------------
    // Connect interrupt sources for CPU external interrupt request inputs.
@@ -250,11 +250,11 @@ module mkSoC_Top (SoC_Top_IFC);
       core.core_external_interrupt_sources [irq_num_uart0].m_interrupt_req (intr);
       Integer last_irq_num = irq_num_uart0;
 
-`ifdef INCLUDE_ACCEL0
+#ifdef INCLUDE_ACCEL0
       Bool intr_accel0 = accel0.interrupt_req;
       core.core_external_interrupt_sources [irq_num_accel0].m_interrupt_req (intr_accel0);
       last_irq_num = irq_num_accel0;
-`endif
+#endif
 
       // Tie off remaining interrupt request lines (2..N)
       for (Integer j = last_irq_num + 1; j < valueOf (N_External_Interrupt_Sources); j = j + 1)
@@ -300,11 +300,11 @@ module mkSoC_Top (SoC_Top_IFC);
 
 	 uart0.set_addr_map (soc_map.m_uart0_addr_base, soc_map.m_uart0_addr_lim);
 
-`ifdef INCLUDE_ACCEL0
+#ifdef INCLUDE_ACCEL0
 	 accel0.init (fabric_default_id,
 		      soc_map.m_accel0_addr_base,
 		      soc_map.m_accel0_addr_lim);
-`endif
+#endif
 
 	 if (verbosity != 0) begin
 	    $display ("  SoC address map:");
@@ -343,7 +343,7 @@ module mkSoC_Top (SoC_Top_IFC);
    // NDM (non-debug-module) reset (requested from Debug Module)
    // Request argument indicates if CPU comes up running or halted
 
-`ifdef INCLUDE_GDB_CONTROL
+#ifdef INCLUDE_GDB_CONTROL
    Reg #(Bool) rg_running <- mkRegU;
 
    rule rl_ndm_reset_start (rg_state == SOC_IDLE);
@@ -366,12 +366,12 @@ module mkSoC_Top (SoC_Top_IFC);
       $display ("%0d:%m.rl_ndm_reset_complete (non-debug-module) running = ",
 		cur_cycle, fshow (rg_running));
    endrule
-`endif
+#endif
 
    // ================================================================
    // BEHAVIOR WITH DEBUG MODULE
 
-`ifdef INCLUDE_GDB_CONTROL
+#ifdef INCLUDE_GDB_CONTROL
    // ----------------------------------------------------------------
    // External debug requests and responses (e.g., GDB)
 
@@ -419,20 +419,20 @@ module mkSoC_Top (SoC_Top_IFC);
       $display ("%0d:%m.rl_handle_external_req_err: unknown req.op", cur_cycle);
       $display ("    ", fshow (req));
    endrule
-`endif
+#endif
 
    // ================================================================
    // INTERFACE
 
    // To external controller (E.g., GDB)
-`ifdef INCLUDE_GDB_CONTROL
+#ifdef INCLUDE_GDB_CONTROL
    interface server_external_control = toGPServer (f_external_control_reqs, f_external_control_rsps);
-`endif
+#endif
 
-`ifdef INCLUDE_TANDEM_VERIF
+#ifdef INCLUDE_TANDEM_VERIF
    // To tandem verifier
    interface tv_verifier_info_get = core.tv_verifier_info_get;
-`endif
+#endif
 
    // External real memory
    interface to_raw_mem = mem0_controller.to_raw_mem;
@@ -451,7 +451,7 @@ module mkSoC_Top (SoC_Top_IFC);
       core.set_verbosity (verbosity1, logdelay);
    endmethod
 
-`ifdef WATCH_TOHOST
+#ifdef WATCH_TOHOST
    // For ISA tests: watch memory writes to <tohost> addr
    method Action set_watch_tohost (Bool  watch_tohost, Fabric_Addr  tohost_addr);
       core.set_watch_tohost (watch_tohost, tohost_addr);
@@ -462,7 +462,7 @@ module mkSoC_Top (SoC_Top_IFC);
       tohost_value = core.mv_tohost_value;
       return tohost_value;
    endmethod
-`endif
+#endif
 
    method Action ma_ddr4_ready;
       core.ma_ddr4_ready;

@@ -41,9 +41,9 @@ import isa_priv_S        :: *;
 import Near_Mem_IFC     :: *;
 import MMU_Cache_Common :: *;
 
-`ifdef ISA_PRIV_S
+#ifdef ISA_PRIV_S
 import PTW              :: *;
-`endif
+#endif
 
 import D_MMU_Cache      :: *;
 import I_MMU_Cache      :: *;
@@ -86,24 +86,24 @@ module mkNear_Mem (Near_Mem_IFC);
    // ----------------------------------------------------------------
    // Connections from IMem to DMem (servicing PTW requests and PTE-writebacks)
 
-`ifdef ISA_PRIV_S
+#ifdef ISA_PRIV_S
    mkConnection (i_mmu_cache.ptw_client,      d_mmu_cache.imem_ptw_server);
    mkConnection (i_mmu_cache.pte_writeback_g, d_mmu_cache.imem_pte_writeback_p);
-`endif
+#endif
 
    // ----------------------------------------------------------------
    // Widener, if d_mmu_cache mem ifc needs it
 
-`ifdef MEM_512b
+#ifdef MEM_512b
    AXI4_Widener_IFC #(Wd_Id, Wd_Addr, Wd_Data, Wd_Data_Mem, Wd_User)
    widener <- mkAXI4_Widener;
 
    mkConnection (d_mmu_cache.mem_master, widener.from_master);
 
    let d_mmu_cache_mem_master = widener.to_slave;
-`else
+#else
    let d_mmu_cache_mem_master = d_mmu_cache.mem_master;
-`endif
+#endif
 
    // ----------------------------------------------------------------
    // BEHAVIOR
@@ -183,9 +183,9 @@ module mkNear_Mem (Near_Mem_IFC);
       // CPU side: DMem request
       method Action  req (CacheOp op,
 			  Bit#(3) f3,
-`ifdef ISA_A
+#ifdef ISA_A
 			  Bit#(7) amo_funct7,
-`endif
+#endif
 			  WordXL addr,
 			  Bit#(64) store_value,
 			  // The following  args for VM
@@ -194,9 +194,9 @@ module mkNear_Mem (Near_Mem_IFC);
 			  Bit#(1)   mstatus_MXR,
 			  WordXL     satp);    // { VM_Mode, ASID, PPN_for_page_table }
 	 d_mmu_cache.req (op, f3,
-`ifdef ISA_A
+#ifdef ISA_A
 		     amo_funct7,
-`endif
+#endif
 		     addr, store_value, priv, sstatus_SUM, mstatus_MXR, satp);
       endmethod
 
@@ -250,7 +250,7 @@ module mkNear_Mem (Near_Mem_IFC);
    // ----------------
    // SFENCE_VMA: flush TLBs and DMem
 
-`ifdef ISA_PRIV_S
+#ifdef ISA_PRIV_S
    interface Server sfence_vma_server;
       interface Put request;
 	 method Action put (Token t);
@@ -264,7 +264,7 @@ module mkNear_Mem (Near_Mem_IFC);
 	 endmethod
       endinterface
    endinterface
-`endif
+#endif
 
    // ----------------------------------------------------------------
    // Interface to 'coherent DMA' port of optional L2 cache
@@ -278,13 +278,13 @@ module mkNear_Mem (Near_Mem_IFC);
    // ----------------
    // For ISA tests: watch memory writes to <tohost> addr
 
-`ifdef WATCH_TOHOST
+#ifdef WATCH_TOHOST
    method Action set_watch_tohost (Bool watch_tohost, Bit#(64) tohost_addr);
       d_mmu_cache.set_watch_tohost (watch_tohost, tohost_addr);
    endmethod
 
    method Bit#(64) mv_tohost_value = d_mmu_cache.mv_tohost_value;
-`endif
+#endif
 
    // Signal that DDR4 has been initialized and is ready to accept requests
    method Action ma_ddr4_ready;

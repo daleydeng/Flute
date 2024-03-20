@@ -196,17 +196,17 @@ module mkLLBank#(
     FIFO#(cRqIndexT) rsLdToDmaIndexQ_pipelineResp <- mkFIFO;
     FIFO#(cRqIndexT) rsStToDmaIndexQ_pipelineResp <- mkFIFO;
 
-`ifdef DEBUG_DMA
+#ifdef DEBUG_DMA
     // these FIFOs are enqueued when DMA req really takes effect
     // FIFOs has 0 cycle latency to match L1Bank resp latency
     Fifo#(1, dmaRqIdT) dmaWrMissQ <- mkBypassFifo;
     Fifo#(1, dmaRqIdT) dmaWrHitQ <- mkBypassFifo;
     Fifo#(1, dmaRqIdT) dmaRdMissQ <- mkBypassFifo;
     Fifo#(1, dmaRqIdT) dmaRdHitQ <- mkBypassFifo;
-`endif
+#endif
 
     // performance
-`ifdef PERF_COUNT
+#ifdef PERF_COUNT
     Reg#(Bool) doStats <- mkConfigReg(False);
     Count#(Data) dmaMemLdCnt <- mkCount(0);
     Count#(Data) dmaMemLdLat <- mkCount(0);
@@ -238,7 +238,7 @@ module mkLLBank#(
         end
     endaction
     endfunction
-`endif
+#endif
 
     function tagT getTag(Addr a) = truncateLSB(a);
 
@@ -368,7 +368,7 @@ module mkLLBank#(
         );
     endrule
 
-`ifdef PERF_COUNT
+#ifdef PERF_COUNT
     // perf stats: insert new cRq fails because of full MSHR
     rule cRqTransfer_new_child_block(
         !cRqRetryIndexQ.notEmpty && newCRqSrc == Valid (Child) && doStats
@@ -387,7 +387,7 @@ module mkLLBank#(
             mshrBlocks.incr(1);
         end
     endrule
-`endif
+#endif
 
     // insert new cRq from DMA to MSHR and send to pipeline
     rule cRqTransfer_new_dma(!cRqRetryIndexQ.notEmpty && newCRqSrc == Valid (Dma));
@@ -418,7 +418,7 @@ module mkLLBank#(
             fshow(r), " ; ", 
             fshow(cRq)
         );
-`ifdef PERF_COUNT
+#ifdef PERF_COUNT
         if(doStats) begin
             if(write) begin
                 dmaStReqCnt.incr(1);
@@ -427,10 +427,10 @@ module mkLLBank#(
                 dmaLdReqCnt.incr(1);
             end
         end
-`endif
+#endif
     endrule
 
-`ifdef PERF_COUNT
+#ifdef PERF_COUNT
     // perf stats: insert new cRq fails because of full MSHR
     rule cRqTransfer_new_dma_block(
         !cRqRetryIndexQ.notEmpty && newCRqSrc == Valid (Dma) && doStats
@@ -450,7 +450,7 @@ module mkLLBank#(
             mshrBlocks.incr(1);
         end
     endrule
-`endif
+#endif
 
     // send downgrade resp from child to pipeline
     rule cRsTransfer;
@@ -459,26 +459,26 @@ module mkLLBank#(
         pipeline.send(CRs (cRs));
        if (verbose)
         $display("%t LL %m cRsTransfer: ", $time, fshow(cRs));
-`ifdef PERF_COUNT
+#ifdef PERF_COUNT
         if(doStats) begin
             downRespCnt.incr(1);
             if(isValid(cRs.data)) begin
                 downRespDataCnt.incr(1);
             end
         end
-`endif
+#endif
     endrule
     
     // mem resp for child req, will refill cache, send it to pipeline
     (* descending_urgency = "mRsTransfer, cRsTransfer, cRqTransfer_retry, cRqTransfer_new_child, cRqTransfer_new_dma" *)
-`ifdef PERF_COUNT
+#ifdef PERF_COUNT
     // stop mshr block stats when other higher priority req is being sent to
     // pipeline
     (* preempts = "mRsTransfer, cRqTransfer_new_child_block" *)
     (* preempts = "mRsTransfer, cRqTransfer_new_dma_block" *)
     (* preempts = "cRsTransfer, cRqTransfer_new_child_block" *)
     (* preempts = "cRsTransfer, cRqTransfer_new_dma_block" *)
-`endif
+#endif
     rule mRsTransfer(rsFromMQ.first.id.refill);
         // get mem resp cRq index & data
         rsFromMQ.deq;
@@ -502,10 +502,10 @@ module mkLLBank#(
             fshow(cRq), " ; ",
             fshow(cSlot), " ; "
         );
-`ifdef PERF_COUNT
+#ifdef PERF_COUNT
         // performance counter: normal miss lat and cnt
         incrMissCnt(n, False);
-`endif
+#endif
     endrule
 
     // this mem resp is just for a DMA req, won't go into pipeline to refill cache
@@ -517,10 +517,10 @@ module mkLLBank#(
         // save data into cRq mshr & send to DMA resp IndexQ
         cRqMshr.mRsDeq.setData(mRs.id.mshrIdx, Valid (mRs.data));
         rsLdToDmaIndexQ_mRsDeq.enq(mRs.id.mshrIdx);
-`ifdef PERF_COUNT
+#ifdef PERF_COUNT
         // performance counter: dma miss lat and cnt
         incrMissCnt(mRs.id.mshrIdx, True);
-`endif
+#endif
     endrule
 
     // send rd/wr to mem
@@ -559,15 +559,15 @@ module mkLLBank#(
             $display("%t LL %m sendToM: load only: ", $time, fshow(msg));
             doAssert(!isValid(data), "cannot have data");
             doAssert(!doLdAfterReplace, "doLdAfterReplace should be false");
-`ifdef PERF_COUNT
+#ifdef PERF_COUNT
             // performance counter: start miss timer
             latTimer.start(n);
-`endif
-`ifdef DEBUG_DMA
+#endif
+#ifdef DEBUG_DMA
             if(cRq.id matches tagged Dma .dmaId) begin
                 dmaRdMissQ.enq(dmaId); // DMA read takes effect
             end
-`endif
+#endif
         end
         else if(t == DmaWr) begin
             // only write mem: must be dma req
@@ -585,9 +585,9 @@ module mkLLBank#(
             doAssert(isRqFromDma(cRq.id), "must be dma write");
             doAssert(isValid(data), "dma write must have data");
             doAssert(!doLdAfterReplace, "doLdAfterReplace should be false");
-`ifdef DEBUG_DMA
+#ifdef DEBUG_DMA
             dmaWrMissQ.enq(getIdFromDma(cRq.id)); // DMA write takes effect
-`endif
+#endif
         end
         else if(t == RepLd) begin
             // write back replaced line then load, must be child req
@@ -606,10 +606,10 @@ module mkLLBank#(
                 doLdAfterReplace <= False;
 	       if (verbose)
                 $display("%t LL %m sendToM: rep then ld: ld: ", $time, fshow(msg));
-`ifdef PERF_COUNT
+#ifdef PERF_COUNT
                 // performance counter: start miss timer
                 latTimer.start(n);
-`endif
+#endif
             end
             else begin // do write back part
                 toMemT msg = Wb (WbMemRs {
@@ -705,14 +705,14 @@ module mkLLBank#(
         }));
         // release MSHR entry
         cRqMshr.sendRsToDmaC.releaseEntry(n);
-`ifdef PERF_COUNT
+#ifdef PERF_COUNT
         if(doStats) begin
             upRespCnt.incr(1);
             if(isValid(rsData)) begin
                 upRespDataCnt.incr(1);
             end
         end
-`endif
+#endif
     endrule
 
     // send downgrade req to child
@@ -803,11 +803,11 @@ module mkLLBank#(
         );
         // change round-robin
         whichCRq <= whichCRq == fromInteger(valueOf(cRqNum) - 1) ? 0 : whichCRq + 1;
-`ifdef PERF_COUNT
+#ifdef PERF_COUNT
         if(doStats) begin
             downReqCnt.incr(1);
         end
-`endif
+#endif
     endrule
 
     // Final stage of pipeline: process all kinds of msg
@@ -934,7 +934,7 @@ module mkLLBank#(
         else begin
             rsLdToDmaIndexQ_pipelineResp.enq(n);
         end
-`ifdef DEBUG_DMA
+#ifdef DEBUG_DMA
         // DMA req takes effect
         dmaRqIdT dmaId = getIdFromDma(cRq.id);
         if(cRq.toState == M) begin
@@ -943,7 +943,7 @@ module mkLLBank#(
         else begin
             dmaRdHitQ.enq(dmaId);
         end
-`endif
+#endif
     endaction
     endfunction
 
@@ -1462,12 +1462,12 @@ module mkLLBank#(
         interface memReq = toFifoEnq(rqFromDmaQ);
         interface respLd = toFifoDeq(rsLdToDmaQ);
         interface respSt = toFifoDeq(rsStToDmaQ);
-`ifdef DEBUG_DMA
+#ifdef DEBUG_DMA
         interface wrMissResp = toGet(dmaWrMissQ);
         interface wrHitResp = toGet(dmaWrHitQ);
         interface rdMissResp = toGet(dmaRdMissQ);
         interface rdHitResp = toGet(dmaRdHitQ);
-`endif
+#endif
     endinterface
 
     interface MemFifoClient to_mem;
@@ -1492,16 +1492,16 @@ module mkLLBank#(
     endinterface
 
     method Action setPerfStatus(Bool stats);
-`ifdef PERF_COUNT
+#ifdef PERF_COUNT
         doStats <= stats;
-`else
+#else
         noAction;
-`endif
+#endif
     endmethod 
 
     method Data getPerfData(LLCPerfType t);
         return (case(t)
-`ifdef PERF_COUNT
+#ifdef PERF_COUNT
             LLCDmaMemLdCnt: dmaMemLdCnt;
             LLCDmaMemLdLat: dmaMemLdLat;
             LLCNormalMemLdCnt: normalMemLdCnt;
@@ -1514,7 +1514,7 @@ module mkLLBank#(
             LLCUpRespDataCnt: upRespDataCnt;
             LLCDmaLdReqCnt: dmaLdReqCnt;
             LLCDmaStReqCnt: dmaStReqCnt;
-`endif
+#endif
             default: 0;
         endcase);
     endmethod

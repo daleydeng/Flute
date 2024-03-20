@@ -104,9 +104,9 @@ interface Debug_Module_IFC;
    interface Client #(DM_CPU_Req #(5,  XLEN), DM_CPU_Rsp #(XLEN)) hart0_gpr_mem_client;
 
    // FPR access
-`ifdef ISA_F
+#ifdef ISA_F
    interface Client #(DM_CPU_Req #(5,  FLEN), DM_CPU_Rsp #(FLEN)) hart0_fpr_mem_client;
-`endif
+#endif
 
    // CSR access
    interface Client #(DM_CPU_Req #(12, XLEN), DM_CPU_Rsp #(XLEN)) hart0_csr_mem_client;
@@ -296,9 +296,9 @@ module mkDebug_Module (Debug_Module_IFC);
    interface Client hart0_gpr_mem_client = dm_abstract_commands.hart0_gpr_mem_client;
 
    // FPR access
-`ifdef ISA_F
+#ifdef ISA_F
    interface Client hart0_fpr_mem_client = dm_abstract_commands.hart0_fpr_mem_client;
-`endif
+#endif
 
    // CSR access
    interface Client hart0_csr_mem_client = dm_abstract_commands.hart0_csr_mem_client;

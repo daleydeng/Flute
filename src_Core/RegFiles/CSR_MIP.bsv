@@ -14,21 +14,21 @@ interface CSR_MIP_IFC;
    (* always_ready *)
    method ActionValue #(WordXL) mav_write (MISA  misa, WordXL  wordxl);
 
-`ifdef ISA_PRIV_S
+#ifdef ISA_PRIV_S
    // SIP is a view of MIP, when 'S' extension is implemented.
    (* always_ready *)
    method WordXL mv_sip_read;
    (* always_ready *)
    method ActionValue #(WordXL) mav_sip_write (MISA  misa, WordXL  wordxl);
-`endif
+#endif
 
-`ifdef ISA_N
+#ifdef ISA_N
    // UIP is a view of MIP, when 'N' extension is implemented.
    (* always_ready *)
    method WordXL mv_uip_read;
    (* always_ready *)
    method ActionValue #(WordXL) mav_uip_write (MISA  misa, WordXL  wordxl);
-`endif
+#endif
 
    (* always_ready, always_enabled *)
    method Action m_external_interrupt_req (Bool req);
@@ -103,7 +103,7 @@ module mkCSR_MIP (CSR_MIP_IFC);
       return zeroExtend (new_mip);
    endmethod
 
-`ifdef ISA_PRIV_S
+#ifdef ISA_PRIV_S
    // SIP is a view of MIP, when 'S' extension is implemented.
    method WordXL mv_sip_read;
       Bit#(12) sip = {2'b0, rg_seip, rg_ueip,
@@ -127,9 +127,9 @@ module mkCSR_MIP (CSR_MIP_IFC);
 			   2'b0, ssip,       usip};
       return zeroExtend (new_sip);
    endmethod
-`endif
+#endif
 
-`ifdef ISA_N
+#ifdef ISA_N
    // UIP is a view of MIP, when 'U' extension is implemented.
    method WordXL mv_uip_read;
       return zeroExtend (fv_mip_to_uip (rg_mip));
@@ -143,7 +143,7 @@ module mkCSR_MIP (CSR_MIP_IFC);
 			   3'b0, rg_usip};
       return zeroExtend (new_uip);
    endmethod
-`endif
+#endif
 
    method Action m_external_interrupt_req (Bool req);
       rg_meip <= pack (req);

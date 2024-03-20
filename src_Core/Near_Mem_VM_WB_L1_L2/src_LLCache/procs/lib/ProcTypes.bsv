@@ -22,28 +22,28 @@
 // CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-`include "ProcConfig.bsv"
+#include "ProcConfig.bsv"
 import Vector::*;
 import Types::*;
 import FShow::*;
 import DefaultValue::*;
 import MemoryTypes::*;
 
-typedef `NUM_CORES CoreNum;
+typedef NUM_CORES CoreNum;
 typedef Bit#(TLog#(CoreNum)) CoreId;
 
-typedef `sizeSup SupSize;
+typedef sizeSup SupSize;
 typedef Bit#(TLog#(SupSize)) SupWaySel;
 typedef Bit#(TLog#(TAdd#(SupSize, 1))) SupCnt;
 
-typedef `NUM_EPOCHS NumEpochs;
+typedef NUM_EPOCHS NumEpochs;
 typedef Bit#(TLog#(NumEpochs)) Epoch;
 
-typedef `NUM_SPEC_TAGS NumSpecTags;
+typedef NUM_SPEC_TAGS NumSpecTags;
 typedef Bit#(TLog#(NumSpecTags)) SpecTag;
 typedef Bit#(NumSpecTags) SpecBits;
 
-typedef `ROB_SIZE NumInstTags;
+typedef ROB_SIZE NumInstTags;
 typedef TDiv#(NumInstTags, SupSize) SingleScalarSize;
 typedef Bit#(TLog#(SingleScalarSize)) SingleScalarPtr;
 typedef Bit#(TAdd#(1, TLog#(SingleScalarSize))) SingleScalarLen;
@@ -59,16 +59,16 @@ typedef struct {
     InstTime t; // inst time in ROB (for dispatch in reservation station)
 } InstTag deriving(Bits, Eq, FShow);
 
-typedef `SB_SIZE SBSize;
+typedef SB_SIZE SBSize;
 typedef Bit#(TLog#(SBSize)) SBIndex;
 
-//typedef `LDSTQ_SIZE LdStQSize;
+//typedef LDSTQ_SIZE LdStQSize;
 //typedef Bit#(TLog#(LdStQSize)) LdStQTag;
 
-typedef `LDQ_SIZE LdQSize;
+typedef LDQ_SIZE LdQSize;
 typedef Bit#(TLog#(LdQSize)) LdQTag;
 
-typedef `STQ_SIZE StQSize;
+typedef STQ_SIZE StQSize;
 typedef Bit#(TLog#(StQSize)) StQTag;
 
 typedef union tagged {
@@ -78,12 +78,12 @@ typedef union tagged {
 
 typedef enum {Ld, St, Cache} LdKilledBy deriving(Bits, Eq, FShow);
 
-typedef `DRAM_MAX_REQS DramMaxReqs;
-typedef `DRAM_MAX_READS DramMaxReads;
-typedef `DRAM_MAX_WRITES DramMaxWrites;
-typedef `DRAM_LATENCY DramLatency;
+typedef DRAM_MAX_REQS DramMaxReqs;
+typedef DRAM_MAX_READS DramMaxReads;
+typedef DRAM_MAX_WRITES DramMaxWrites;
+typedef DRAM_LATENCY DramLatency;
 
-typedef Bit#(`LOG_DEADLOCK_CYCLES) DeadlockTimer;
+typedef Bit#(LOG_DEADLOCK_CYCLES) DeadlockTimer;
 
 typedef struct {
     // ISA modes
@@ -100,7 +100,7 @@ typedef struct {
 instance DefaultValue#(RiscVISASubset);
     function RiscVISASubset defaultValue = RiscVISASubset {
         s: True, u: True,
-        m: `m , a: `a , f: `f , d: `d, c: `c
+        m: m , a: a , f: f , d: d, c: c
     };
 endinstance
 
@@ -127,7 +127,7 @@ typedef union tagged {
 
 typedef TExp#(SizeOf#(ArchRIndx)) NumArchReg;
 
-typedef TAdd#(NumArchReg, `ROB_SIZE) NumPhyReg;
+typedef TAdd#(NumArchReg, ROB_SIZE) NumPhyReg;
 typedef Bit#(TLog#(NumPhyReg)) PhyRIndx;
 
 typedef struct {
@@ -254,7 +254,7 @@ typedef enum {
     CSRmarchid    = 12'hf12,
     CSRmimpid     = 12'hf13,
     CSRmhartid    = 12'hf14,
-`ifdef SECURITY
+#ifdef SECURITY
     // sanctum machine CSR
     CSRmevbase    = 12'h7c0,
     CSRmevmask    = 12'h7c1,
@@ -269,19 +269,19 @@ typedef enum {
     CSRmspec      = 12'h7ca, // control speculation
     // sanctum user CSR
     CSRtrng       = 12'hcc0, // random number for secure boot
-`endif
+#endif
 
    CSRtselect     = 12'h7A0,    // Debug/trace tselect
    CSRtdata1      = 12'h7A1,    // Debug/trace tdata1
    CSRtdata2      = 12'h7A2,    // Debug/trace tdata2
    CSRtdata3      = 12'h7A3,    // Debug/trace tdata3
 
-`ifdef INCLUDE_GDB_CONTROL
+#ifdef INCLUDE_GDB_CONTROL
    CSRdcsr        = 12'h7B0,    // Debug control and status
    CSRdpc         = 12'h7B1,    // Debug PC
    CSRdscratch0   = 12'h7B2,    // Debug scratch0
    CSRdscratch1   = 12'h7B3,    // Debug scratch1
-`endif
+#endif
 
     // CSR that catches all the unimplemented CSRs. To avoid exception on this,
     // make it a user non-standard read/write CSR.
@@ -327,7 +327,7 @@ function CSR unpackCSR(Bit#(12) x);
         pack(CSR'(CSRmarchid   )): (CSRmarchid   );
         pack(CSR'(CSRmimpid    )): (CSRmimpid    );
         pack(CSR'(CSRmhartid   )): (CSRmhartid   );
-`ifdef SECURITY
+#ifdef SECURITY
         pack(CSR'(CSRmevbase   )): (CSRmevbase   );
         pack(CSR'(CSRmevmask   )): (CSRmevmask   );
         pack(CSR'(CSRmeatp     )): (CSRmeatp     );
@@ -340,19 +340,19 @@ function CSR unpackCSR(Bit#(12) x);
         pack(CSR'(CSRmflush    )): (CSRmflush    );
         pack(CSR'(CSRmspec     )): (CSRmspec     );
         pack(CSR'(CSRtrng      )): (CSRtrng      );
-`endif
+#endif
 
         pack(CSR'(CSRtselect   )): (CSRtselect   );
         pack(CSR'(CSRtdata1    )): (CSRtdata1    );
         pack(CSR'(CSRtdata2    )): (CSRtdata2    );
         pack(CSR'(CSRtdata3    )): (CSRtdata3    );
 
-`ifdef INCLUDE_GDB_CONTROL
+#ifdef INCLUDE_GDB_CONTROL
         pack(CSR'(CSRdcsr      )): (CSRdcsr      );
         pack(CSR'(CSRdpc       )): (CSRdpc       );
         pack(CSR'(CSRdscratch0 )): (CSRdscratch0 );
         pack(CSR'(CSRdscratch1 )): (CSRdscratch1 );
-`endif
+#endif
 
         default                  : (CSRnone      );
     endcase);
@@ -476,18 +476,18 @@ typedef enum {
     SupervisorExternel = 4'd9,
     MachineExternal    = 4'd11
 
-`ifdef INCLUDE_GDB_CONTROL
+#ifdef INCLUDE_GDB_CONTROL
   , DebugHalt          = 4'd14,        // Debugger halt command (^C in GDB)
     DebugStep          = 4'd15         // dcsr.step is set and 1 instr has been processed
-`endif
+#endif
 
 } Interrupt deriving(Bits, Eq, FShow);
 
-`ifdef INCLUDE_GDB_CONTROL
+#ifdef INCLUDE_GDB_CONTROL
 typedef 16 InterruptNum;    // With debugger
-`else
+#else
 typedef 12 InterruptNum;    // Without debugger
-`endif
+#endif
 
 // Traps are either an exception or an interrupt
 typedef union tagged {
@@ -533,7 +533,7 @@ typedef struct {
                             // mstatus.mprv), accessing page with U=1 will NOT
                             // fault
     Bit#(44) basePPN; // ppn of root page table
-`ifdef SECURITY
+#ifdef SECURITY
     // sanctum page walk check
     Bit#(64) sanctum_evbase;
     Bit#(64) sanctum_evmask;
@@ -548,7 +548,7 @@ typedef struct {
     // domain) memory is allowed. This should not be allowed if speculation is
     // turned on.
     Bool sanctum_authShared;
-`endif
+#endif
 } VMInfo deriving(Bits, Eq, FShow);
 
 instance DefaultValue#(VMInfo);
@@ -559,7 +559,7 @@ instance DefaultValue#(VMInfo);
         exeReadable: False,
         userAccessibleByS: False,
         basePPN: 0
-`ifdef SECURITY
+#ifdef SECURITY
         , sanctum_evbase:   maxBound,
         sanctum_evmask:     0,
         sanctum_ebasePPN:   0,
@@ -570,7 +570,7 @@ instance DefaultValue#(VMInfo);
         sanctum_eparbase:   0,
         sanctum_eparmask:   0,
         sanctum_authShared: False
-`endif
+#endif
     };
 endinstance
 
@@ -679,7 +679,7 @@ typedef struct {
 } MMIOCRs deriving(Bits, Eq, FShow);
 
 // Boot rom: each block is 64-bit data
-typedef `LOG_BOOT_ROM_BYTES LgBootRomBytes;
+typedef LOG_BOOT_ROM_BYTES LgBootRomBytes;
 typedef TSub#(LgBootRomBytes, TLog#(NumBytes)) LgBootRomSzData;
 typedef Bit#(LgBootRomSzData) BootRomIndex;
 

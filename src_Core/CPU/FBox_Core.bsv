@@ -109,14 +109,14 @@ endfunction
 // Take a 64-bit value and check if it is properly nanboxed if operating in a DP
 // capable environment. If not properly nanboxed, return canonicalNaN32
 function FSingle fv_unbox (Bit#(64) x);
-`ifdef ISA_D
+#ifdef ISA_D
    if (x [63:32] == 32'hffffffff)
       return (unpack (x [31:0]));
    else
       return (unpack (canonicalNaN32));
-`else  
+#else  
    return (unpack (x [31:0]));
-`endif
+#endif
 endfunction
 
 // Check if FSingle is a +0
@@ -174,7 +174,7 @@ module mkFBox_Core #(Bit#(4) verbosity) (FBox_Core_IFC);
    // Decode sub-opcodes (a direct lift from the spec)
    match {.opc, .f7, .rs2, .rm, .v1, .v2, .v3} = requestR.Valid;
    Bit#(2) f2 = f7[1:0];
-`ifdef ISA_D
+#ifdef ISA_D
    let isFMADD_D     = (opc == op_FMADD)  && (f2 == 1);
    let isFMSUB_D     = (opc == op_FMSUB)  && (f2 == 1);
    let isFNMADD_D    = (opc == op_FNMADD) && (f2 == 1);
@@ -182,27 +182,27 @@ module mkFBox_Core #(Bit#(4) verbosity) (FBox_Core_IFC);
    let isFADD_D      = (opc == op_FP) && (f7 == f7_FADD_D); 
    let isFSUB_D      = (opc == op_FP) && (f7 == f7_FSUB_D);
    let isFMUL_D      = (opc == op_FP) && (f7 == f7_FMUL_D);
-`ifdef INCLUDE_FDIV
+#ifdef INCLUDE_FDIV
    let isFDIV_D      = (opc == op_FP) && (f7 == f7_FDIV_D);
-`endif
-`ifdef INCLUDE_FSQRT
+#endif
+#ifdef INCLUDE_FSQRT
    let isFSQRT_D     = (opc == op_FP) && (f7 == f7_FSQRT_D);
-`endif
+#endif
    let isFSGNJ_D     = (opc == op_FP) && (f7 == f7_FSGNJ_D) && (rm == 0);
    let isFSGNJN_D    = (opc == op_FP) && (f7 == f7_FSGNJ_D) && (rm == 1);
    let isFSGNJX_D    = (opc == op_FP) && (f7 == f7_FSGNJ_D) && (rm == 2);
    let isFCVT_W_D    = (opc == op_FP) && (f7 == f7_FCVT_W_D)  && (rs2 == 0);
    let isFCVT_WU_D   = (opc == op_FP) && (f7 == f7_FCVT_WU_D) && (rs2 == 1);
-`ifdef RV64
+#ifdef RV64
    let isFCVT_L_D    = (opc == op_FP) && (f7 == f7_FCVT_L_D)  && (rs2 == 2);
    let isFCVT_LU_D   = (opc == op_FP) && (f7 == f7_FCVT_LU_D) && (rs2 == 3);
-`endif
+#endif
    let isFCVT_D_W    = (opc == op_FP) && (f7 == f7_FCVT_D_W)  && (rs2 == 0);
    let isFCVT_D_WU   = (opc == op_FP) && (f7 == f7_FCVT_D_WU) && (rs2 == 1);
-`ifdef RV64
+#ifdef RV64
    let isFCVT_D_L    = (opc == op_FP) && (f7 == f7_FCVT_D_L)  && (rs2 == 2);
    let isFCVT_D_LU   = (opc == op_FP) && (f7 == f7_FCVT_D_LU) && (rs2 == 3);
-`endif
+#endif
    let isFCVT_D_S    = (opc == op_FP) && (f7 == f7_FCVT_D_S)  && (rs2 == 0);
    let isFCVT_S_D    = (opc == op_FP) && (f7 == f7_FCVT_S_D)  && (rs2 == 1);
    let isFMIN_D      = (opc == op_FP) && (f7 == f7_FMIN_D) && (rm == 0);
@@ -213,7 +213,7 @@ module mkFBox_Core #(Bit#(4) verbosity) (FBox_Core_IFC);
    let isFMV_X_D     = (opc == op_FP) && (f7 == f7_FMV_X_D) && (rm == 0);
    let isFMV_D_X     = (opc == op_FP) && (f7 == f7_FMV_D_X) && (rm == 0);
    let isFCLASS_D    = (opc == op_FP) && (f7 == f7_FCLASS_D) && (rm == 1);
-`endif
+#endif
 
    let isFMADD_S     = (opc == op_FMADD)  && (f2 == 0);
    let isFMSUB_S     = (opc == op_FMSUB)  && (f2 == 0);
@@ -222,27 +222,27 @@ module mkFBox_Core #(Bit#(4) verbosity) (FBox_Core_IFC);
    let isFADD_S      = (opc == op_FP) && (f7 == f7_FADD_S); 
    let isFSUB_S      = (opc == op_FP) && (f7 == f7_FSUB_S);
    let isFMUL_S      = (opc == op_FP) && (f7 == f7_FMUL_S);
-`ifdef INCLUDE_FDIV
+#ifdef INCLUDE_FDIV
    let isFDIV_S      = (opc == op_FP) && (f7 == f7_FDIV_S);
-`endif
-`ifdef INCLUDE_FSQRT
+#endif
+#ifdef INCLUDE_FSQRT
    let isFSQRT_S     = (opc == op_FP) && (f7 == f7_FSQRT_S);
-`endif
+#endif
    let isFSGNJ_S     = (opc == op_FP) && (f7 == f7_FSGNJ_S) && (rm == 0);
    let isFSGNJN_S    = (opc == op_FP) && (f7 == f7_FSGNJ_S) && (rm == 1);
    let isFSGNJX_S    = (opc == op_FP) && (f7 == f7_FSGNJ_S) && (rm == 2);
    let isFCVT_W_S    = (opc == op_FP) && (f7 == f7_FCVT_W_S)  && (rs2 == 0);
    let isFCVT_WU_S   = (opc == op_FP) && (f7 == f7_FCVT_WU_S) && (rs2 == 1);
-`ifdef RV64
+#ifdef RV64
    let isFCVT_L_S    = (opc == op_FP) && (f7 == f7_FCVT_L_S)  && (rs2 == 2);
    let isFCVT_LU_S   = (opc == op_FP) && (f7 == f7_FCVT_LU_S) && (rs2 == 3);
-`endif
+#endif
    let isFCVT_S_W    = (opc == op_FP) && (f7 == f7_FCVT_S_W)  && (rs2 == 0);
    let isFCVT_S_WU   = (opc == op_FP) && (f7 == f7_FCVT_S_WU) && (rs2 == 1);
-`ifdef RV64
+#ifdef RV64
    let isFCVT_S_L    = (opc == op_FP) && (f7 == f7_FCVT_S_L)  && (rs2 == 2);
    let isFCVT_S_LU   = (opc == op_FP) && (f7 == f7_FCVT_S_LU) && (rs2 == 3);
-`endif
+#endif
    let isFMIN_S      = (opc == op_FP) && (f7 == f7_FMIN_S) && (rm == 0);
    let isFMAX_S      = (opc == op_FP) && (f7 == f7_FMAX_S) && (rm == 1);
    let isFLE_S       = (opc == op_FP) && (f7 == f7_FCMP_S) && (rm == 0);
@@ -351,23 +351,23 @@ module mkFBox_Core #(Bit#(4) verbosity) (FBox_Core_IFC);
       stateR <= FBOX_BUSY;
    endrule
 
-`ifdef INCLUDE_FDIV
+#ifdef INCLUDE_FDIV
    rule doFDIV_S ( validReq && isFDIV_S );
       if (verbosity > 1)
          $display ("%0d: FBox_Core.doFDIV_S ", cur_cycle);
       fpu.server_core.request.put( tuple5( tagged S sV1, tagged S sV2, ?, rmd, FPDiv ));
       stateR <= FBOX_BUSY;
    endrule
-`endif
+#endif
 
-`ifdef INCLUDE_FSQRT
+#ifdef INCLUDE_FSQRT
    rule doFSQRT_S ( validReq && isFSQRT_S );
       if (verbosity > 1)
          $display ("%0d: FBox_Core.doFSQRT_S ", cur_cycle);
       fpu.server_core.request.put( tuple5( tagged S sV1, ?, ?, rmd, FPSqrt ));
       stateR <= FBOX_BUSY;
    endrule
-`endif
+#endif
 
    rule doFSGNJ_S ( validReq && isFSGNJ_S );
       if (verbosity > 1)
@@ -404,7 +404,7 @@ module mkFBox_Core #(Bit#(4) verbosity) (FBox_Core_IFC);
       stateR      <= FBOX_RSP;
    endrule
 
-`ifdef RV64
+#ifdef RV64
    rule doFCVT_S_L ( validReq && isFCVT_S_L );
       if (verbosity > 1)
          $display ("%0d: FBox_Core.doFCVT_S_L ", cur_cycle);
@@ -432,7 +432,7 @@ module mkFBox_Core #(Bit#(4) verbosity) (FBox_Core_IFC);
       resultR     <= tagged Valid (tuple2 (res, fcsr));
       stateR      <= FBOX_RSP;
    endrule
-`endif
+#endif
 
    rule doFCVT_S_W ( validReq && isFCVT_S_W );
       if (verbosity > 1)
@@ -456,7 +456,7 @@ module mkFBox_Core #(Bit#(4) verbosity) (FBox_Core_IFC);
       stateR      <= FBOX_RSP;
    endrule
 
-`ifdef RV64
+#ifdef RV64
    rule doFCVT_L_S ( validReq && isFCVT_L_S );
       if (verbosity > 1)
          $display ("%0d: FBox_Core.doFCVT_L_S ", cur_cycle);
@@ -505,7 +505,7 @@ module mkFBox_Core #(Bit#(4) verbosity) (FBox_Core_IFC);
       resultR     <= tagged Valid (tuple2 (res, fcsr));
       stateR      <= FBOX_RSP;
    endrule
-`endif
+#endif
 
    rule doFCVT_W_S ( validReq && isFCVT_W_S );
       if (verbosity > 1)
@@ -746,7 +746,7 @@ module mkFBox_Core #(Bit#(4) verbosity) (FBox_Core_IFC);
    endrule
 
 
-`ifdef ISA_D
+#ifdef ISA_D
    // Double precision operations
    let cmpres_d = compareFP ( dV1, dV2 );
    rule doFADD_D ( validReq && isFADD_D );
@@ -800,23 +800,23 @@ module mkFBox_Core #(Bit#(4) verbosity) (FBox_Core_IFC);
       stateR <= FBOX_BUSY;
    endrule
 
-`ifdef INCLUDE_FDIV
+#ifdef INCLUDE_FDIV
    rule doFDIV_D ( validReq && isFDIV_D );
       if (verbosity > 1)
          $display ("%0d: FBox_Core.doFDIV_D ", cur_cycle);
       fpu.server_core.request.put( tuple5( tagged D dV1, tagged D dV2, ?, rmd, FPDiv) );
       stateR <= FBOX_BUSY;
    endrule
-`endif
+#endif
 
-`ifdef INCLUDE_FSQRT
+#ifdef INCLUDE_FSQRT
    rule doFSQRT_D ( validReq && isFSQRT_D );
       if (verbosity > 1)
          $display ("%0d: FBox_Core.doFSQRT_D ", cur_cycle);
       fpu.server_core.request.put( tuple5( tagged D dV1, ?, ?, rmd, FPSqrt) );
       stateR <= FBOX_BUSY;
    endrule
-`endif
+#endif
 
    rule doFSGNJ_D ( validReq && isFSGNJ_D );
       if (verbosity > 1)
@@ -926,7 +926,7 @@ module mkFBox_Core #(Bit#(4) verbosity) (FBox_Core_IFC);
       stateR      <= FBOX_RSP;
    endrule
 
-`ifdef RV64
+#ifdef RV64
    rule doFCVT_D_L ( validReq && isFCVT_D_L );
       if (verbosity > 1)
          $display ("%0d: FBox_Core.doFCVT_D_L ", cur_cycle);
@@ -997,7 +997,7 @@ module mkFBox_Core #(Bit#(4) verbosity) (FBox_Core_IFC);
       resultR     <= tagged Valid (tuple2 (res, fcsr));
       stateR      <= FBOX_RSP;
    endrule
-`endif
+#endif
 
    rule doFCVT_S_D ( validReq && isFCVT_S_D );
       if (verbosity > 1)
@@ -1218,7 +1218,7 @@ module mkFBox_Core #(Bit#(4) verbosity) (FBox_Core_IFC);
       resultR     <= tagged Valid (tuple2 (res, 0));
       stateR      <= FBOX_RSP;
    endrule
-`endif
+#endif
 
    // =============================================================
 

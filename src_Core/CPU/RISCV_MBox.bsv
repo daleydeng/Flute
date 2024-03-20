@@ -68,13 +68,13 @@ module mkRISCV_MBox (RISCV_MBox_IFC);
 
    IntDiv_IFC #(XLEN) intDiv <- mkIntDiv (rg_v1, rg_v2);
 
-`ifdef MULT_SERIAL
-`ifdef RV64
+#ifdef MULT_SERIAL
+#ifdef RV64
    IntMul_IFC#(64) intMul <- mkIntMul_64;
-`else
+#else
    IntMul_IFC#(32) intMul <- mkIntMul_32;
-`endif
-`endif
+#endif
+#endif
 
    Reg #(Bool)    dw_valid  <- mkDWire (False);
    Reg #(WordXL)  dw_result <- mkDWire (?);
@@ -86,7 +86,7 @@ module mkRISCV_MBox (RISCV_MBox_IFC);
    // and rely on Verilog synthesis to implement the multiplier.
    // (DSPs on FPGAa).
 
-`ifdef MULT_SYNTH
+#ifdef MULT_SYNTH
 
    rule rl_mul (rg_state == STATE_MUL1);
       if (cfg_verbosity > 1)
@@ -98,9 +98,9 @@ module mkRISCV_MBox (RISCV_MBox_IFC);
       else if (rg_is_OP_not_OP_32     && (rg_f3 == f3_MULH))    result <- fav_MULH (rg_v1, rg_v2);
       else if (rg_is_OP_not_OP_32     && (rg_f3 == f3_MULHU))   result <- fav_MULHU (rg_v1, rg_v2);
       else if (rg_is_OP_not_OP_32     && (rg_f3 == f3_MULHSU))  result <- fav_MULHSU (rg_v1, rg_v2);
-`ifdef RV64
+#ifdef RV64
       else if ((! rg_is_OP_not_OP_32) && (rg_f3 == f3_MUL))     result <- fav_MULW (rg_v1, rg_v2);
-`endif
+#endif
       else begin
 	 // This should be Impossible
 	 $display ("%0d: ERROR: RISCV_MBox.rl_mul: illegal f3.", cur_cycle);
@@ -118,13 +118,13 @@ module mkRISCV_MBox (RISCV_MBox_IFC);
       dw_result <= result;
    endrule
 
-`endif
+#endif
 
    // ----------------------------------------------------------------
    // MUL family: SERIAL implementation
    // Uses the iterative multiplier in the 'IntMulDiv' package.
 
-`ifdef MULT_SERIAL
+#ifdef MULT_SERIAL
    rule rl_mul (rg_state == STATE_MUL1 && intMul.result_valid);
       WordXL result;
       if      (rg_is_OP_not_OP_32     && (rg_f3 == f3_MUL))     begin
@@ -139,11 +139,11 @@ module mkRISCV_MBox (RISCV_MBox_IFC);
       else if (rg_is_OP_not_OP_32     && (rg_f3 == f3_MULHSU))  begin
 	 result = (intMul.result_value)[2 * xlen - 1 : xlen];
       end
-`ifdef RV64
+#ifdef RV64
       else if ((! rg_is_OP_not_OP_32) && (rg_f3 == f3_MUL))     begin
 	 result = signExtend((intMul.result_value)[31:0]);
       end
-`endif
+#endif
       else begin
 	 // This should be Impossible
 	 $display ("%0d: ERROR: RISCV_MBox.rl_mul: illegal f3. again", cur_cycle);
@@ -153,7 +153,7 @@ module mkRISCV_MBox (RISCV_MBox_IFC);
       dw_valid  <= True;
       dw_result <= result;
    endrule
-`endif
+#endif
 
    // ----------------------------------------------------------------
    // DIV family and REM family
@@ -163,10 +163,10 @@ module mkRISCV_MBox (RISCV_MBox_IFC);
       match { .q, .r } = intDiv.result_value;
       WordXL result = ((rg_f3 [1] == 1'b0) ? q : r );
 
-`ifdef RV64
+#ifdef RV64
       if (! rg_is_OP_not_OP_32)
 	 result = signExtend (result [31:0]);
-`endif
+#endif
 
       dw_valid  <= True;
       dw_result <= result;
@@ -192,7 +192,7 @@ module mkRISCV_MBox (RISCV_MBox_IFC);
 
       Bool is_signed = (f3 [0] == 1'b0);
 
-`ifdef RV64
+#ifdef RV64
       if (! is_OP_not_OP_32) begin
 	 // RV64 ops MULW/DIVW/DIVUW/REMW/REMUW)
 	 if (is_signed) begin
@@ -204,7 +204,7 @@ module mkRISCV_MBox (RISCV_MBox_IFC);
 	    v2 = zeroExtend (v2 [31:0]);
 	 end
       end
-`endif
+#endif
 
       rg_is_OP_not_OP_32 <= is_OP_not_OP_32;
       rg_f3              <= f3;
@@ -215,7 +215,7 @@ module mkRISCV_MBox (RISCV_MBox_IFC);
       if (f3 [2] == 1'b0) begin
 	 rg_state <= STATE_MUL1;
 
-`ifdef MULT_SERIAL
+#ifdef MULT_SERIAL
 	 Bool s1, s2;
 
 	 if      (is_OP_not_OP_32     && (f3 == f3_MUL))     begin
@@ -230,14 +230,14 @@ module mkRISCV_MBox (RISCV_MBox_IFC);
 	 else if (is_OP_not_OP_32     && (f3 == f3_MULHSU))  begin
 	    s1 = True; s2 = False;
 	 end
-`ifdef RV64
+#ifdef RV64
 	 else if ((! is_OP_not_OP_32) && (f3 == f3_MUL))     begin
 	    // Signed versions of lower 32 bits of v_rs1 and v_rs2
 	    v1 = signExtend (v1 [31:0]);
 	    v2 = signExtend (v2 [31:0]);
 	    s1 = True; s2 = True;
 	 end
-`endif
+#endif
 	 else begin
 	    // This should be Impossible
 	    $display ("%0d: ERROR: RISCV_MBox.rl_mul: illegal f3.", cur_cycle);
@@ -247,7 +247,7 @@ module mkRISCV_MBox (RISCV_MBox_IFC);
 	 end
 
 	 intMul.put_args(s1, v1, s2, v2);
-`endif
+#endif
       end
 
       // DIV, DIVU, REM, REMU
@@ -301,7 +301,7 @@ endfunction
 // ================================================================
 // MULH: signed XLEN x signed XLEN -> signed [2 x XLEN], return upper XLEN
 
-`ifdef RV32
+#ifdef RV32
 
 function ActionValue #(WordXL) fav_MULH (WordXL v_rs1, WordXL v_rs2);
    actionvalue
@@ -317,9 +317,9 @@ function ActionValue #(WordXL) fav_MULH (WordXL v_rs1, WordXL v_rs2);
    endactionvalue
 endfunction
 
-`endif
+#endif
 
-`ifdef RV64
+#ifdef RV64
 
 function ActionValue #(Bit#(64)) fav_MULH (Bit#(64) v_rs1, Bit#(64) v_rs2);
    actionvalue
@@ -335,12 +335,12 @@ function ActionValue #(Bit#(64)) fav_MULH (Bit#(64) v_rs1, Bit#(64) v_rs2);
    endactionvalue
 endfunction
 
-`endif
+#endif
 
 // ================================================================
 // MULHU: unsigned XLEN x unsigned XLEN -> unsigned [2 x XLEN], return upper XLEN
 
-`ifdef RV32
+#ifdef RV32
 
 function ActionValue #(WordXL) fav_MULHU (WordXL v_rs1, WordXL v_rs2);
    actionvalue
@@ -352,9 +352,9 @@ function ActionValue #(WordXL) fav_MULHU (WordXL v_rs1, WordXL v_rs2);
    endactionvalue
 endfunction
 
-`endif
+#endif
 
-`ifdef RV64
+#ifdef RV64
 
 function ActionValue #(Bit#(64)) fav_MULHU (Bit#(64) v_rs1, Bit#(64) v_rs2);
    actionvalue
@@ -364,12 +364,12 @@ function ActionValue #(Bit#(64)) fav_MULHU (Bit#(64) v_rs1, Bit#(64) v_rs2);
    endactionvalue
 endfunction
 
-`endif
+#endif
 
 // ================================================================
 // MULHSU: signed XLEN x unsigned XLEN -> signed [2 x XLEN], return upper XLEN
 
-`ifdef RV32
+#ifdef RV32
 
 function ActionValue #(WordXL) fav_MULHSU (WordXL v_rs1, WordXL v_rs2);
    actionvalue
@@ -384,9 +384,9 @@ function ActionValue #(WordXL) fav_MULHSU (WordXL v_rs1, WordXL v_rs2);
    endactionvalue
 endfunction
 
-`endif
+#endif
 
-`ifdef RV64
+#ifdef RV64
 
 function ActionValue #(Bit#(64)) fav_MULHSU (Bit#(64) v_rs1, Bit#(64) v_rs2);
    actionvalue
@@ -402,12 +402,12 @@ function ActionValue #(Bit#(64)) fav_MULHSU (Bit#(64) v_rs1, Bit#(64) v_rs2);
    endactionvalue
 endfunction
 
-`endif
+#endif
 
 // ================================================================
 // MULW
 
-`ifdef RV64
+#ifdef RV64
 function ActionValue #(WordXL) fav_MULW (WordXL v_rs1, WordXL v_rs2);
    actionvalue
       // Signed versions of lower 32 bits of v_rs1 and v_rs2
@@ -419,7 +419,7 @@ function ActionValue #(WordXL) fav_MULW (WordXL v_rs1, WordXL v_rs2);
       return v_rd;
    endactionvalue
 endfunction
-`endif
+#endif
 
 // ================================================================
 // Help-functions for Vivado work-around codes above

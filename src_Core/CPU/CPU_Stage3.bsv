@@ -37,15 +37,15 @@ import Cur_Cycle :: *;
 
 import isa_priv_M   :: *;
 import GPR_RegFile :: *;
-`ifdef ISA_F
+#ifdef ISA_F
 import FPR_RegFile :: *;
-`endif
+#endif
 import CSR_RegFile :: *;
 import CPU_Globals :: *;
 
-`ifdef INCLUDE_TANDEM_VERIF
+#ifdef INCLUDE_TANDEM_VERIF
 import tv_trace_data :: *;
-`endif
+#endif
 
 // ================================================================
 // Interface
@@ -77,9 +77,9 @@ endinterface
 
 module mkCPU_Stage3 #(Bit#(4)         verbosity,
 		      GPR_RegFile_IFC  gpr_regfile,
-`ifdef ISA_F
+#ifdef ISA_F
 		      FPR_RegFile_IFC  fpr_regfile,
-`endif
+#endif
 		      CSR_RegFile_IFC  csr_regfile)
                     (CPU_Stage3_IFC);
 
@@ -98,13 +98,13 @@ module mkCPU_Stage3 #(Bit#(4)         verbosity,
 			     rd_val:       rg_stage3.rd_val
 			     };
 
-`ifdef ISA_F
+#ifdef ISA_F
    let fbypass_base = FBypass {bypass_state: BYPASS_RD_NONE,
 			       rd:           rg_stage3.rd,
 			       // WordFL        WordFL
 			       rd_val:       rg_stage3.frd_val
 			       };
-`endif
+#endif
 
    rule rl_reset;
       f_reset_reqs.deq;
@@ -117,7 +117,7 @@ module mkCPU_Stage3 #(Bit#(4)         verbosity,
 
    function Output_Stage3 fv_out;
       let bypass = bypass_base;
-`ifdef ISA_F
+#ifdef ISA_F
       let fbypass = fbypass_base;
       if (rg_stage3.rd_in_fpr) begin
          bypass.bypass_state = BYPASS_RD_NONE;
@@ -129,14 +129,14 @@ module mkCPU_Stage3 #(Bit#(4)         verbosity,
          bypass.bypass_state = (rg_full && rg_stage3.rd_valid) ? BYPASS_RD_RDVAL
                                                                : BYPASS_RD_NONE;
       end
-`else
+#else
       bypass.bypass_state = (rg_full && rg_stage3.rd_valid) ? BYPASS_RD_RDVAL
                                                             : BYPASS_RD_NONE;
-`endif
+#endif
 
-`ifdef INCLUDE_TANDEM_VERIF
+#ifdef INCLUDE_TANDEM_VERIF
       let trace_data = rg_stage3.trace_data;
-`ifdef ISA_F
+#ifdef ISA_F
       if (rg_stage3.upd_flags) begin
 	 let fflags = csr_regfile.mv_update_fcsr_fflags (rg_stage3.fpr_flags);
 	 trace_data = trace_update_fcsr_fflags (trace_data, fflags);
@@ -146,17 +146,17 @@ module mkCPU_Stage3 #(Bit#(4)         verbosity,
 	 let new_mstatus = csr_regfile.mv_update_mstatus_fs (fs_xs_dirty);
 	 trace_data = trace_update_mstatus_fs (trace_data, new_mstatus);
       end
-`endif
-`endif
+#endif
+#endif
 
       return Output_Stage3 {ostatus: (rg_full ? OSTATUS_PIPE : OSTATUS_EMPTY),
 			    bypass : bypass
-`ifdef ISA_F
+#ifdef ISA_F
 			    , fbypass: fbypass
-`endif
-`ifdef INCLUDE_TANDEM_VERIF
+#endif
+#ifdef INCLUDE_TANDEM_VERIF
 			    , trace_data: trace_data
-`endif
+#endif
 			    };
    endfunction
 
@@ -167,7 +167,7 @@ module mkCPU_Stage3 #(Bit#(4)         verbosity,
       action
 	 // Writeback Rd if valid
 	 if (rg_stage3.rd_valid) begin
-`ifdef ISA_F
+#ifdef ISA_F
             // Write to FPR
             if (rg_stage3.rd_in_fpr)
                fpr_regfile.write_rd (rg_stage3.rd, rg_stage3.frd_val);
@@ -175,22 +175,22 @@ module mkCPU_Stage3 #(Bit#(4)         verbosity,
             else
                // Write to GPR
                gpr_regfile.write_rd (rg_stage3.rd, rg_stage3.rd_val);
-`else
+#else
             // Write to GPR in a non-FD system
             gpr_regfile.write_rd (rg_stage3.rd, rg_stage3.rd_val);
-`endif
+#endif
 
 	    if (verbosity > 1)
-`ifdef ISA_F
+#ifdef ISA_F
                if (rg_stage3.rd_in_fpr)
                   $display ("    S3.fa_deq: write FRd 0x%0h, rd_val 0x%0h",
                             rg_stage3.rd, rg_stage3.frd_val);
                else
-`endif
+#endif
                   $display ("    S3.fa_deq: write GRd 0x%0h, rd_val 0x%0h",
                             rg_stage3.rd, rg_stage3.rd_val);
 
-`ifdef ISA_F
+#ifdef ISA_F
             // Update FCSR.fflags
             if (rg_stage3.upd_flags)
                csr_regfile.ma_update_fcsr_fflags (rg_stage3.fpr_flags);
@@ -198,7 +198,7 @@ module mkCPU_Stage3 #(Bit#(4)         verbosity,
             // Update MSTATUS.FS
             if (rg_stage3.upd_flags || rg_stage3.rd_in_fpr)
                csr_regfile.ma_update_mstatus_fs (fs_xs_dirty);
-`endif
+#endif
 	 end
       endaction
    endfunction

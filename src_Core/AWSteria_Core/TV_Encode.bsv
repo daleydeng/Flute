@@ -95,7 +95,7 @@ module mkTV_Encode (TV_Encode_IFC);
       f_vb.enq (tuple2 (nnN, xN));
    endrule
 
-`ifdef ISA_F
+#ifdef ISA_F
    rule rl_log_trace_FPR_WRITE (rg_reset_done && (f_trace_data.first.op == TRACE_FPR_WRITE));
       let td <- pop (f_trace_data);
 
@@ -113,7 +113,7 @@ module mkTV_Encode (TV_Encode_IFC);
 
       f_vb.enq (tuple2 (nnN, xN));
    endrule
-`endif
+#endif
 
    rule rl_log_trace_CSR_WRITE (rg_reset_done && (f_trace_data.first.op == TRACE_CSR_WRITE));
       let td <- pop (f_trace_data);
@@ -210,7 +210,7 @@ module mkTV_Encode (TV_Encode_IFC);
 	 $display ("%0d: %m.rl_log_trace_I_RD, pc = %0h", cur_cycle, td.pc);
    endrule
 
-`ifdef ISA_F
+#ifdef ISA_F
    // New opcode to track GPR updates due to F/D instructions. Also updates
    // the CSR FFLAGS
    rule rl_log_trace_F_GRD (rg_reset_done && (f_trace_data.first.op == TRACE_F_GRD));
@@ -262,7 +262,7 @@ module mkTV_Encode (TV_Encode_IFC);
 
       f_vb.enq (tuple2 (nnN, xN));
    endrule
-`endif
+#endif
 
    rule rl_log_trace_I_LOAD (rg_reset_done && (f_trace_data.first.op == TRACE_I_LOAD));
       let td <- pop (f_trace_data);
@@ -286,7 +286,7 @@ module mkTV_Encode (TV_Encode_IFC);
       f_vb.enq (tuple2 (nnN, xN));
    endrule
 
-`ifdef ISA_F
+#ifdef ISA_F
    rule rl_log_trace_F_LOAD (rg_reset_done && (f_trace_data.first.op == TRACE_F_LOAD));
       let td <- pop (f_trace_data);
 
@@ -310,7 +310,7 @@ module mkTV_Encode (TV_Encode_IFC);
 
       f_vb.enq (tuple2 (nnN, xN));
    endrule
-`endif
+#endif
 
    rule rl_log_trace_I_STORE (rg_reset_done && (f_trace_data.first.op == TRACE_I_STORE));
       let td <- pop (f_trace_data);
@@ -336,7 +336,7 @@ module mkTV_Encode (TV_Encode_IFC);
       f_vb.enq (tuple2 (nnN, xN));
    endrule
 
-`ifdef ISA_F
+#ifdef ISA_F
    rule rl_log_trace_F_STORE (rg_reset_done && (f_trace_data.first.op == TRACE_F_STORE));
       let td <- pop (f_trace_data);
 
@@ -360,7 +360,7 @@ module mkTV_Encode (TV_Encode_IFC);
 
       f_vb.enq (tuple2 (nnN, xN));
    endrule
-`endif
+#endif
 
    rule rl_log_trace_AMO (rg_reset_done && (f_trace_data.first.op == TRACE_AMO));
       let td <- pop (f_trace_data);
@@ -403,14 +403,14 @@ module mkTV_Encode (TV_Encode_IFC);
       match { .n4, .vb4 } = (csr_written
 			     ? encode_reg (fv_csr_regnum (truncate (td.word3)), td.word4)
 			     : tuple2 (0, ?));
-`ifdef ISA_F
+#ifdef ISA_F
       // MSTATUS.FS and .SD also updated if CSR instr wrote FFLAGS, FRM or FCSR
       Bool mstatus_written = (td.word2 [1] == 1'b1);
       match { .n5, .vb5 } = (mstatus_written
 			     ? encode_reg (fv_csr_regnum (csr_addr_mstatus),
 					   truncate (td.word5))
 			     : tuple2 (0, ?));
-`endif
+#endif
       match { .nN, .vbN } = encode_byte (te_op_end_group);
 
       // Concatenate components into a single byte vec
@@ -419,12 +419,12 @@ module mkTV_Encode (TV_Encode_IFC);
       match { .nn2, .x2 } = vsubst (nn1, x1,  n2, vb2);
       match { .nn3, .x3 } = vsubst (nn2, x2,  n3, vb3);
       match { .nn4, .x4 } = vsubst (nn3, x3,  n4, vb4);
-`ifdef ISA_F
+#ifdef ISA_F
       match { .nn5, .x5 } = vsubst (nn4, x4,  n5, vb5);
       match { .nnN, .xN } = vsubst (nn5, x5,  nN, vbN);
-`else
+#else
       match { .nnN, .xN } = vsubst (nn4, x4,  nN, vbN);
-`endif
+#endif
 
       f_vb.enq (tuple2 (nnN, xN));
    endrule
@@ -679,14 +679,14 @@ function Tuple2 #(Bit#(32), TVVecBytes) encode_mlen (Bit#(64) word);
    vb [5] = word [47:40];
    vb [6] = word [55:48];
    vb [7] = word [63:56];
-`ifdef RV32
+#ifdef RV32
    n = 4;    // MLEN = 32
-`ifdef SV32
+#ifdef SV32
    n = 5;    // MLEN = 34
-`endif
-`else
+#endif
+#else
    n = 8;    // MLEN = 64
-`endif
+#endif
    return tuple2 (n, vb);
 endfunction
 
@@ -696,12 +696,12 @@ function Tuple2 #(Bit#(32), TVVecBytes) encode_mdata (MemReqSize mem_req_size, W
    vb [1] = word [15:8];
    vb [2] = word [23:16];
    vb [3] = word [31:24];
-`ifdef RV64
+#ifdef RV64
    vb [4] = word [39:32];
    vb [5] = word [47:40];
    vb [6] = word [55:48];
    vb [7] = word [63:56];
-`endif
+#endif
    Bit#(32) n = (1 << pack(mem_req_size));
    return tuple2 (n, vb);
 endfunction
@@ -729,18 +729,18 @@ function Tuple2 #(Bit#(32), TVVecBytes) encode_reg (Bit#(16) regnum, WordXL word
    vb [5] = word [23:16];
    vb [6] = word [31:24];
    n = 7;
-`ifdef RV64
+#ifdef RV64
    vb [7] = word [39:32];
    vb [8] = word [47:40];
    vb [9] = word [55:48];
    vb [10] = word [63:56];
    n = 11;
-`endif
+#endif
    if (regnum == fv_gpr_regnum (0)) n = 0;
    return tuple2 (n, vb);
 endfunction
 
-`ifdef ISA_F
+#ifdef ISA_F
 function Tuple2 #(Bit#(32), TVVecBytes) encode_fpr (Bit#(16) regnum, WordFL word);
    TVVecBytes vb = newVector;
    Bit#(32) n = 0;
@@ -752,16 +752,16 @@ function Tuple2 #(Bit#(32), TVVecBytes) encode_fpr (Bit#(16) regnum, WordFL word
    vb [5] = word [23:16];
    vb [6] = word [31:24];
    n = 7;
-`ifdef ISA_D
+#ifdef ISA_D
    vb [7] = word [39:32];
    vb [8] = word [47:40];
    vb [9] = word [55:48];
    vb [10] = word [63:56];
    n = 11;
-`endif
+#endif
    return tuple2 (n, vb);
 endfunction
-`endif
+#endif
 
 function Tuple2 #(Bit#(32), TVVecBytes) encode_priv (Bit#(5) priv);
    TVVecBytes vb = newVector;
@@ -781,13 +781,13 @@ function Tuple2 #(Bit#(32), TVVecBytes) encode_pc (WordXL word);
    vb [4] = word [23:16];
    vb [5] = word [31:24];
    n = 6;
-`ifdef RV64
+#ifdef RV64
    vb [6] = word [39:32];
    vb [7] = word [47:40];
    vb [8] = word [55:48];
    vb [9] = word [63:56];
    n = 10;
-`endif
+#endif
    return tuple2 (n, vb);
 endfunction
 
@@ -801,13 +801,13 @@ function Tuple2 #(Bit#(32), TVVecBytes) encode_eaddr (WordXL word);
    vb [4] = word [23:16];
    vb [5] = word [31:24];
    n = 6;
-`ifdef RV64
+#ifdef RV64
    vb [6] = word [39:32];
    vb [7] = word [47:40];
    vb [8] = word [55:48];
    vb [9] = word [63:56];
    n = 10;
-`endif
+#endif
    return tuple2 (n, vb);
 endfunction
 
@@ -824,17 +824,17 @@ function Tuple2 #(Bit#(32), TVVecBytes) encode_stval (MemReqSize mem_req_size, W
    vb [3] = word [15:8];
    vb [4] = word [23:16];
    vb [5] = word [31:24];
-`ifdef RV64
+#ifdef RV64
    vb [6] = word [39:32];
    vb [7] = word [47:40];
    vb [8] = word [55:48];
    vb [9] = word [63:56];
-`endif
+#endif
    Bit#(32) n = (1 << pack(mem_req_size)) + 2;
    return tuple2 (n, vb);
 endfunction
 
-`ifdef ISA_F
+#ifdef ISA_F
 function Tuple2 #(Bit#(32), TVVecBytes) encode_fstval (MemReqSize mem_req_size, WordFL word);
    TVVecBytes vb = newVector;
    vb [0] = te_op_addl_state;
@@ -848,16 +848,16 @@ function Tuple2 #(Bit#(32), TVVecBytes) encode_fstval (MemReqSize mem_req_size, 
    vb [3] = word [15:8];
    vb [4] = word [23:16];
    vb [5] = word [31:24];
-`ifdef ISA_D
+#ifdef ISA_D
    vb [6] = word [39:32];
    vb [7] = word [47:40];
    vb [8] = word [55:48];
    vb [9] = word [63:56];
-`endif
+#endif
    Bit#(32) n = (1 << pack(mem_req_size)) + 2;
    return tuple2 (n, vb);
 endfunction
-`endif
+#endif
 
 // ================================================================
 

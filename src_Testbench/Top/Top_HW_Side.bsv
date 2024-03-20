@@ -87,7 +87,7 @@ module mkTop_HW_Side (Empty) ;
 
       // ----------------
       // Open file for Tandem Verification trace output
-`ifdef INCLUDE_TANDEM_VERIF
+#ifdef INCLUDE_TANDEM_VERIF
       let success <- c_trace_file_open ('h_AA);
       if (success == 0) begin
 	 $display ("ERROR: Top_HW_Side.rl_step0: error opening trace file.");
@@ -96,18 +96,18 @@ module mkTop_HW_Side (Empty) ;
       end
       else
 	 $display ("Top_HW_Side.rl_step0: opened trace file.");
-`endif
+#endif
 
       // ----------------
       // Open connection to remote debug client
-`ifdef INCLUDE_GDB_CONTROL
+#ifdef INCLUDE_GDB_CONTROL
       let dmi_status <- c_debug_client_connect (dmi_default_tcp_port);
       if (dmi_status != dmi_status_ok) begin
 	 $display ("ERROR: Top_HW_Side.rl_step0: error opening debug client connection.");
 	 $display ("    Aborting.");
 	 $finish (1);
       end
-`endif
+#endif
 
    endrule: rl_step0
 
@@ -126,7 +126,7 @@ module mkTop_HW_Side (Empty) ;
 
    // Terminate on ISA test writing non-zero to <tohost_addr>
 
-`ifdef WATCH_TOHOST
+#ifdef WATCH_TOHOST
    rule rl_terminate_tohost (soc_top.mv_tohost_value != 0);
       let tohost_value = soc_top.mv_tohost_value;
 
@@ -142,12 +142,12 @@ module mkTop_HW_Side (Empty) ;
       c_end_timing (zeroExtend (cycle_num));
       $finish (0);
    endrule
-`endif
+#endif
 
    // ================================================================
    // Tandem verifier: drain and output vectors of bytes
 
-`ifdef INCLUDE_TANDEM_VERIF
+#ifdef INCLUDE_TANDEM_VERIF
    rule rl_tv_vb_out;
       let tv_buffer <- soc_top.tv_verifier_info_get.get;
       let n  = tv_buffer.num_bytes;
@@ -173,7 +173,7 @@ module mkTop_HW_Side (Empty) ;
 	 $finish (1);
       end
    endrule
-`endif
+#endif
 
    // ================================================================
    // UART console I/O
@@ -209,7 +209,7 @@ module mkTop_HW_Side (Empty) ;
    // ================================================================
    // Interaction with remote debug client
 
-`ifdef INCLUDE_GDB_CONTROL
+#ifdef INCLUDE_GDB_CONTROL
    rule rl_debug_client_request_recv;
       Bit#(64) req <- c_debug_client_request_recv ('hAA);
       Bit#(8)  status = req [63:56];
@@ -263,7 +263,7 @@ module mkTop_HW_Side (Empty) ;
 	 $finish (1);
       end
    endrule
-`endif
+#endif
 
    // ================================================================
    // INTERFACE

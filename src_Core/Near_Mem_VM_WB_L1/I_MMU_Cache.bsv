@@ -67,10 +67,10 @@ import SoC_Map      :: *;
 
 import MMU_Cache_Common :: *;
 
-`ifdef ISA_PRIV_S
+#ifdef ISA_PRIV_S
 import TLB :: *;
 import PTW :: *;
-`endif
+#endif
 
 import Cache                  :: *;
 import MMIO                   :: *;
@@ -107,14 +107,14 @@ interface I_MMU_Cache_IFC;
    // Cache flush request/response
    interface Server #(Bit#(1), Token) flush_server;
 
-`ifdef ISA_PRIV_S
+#ifdef ISA_PRIV_S
    // TLB flush
    method Action tlb_flush;
 
    // PTW and PTE-writeback requests from I_MMU_Cache are serviced by D_MMU_Cache
    interface Client #(PTW_Req, PTW_Rsp)  ptw_client;
    interface Get #(Tuple2 #(PA, WordXL)) pte_writeback_g;
-`endif
+#endif
 
    // Fabric master interface
    interface AXI4_Master_IFC #(Wd_Id, Wd_Addr, Wd_Data, Wd_User) mem_master;
@@ -144,10 +144,10 @@ typedef enum {FSM_MAIN_IDLE,          // No active request
 	      FSM_MAIN_CACHE_WAIT,    // On cache miss wait for cache to refill
 	      FSM_MAIN_MMIO_WAIT      // Wait for MMIO response
 
-`ifdef ISA_PRIV_S
+#ifdef ISA_PRIV_S
 	    , FSM_MAIN_PTW_START,     // Send PTW request
 	      FSM_MAIN_PTW_FINISHED   // Resume after PTW response
-`endif
+#endif
    } FSM_MAIN_State
 deriving (Bits, Eq, FShow);
 
@@ -187,9 +187,9 @@ module mkI_MMU_Cache (I_MMU_Cache_IFC);
    Integer verbosity_axi4_adapter = 0;
 
    // Major sub-modules
-`ifdef ISA_PRIV_S
+#ifdef ISA_PRIV_S
    TLB_IFC                     tlb          <- mkTLB;
-`endif
+#endif
    Cache_IFC                   cache        <- mkCache (fromInteger (verbosity_cache));
    MMIO_IFC                    mmio         <- mkMMIO;
    MMU_Cache_AXI4_Adapter_IFC  axi4_adapter <- mkMMU_Cache_AXI4_Adapter (fromInteger (verbosity_axi4_adapter));
@@ -223,11 +223,11 @@ module mkI_MMU_Cache (I_MMU_Cache_IFC);
    // Phys addr (initially taken from rg_req.va; VM xlation may replace it)
    Reg #(PA)  rg_pa <- mkRegU;
 
-`ifdef ISA_PRIV_S
+#ifdef ISA_PRIV_S
    // PTW requests and responses
    FIFOF #(PTW_Req) f_ptw_reqs <- mkFIFOF;    // To D_MMU_Cache
    FIFOF #(PTW_Rsp) f_ptw_rsps <- mkFIFOF;    // From D_MMU_Cache
-`endif
+#endif
 
    // Writebacks to mem of PTEs whose PTE.A and/or PTE.D have been modified
    FIFOF #(Tuple2 #(PA, WordXL)) f_pte_writebacks <- mkFIFOF;
@@ -324,7 +324,7 @@ module mkI_MMU_Cache (I_MMU_Cache_IFC);
       end
    endrule
 
-`ifdef ISA_PRIV_S
+#ifdef ISA_PRIV_S
    // VM translation (VA to PA)
    VM_Xlate_Result vm_xlate_result = tlb.mv_vm_xlate (rg_req.va,
 						      rg_req.satp,
@@ -333,11 +333,11 @@ module mkI_MMU_Cache (I_MMU_Cache_IFC);
 						      rg_req.priv,
 						      rg_req.sstatus_SUM,
 						      rg_req.mstatus_MXR);
-`else
+#else
    // In non-VM, translation result (PA) is same as VA
    VM_Xlate_Result vm_xlate_result = VM_Xlate_Result {outcome: VM_XLATE_OK,
 						      pa:      rg_req.va};
-`endif
+#endif
 
    rule rl_fsm_main_PA ((rg_fsm_main_state == FSM_MAIN_PA)
 			&& (rg_fsm_flush_state == FSM_FLUSH_IDLE));
@@ -348,7 +348,7 @@ module mkI_MMU_Cache (I_MMU_Cache_IFC);
 	 $display ("    ", fshow_VM_Xlate_Result (vm_xlate_result));
       rg_pa <= vm_xlate_result.pa;
 
-`ifdef ISA_PRIV_S
+#ifdef ISA_PRIV_S
       // ---- TLB miss
       if (vm_xlate_result.outcome == VM_XLATE_TLB_MISS) begin
 	 rg_fsm_main_state <= FSM_MAIN_PTW_START;
@@ -364,11 +364,11 @@ module mkI_MMU_Cache (I_MMU_Cache_IFC);
 
       // ---- TLB success
       else
-`endif
+#endif
 	 begin
 	    dynamicAssert ((vm_xlate_result.outcome == VM_XLATE_OK), "FAIL: unknown vm_xlate result");
 
-`ifdef ISA_PRIV_S
+#ifdef ISA_PRIV_S
 	    // If PTE A, D bits modified ...
 	    if (vm_xlate_result.pte_modified) begin
 	       // Update the TLB
@@ -387,7 +387,7 @@ module mkI_MMU_Cache (I_MMU_Cache_IFC);
 			    vm_xlate_result.pte_pa,
 			    vm_xlate_result.pte);
 	    end
-`endif
+#endif
 	    // Triage cached (memory) vs. uncached (IO, other non-mem) addresses
 	    let is_mem_addr = soc_map.m_is_mem_addr (fv_PA_to_Fabric_Addr (vm_xlate_result.pa));
 
@@ -466,7 +466,7 @@ module mkI_MMU_Cache (I_MMU_Cache_IFC);
    // ================================================================
    // On TLB miss, do a PTW, then try again or go to exception.
 
-`ifdef ISA_PRIV_S
+#ifdef ISA_PRIV_S
    rule rl_fsm_main_PTW_start (rg_fsm_main_state == FSM_MAIN_PTW_START);
       let ptw_req = PTW_Req {va: rg_req.va, satp: rg_req.satp};
       f_ptw_reqs.enq (ptw_req);    // sent to PTW module in D_MMU_Cache
@@ -507,7 +507,7 @@ module mkI_MMU_Cache (I_MMU_Cache_IFC);
 	 rg_fsm_main_state <= FSM_MAIN_IDLE;
       end
    endrule
-`endif
+#endif
 
    // ****************************************************************
    // ****************************************************************
@@ -562,15 +562,15 @@ module mkI_MMU_Cache (I_MMU_Cache_IFC);
 				     f3:          3'b010,    // = 'W' (32-bit word)
 				     va:          va,
 				     st_value:    ?
-`ifdef ISA_A
+#ifdef ISA_A
 				   , amo_funct7:  ?
-`endif
-`ifdef ISA_PRIV_S
+#endif
+#ifdef ISA_PRIV_S
 				   , priv:        priv,
 				     sstatus_SUM: sstatus_SUM,
 				     mstatus_MXR: mstatus_MXR,
 				     satp:        satp
-`endif
+#endif
 				     };
       wire_mmu_cache_req <= cache_req;
    endmethod
@@ -598,13 +598,13 @@ module mkI_MMU_Cache (I_MMU_Cache_IFC);
    // Flush request/response
    interface Server flush_server = toGPServer (f_cache_flush_reqs, f_cache_flush_rsps);
 
-`ifdef ISA_PRIV_S
+#ifdef ISA_PRIV_S
    // TLB flush
    method Action tlb_flush () = tlb.ma_flush;
 
    interface Client ptw_client      = toGPClient (f_ptw_reqs, f_ptw_rsps);
    interface Get    pte_writeback_g = toGet (f_pte_writebacks);
-`endif
+#endif
 
    // Fabric master interface
    interface AXI4_Master_IFC mem_master = axi4_adapter.mem_master;

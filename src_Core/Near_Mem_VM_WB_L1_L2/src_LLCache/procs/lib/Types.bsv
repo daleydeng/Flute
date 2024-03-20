@@ -66,8 +66,8 @@ typedef struct {
     Bool    rl;
 } MemInst deriving(Bits, Eq, FShow);
 
-`ifdef BSIM
+#ifdef BSIM
 function Action doAssert(Bool b, String s) = action if(!b) $fdisplay(stderr, "\n%m: ASSERT FAIL!!"); dynamicAssert(b, s); endaction;
-`else
+#else
 function Action doAssert(Bool b, String s) = dynamicAssert(b, s);
-`endif
+#endif

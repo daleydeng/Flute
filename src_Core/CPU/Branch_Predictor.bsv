@@ -128,7 +128,7 @@ function Tuple3 #(Bool, Bool, WordXL) fn_ras_actions (WordXL  pc,
    Bool   instr_is_JAL  = (instr_opcode (instr) == op_JAL);
    Bool   instr_is_JALR = (instr_opcode (instr) == op_JALR);
 
-`ifdef ISA_C
+#ifdef ISA_C
    // Classify instr, for 16-bit instructions ('C' extension)
    if (! (is_i32_not_i16)) begin
       ret_pc = pc + 2;
@@ -166,7 +166,7 @@ function Tuple3 #(Bool, Bool, WordXL) fn_ras_actions (WordXL  pc,
 	 instr_is_JALR = True;
       end
    end
-`endif
+#endif
 
    // Compute RAS actions based on classification.
    // (cf. RISC-V Unprivileged ISA Manual, Sec 2.5, Control Transfer Instructions/ Unconditional Jumps)

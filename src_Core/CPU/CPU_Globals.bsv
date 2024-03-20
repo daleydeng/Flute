@@ -136,7 +136,7 @@ instance FShow #(Bypass);
    endfunction
 endinstance
 
-`ifdef ISA_F
+#ifdef ISA_F
 typedef struct {
    Bypass_State  bypass_state;
    RegIdx       rd;
@@ -156,7 +156,7 @@ instance FShow #(FBypass);
       return fmt0 + fmt1 + fmt2;
    endfunction
 endinstance
-`endif
+#endif
 
 // ----------------
 // Baseline bypass info
@@ -165,11 +165,11 @@ Bypass no_bypass = Bypass {bypass_state: BYPASS_RD_NONE,
 			   rd: ?,
 			   rd_val: ? };
 
-`ifdef ISA_F
+#ifdef ISA_F
 FBypass no_fbypass = FBypass {bypass_state: BYPASS_RD_NONE,
 			      rd: ?,
 			      rd_val: ? };
-`endif
+#endif
 
 // ----------------
 // Bypass functions for GPRs
@@ -184,7 +184,7 @@ function Tuple2 #(Bool, WordXL) fn_gpr_bypass (Bypass bypass, RegIdx rd, WordXL 
    return tuple2 (busy, val);
 endfunction
 
-`ifdef ISA_F
+#ifdef ISA_F
 // FBypass functions for FPRs
 // Returns '(busy, val)'
 // 'busy' means that the RegIdx is valid and matches, but the value is not available yet
@@ -196,7 +196,7 @@ function Tuple2 #(Bool, WordFL) fn_fpr_bypass (FBypass bypass, RegIdx rd, WordFL
 		: rd_val);
    return tuple2 (busy, val);
 endfunction
-`endif
+#endif
 
 // ================================================================
 // Trap information
@@ -398,21 +398,21 @@ typedef enum {  OP_Stage2_ALU         // Pass-through (non mem, M, FD, AMO)
 	      , OP_Stage2_LD
 	      , OP_Stage2_ST
 
-`ifdef SHIFT_SERIAL
+#ifdef SHIFT_SERIAL
 	      , OP_Stage2_SH
-`endif
+#endif
 
-`ifdef ISA_M
+#ifdef ISA_M
 	      , OP_Stage2_M
-`endif
+#endif
 
-`ifdef ISA_A
+#ifdef ISA_A
 	      , OP_Stage2_AMO
-`endif
+#endif
 
-`ifdef ISA_F
+#ifdef ISA_F
 	      , OP_Stage2_FD
-`endif
+#endif
    } Op_Stage2
 deriving (Eq, Bits, FShow);
 
@@ -431,7 +431,7 @@ typedef struct {
    WordXL     val2;              // OP_Stage2_ST: store-val;
                                  // OP_Stage2_M and OP_Stage2_FD: arg2
 
-`ifdef ISA_F
+#ifdef ISA_F
    // Floating point fields
    WordFL     fval1;             // OP_Stage2_FD: arg1
    WordFL     fval2;             // OP_Stage2_FD: arg2
@@ -440,11 +440,11 @@ typedef struct {
    Bool       rs_frm_fpr;        // The rs is from FPR (FP stores)
    Bool       val1_frm_gpr;      // The val1 is from GPR for a FP instruction
    Bit#(3)   rounding_mode;     // rounding mode from fcsr_frm or instr.rm
-`endif
+#endif
 
-`ifdef INCLUDE_TANDEM_VERIF
+#ifdef INCLUDE_TANDEM_VERIF
    TraceData  trace_data;
-`endif
+#endif
    } Data_Stage1_to_Stage2
 deriving (Bits);
 
@@ -454,11 +454,11 @@ instance FShow #(Data_Stage1_to_Stage2);
       fmt = fmt + $format ("            op_stage2:", fshow (x.op_stage2), "  rd:%0d\n", x.rd);
       fmt = fmt + $format ("            addr:%h  val1:%h  val2:%h}",
 			   x.addr, x.val1, x.val2);
-`ifdef ISA_F
+#ifdef ISA_F
       fmt = fmt + $format ("\n");
       fmt = fmt + $format ("            fval1:%h  fval2:%h  fval3:%h}",
 			   x.fval1, x.fval2, x.fval3);
-`endif
+#endif
       return fmt;
    endfunction
 endinstance
@@ -472,9 +472,9 @@ typedef struct {
 
    // feedback
    Bypass                 bypass;
-`ifdef ISA_F
+#ifdef ISA_F
    FBypass                fbypass;
-`endif
+#endif
 
    // feedforward data
    Data_Stage2_to_Stage3  data_to_stage3;
@@ -510,16 +510,16 @@ typedef struct {
    RegIdx   rd;
    WordXL    rd_val;
 
-`ifdef ISA_F
+#ifdef ISA_F
    Bool      upd_flags;
    Bool      rd_in_fpr;
    Bit#(5)  fpr_flags;
    WordFL    frd_val;
-`endif
+#endif
 
-`ifdef INCLUDE_TANDEM_VERIF
+#ifdef INCLUDE_TANDEM_VERIF
    TraceData             trace_data;
-`endif
+#endif
    } Data_Stage2_to_Stage3
 deriving (Bits);
 
@@ -528,14 +528,14 @@ instance FShow #(Data_Stage2_to_Stage3);
       Fmt fmt =   $format ("data_to_Stage3 {pc:%h  instr:%h  priv:%0d\n", x.pc, x.instr, x.priv);
       fmt = fmt + $format ("        rd_valid:", fshow (x.rd_valid));
 
-`ifdef ISA_F
+#ifdef ISA_F
       if (x.upd_flags)
          fmt = fmt + $format ("  fflags: %05b", fshow (x.fpr_flags));
 
       if (x.rd_in_fpr)
          fmt = fmt + $format ("  frd:%0d  rd_val:%h\n", x.rd, x.frd_val);
       else
-`endif
+#endif
          fmt = fmt + $format ("  grd:%0d  rd_val:%h\n", x.rd, x.rd_val);
       return fmt;
    endfunction
@@ -547,13 +547,13 @@ endinstance
 typedef struct {
    Stage_OStatus  ostatus;
    Bypass         bypass;
-`ifdef ISA_F
+#ifdef ISA_F
    FBypass        fbypass;
-`endif
+#endif
 
-`ifdef INCLUDE_TANDEM_VERIF
+#ifdef INCLUDE_TANDEM_VERIF
    TraceData     trace_data;
-`endif
+#endif
    } Output_Stage3
 deriving (Bits);
 

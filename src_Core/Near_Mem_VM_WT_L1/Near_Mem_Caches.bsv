@@ -44,10 +44,10 @@ import MMU_Cache        :: *;
 import AXI4_Types       :: *;
 import Fabric_Defs      :: *;
 
-`ifdef INCLUDE_DMEM_SLAVE
+#ifdef INCLUDE_DMEM_SLAVE
 import MMU_Cache_Arbiter           :: *;
 import AXI4_Lite_MMU_Cache_Adapter :: *;
-`endif
+#endif
 
 // System address map and pc_reset value
 import SoC_Map :: *;
@@ -79,12 +79,12 @@ module mkNear_Mem (Near_Mem_IFC);
 
    MMU_Cache_IFC  icache <- mkMMU_Cache (False);
    MMU_Cache_IFC  dcache <- mkMMU_Cache (True);
-`ifdef INCLUDE_DMEM_SLAVE
+#ifdef INCLUDE_DMEM_SLAVE
    MMU_Cache_Arbiter_IFC #(2) dcache_arbiter <- mkMMU_Cache_Arbiter (dcache);
    dcache = dcache_arbiter.v_from_masters [0];
 
    AXI4_Lite_MMU_Cache_Adapter_IFC dmem_slave_adapter <- mkAXI4_Lite_MMU_Cache_Adapter(dcache_arbiter.v_from_masters [1]);
-`endif
+#endif
 
    // ----------------------------------------------------------------
    // BEHAVIOR
@@ -116,7 +116,7 @@ module mkNear_Mem (Near_Mem_IFC);
    // ----------------
    // SFENCE_VMA
 
-`ifdef ISA_PRIV_S
+#ifdef ISA_PRIV_S
    FIFOF #(Token) f_sfence_vma_reqs <- mkFIFOF;
    FIFOF #(Token) f_sfence_vma_rsps <- mkFIFOF;
 
@@ -126,7 +126,7 @@ module mkNear_Mem (Near_Mem_IFC);
       dcache.tlb_flush;
       f_sfence_vma_rsps.enq (tok);
    endrule
-`endif
+#endif
 
    // ----------------------------------------------------------------
    // INTERFACE
@@ -163,9 +163,9 @@ module mkNear_Mem (Near_Mem_IFC);
 	 Bit#(7)  amo_funct7  = ?;
 	 Bit#(64) store_value = ?;
 	 icache.req (CACHE_LD, f3,
-`ifdef ISA_A
+#ifdef ISA_A
 		     amo_funct7,
-`endif
+#endif
 		     addr, store_value, priv, sstatus_SUM, mstatus_MXR, satp);
       endmethod
 
@@ -190,9 +190,9 @@ module mkNear_Mem (Near_Mem_IFC);
       // CPU side: DMem request
       method Action  req (CacheOp op,
 			  Bit#(3) f3,
-`ifdef ISA_A
+#ifdef ISA_A
 			  Bit#(7) amo_funct7,
-`endif
+#endif
 			  WordXL addr,
 			  Bit#(64) store_value,
 			  // The following  args for VM
@@ -201,18 +201,18 @@ module mkNear_Mem (Near_Mem_IFC);
 			  Bit#(1)   mstatus_MXR,
 			  WordXL     satp);    // { VM_Mode, ASID, PPN_for_page_table }
 	 dcache.req (op, f3,
-`ifdef ISA_A
+#ifdef ISA_A
 		     amo_funct7,
-`endif
+#endif
 		     addr, store_value, priv, sstatus_SUM, mstatus_MXR, satp);
       endmethod
 
       // CPU side: DMem response
       method Bool       valid      = dcache.valid;
       method Bit#(64)  word64     = dcache.cword;
-`ifdef ISA_A
+#ifdef ISA_A
       method Bit#(64)  st_amo_val = dcache.st_amo_val;
-`endif
+#endif
       method Bool       exc        = dcache.exc;
       method Exc_Code   exc_code   = dcache.exc_code;
    endinterface
@@ -220,9 +220,9 @@ module mkNear_Mem (Near_Mem_IFC);
    // Fabric side
    interface Near_Mem_Fabric_IFC  mem_master = dcache.mem_master;
 
-`ifdef INCLUDE_DMEM_SLAVE
+#ifdef INCLUDE_DMEM_SLAVE
    interface dmem_slave = dmem_slave_adapter.from_master;
-`endif
+#endif
 
    // ----------------
    // FENCE.I: flush both ICache and DCache
@@ -263,9 +263,9 @@ module mkNear_Mem (Near_Mem_IFC);
    // ----------------
    // SFENCE_VMA: flush TLBs
 
-`ifdef ISA_PRIV_S
+#ifdef ISA_PRIV_S
    interface Server sfence_vma_server = toGPServer (f_sfence_vma_reqs, f_sfence_vma_rsps);
-`endif
+#endif
 
    // ----------------------------------------------------------------
    // Interface to 'coherent DMA' port of optional L2 cache
@@ -279,13 +279,13 @@ module mkNear_Mem (Near_Mem_IFC);
    // ----------------
    // For ISA tests: watch memory writes to <tohost> addr
 
-`ifdef WATCH_TOHOST
+#ifdef WATCH_TOHOST
    method Action set_watch_tohost (Bool watch_tohost, Bit#(64) tohost_addr);
       dcache.set_watch_tohost (watch_tohost, tohost_addr);
    endmethod
 
    method Bit#(64) mv_tohost_value = dcache.mv_tohost_value;
-`endif
+#endif
 
    // Inform core that DDR4 has been initialized and is ready to accept requests
    method Action ma_ddr4_ready;

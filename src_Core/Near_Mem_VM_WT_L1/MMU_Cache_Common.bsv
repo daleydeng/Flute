@@ -16,9 +16,9 @@ import Fabric_Defs :: *;
 
 typedef enum {  CACHE_LD
 	      , CACHE_ST
-`ifdef ISA_A
+#ifdef ISA_A
 	      , CACHE_AMO
-`endif
+#endif
    } CacheOp
 deriving (Bits, Eq, FShow);
 

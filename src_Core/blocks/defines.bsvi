@@ -1,33 +1,33 @@
 // classic bluespec haskell dont support macro, put them here to fix around
-`ifdef RV32
+#ifdef RV32
 typedef 32 XLEN;
 
-`elsif RV64
+#elif defined RV64
 typedef 64 XLEN;
 
-`elsif RV128
+#elif defined RV128
 typedef 128 XLEN
-`endif
+#endif
 
-`ifdef ISA_F
+#ifdef ISA_F
 
-`ifdef ISA_D
+#ifdef ISA_D
 typedef 64 FLEN;
-`else
+#else
 typedef 32 FLEN;
-`endif
+#endif
 
-`else
+#else
 typedef 0 FLEN;
-`endif
+#endif
 
-`define PAT(v, P) \
+#define PAT(v, P) \
    case (v) matches \
       tagged P .x: return x; \
    endcase
  
-`ifdef INCLUDE_TANDEM_VERIF
+#ifdef INCLUDE_TANDEM_VERIF
 Integer kINCLUDE_TANDEM_VERIF = 1;
-`else
+#else
 Integer INCLUDE_TANDEM_VERIF = 0;
-`endif
+#endif

@@ -21,7 +21,7 @@
 // CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-`include "ProcConfig.bsv"
+#include "ProcConfig.bsv"
 import BRAM::*;
 import Types::*;
 import MemoryTypes::*;

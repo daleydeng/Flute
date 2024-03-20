@@ -34,7 +34,7 @@ import Near_Mem_IO_AXI4 :: *;
 // ================================================================
 // Test both RV32 and RV64 versions
 
-`ifdef RV32
+#ifdef RV32
 
 typedef 32 XLEN;
 
@@ -46,7 +46,7 @@ function Bit#(XLEN) fn_fabric_to_cpu_width (Bit#(Wd_Data) x);
    return truncate (x);
 endfunction
 
-`else
+#else
 
 typedef 64 XLEN;
 
@@ -58,7 +58,7 @@ function Bit#(XLEN) fn_fabric_to_cpu_width (Bit#(Wd_Data) x);
    return zeroExtend (x);
 endfunction
 
-`endif
+#endif
 
 // ================================================================
 

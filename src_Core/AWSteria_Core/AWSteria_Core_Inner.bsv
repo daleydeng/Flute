@@ -66,9 +66,9 @@ import Fabric_Defs       :: *;    // for Wd_{Id,Addr,Data,User}
 import DM_Common         :: *;    // Debug Module interface etc.
 import DM_CPU_Req_Rsp    :: *;
 
-`ifdef INCLUDE_PC_TRACE
+#ifdef INCLUDE_PC_TRACE
 import PCTrace          :: *;    // Lightweight PC trace info
-`endif
+#endif
 
 import tv_buffer           :: *;    // Tandem Verification info
 
@@ -133,10 +133,10 @@ interface AWSteria_Core_Inner_IFC;
 
    // GPR access
    interface Server #(DM_CPU_Req #(5,  XLEN), DM_CPU_Rsp #(XLEN)) hart0_gpr_mem_server;
-`ifdef ISA_F
+#ifdef ISA_F
    // FPR access
    interface Server #(DM_CPU_Req #(5,  FLEN), DM_CPU_Rsp #(FLEN)) hart0_fpr_mem_server;
-`endif
+#endif
    // CSR access
    interface Server #(DM_CPU_Req #(12, XLEN), DM_CPU_Rsp #(XLEN)) hart0_csr_mem_server;
 
@@ -152,12 +152,12 @@ interface AWSteria_Core_Inner_IFC;
    // Set core's verbosity and logdelay
    interface FIFOF_I #(Tuple2 #(Bit#(4), Bit#(64))) fi_verbosity_control;
 
-`ifdef WATCH_TOHOST
+#ifdef WATCH_TOHOST
    // Set watch-tohost on/off with tohost address
    interface FIFOF_I #(Tuple2 #(Bool, Bit#(64))) fi_watch_tohost_control;
    // Get tohost value
    interface FIFOF_O #(Bit#(64)) fo_tohost_value;
-`endif
+#endif
 endinterface
 
 // ================================================================
@@ -207,18 +207,18 @@ module mkAWSteria_Core_Inner (AWSteria_Core_Inner_IFC);
    // Tandem Verification Encoder wrapper
    // and its connections to CPU
    let tve_wrapper_param = TVE_Wrapper_Param {
-`ifdef INCLUDE_TANDEM_VERIF
+#ifdef INCLUDE_TANDEM_VERIF
       cpu_trace_data_out:        cpu.trace_data_out,
-`else
+#else
       cpu_trace_data_out:        getstub,
-`endif
-`ifdef INCLUDE_GDB_CONTROL
+#endif
+#ifdef INCLUDE_GDB_CONTROL
       cpu_hart0_gpr_mem_server:	 cpu.hart0_gpr_mem_server,
-`ifdef ISA_F
+#ifdef ISA_F
       cpu_hart0_fpr_mem_server:  cpu.hart0_fpr_mem_server,
-`endif
+#endif
       cpu_hart0_csr_mem_server:  cpu.hart0_csr_mem_server,
-`endif
+#endif
       cpu_dma_server:            dma_server_axi4_deburster.from_master
       };
 
@@ -384,7 +384,7 @@ module mkAWSteria_Core_Inner (AWSteria_Core_Inner_IFC);
 
    FIFOF #(Bit#(32)) f_misc_from_host = dummy_FIFOF;    // unused
 
-`ifdef INCLUDE_PC_TRACE
+#ifdef INCLUDE_PC_TRACE
    Reg #(Tuple2 #(Bool, Bit#(64))) rg_pc_trace_control <- mkReg (tuple2 (False, ?));
    FIFOF #(Bit#(32))               f_misc_to_host      <- mkFIFOF;
 
@@ -437,9 +437,9 @@ module mkAWSteria_Core_Inner (AWSteria_Core_Inner_IFC);
       f_misc_to_host.enq (rg_pc_trace.pc [63:32]);
       rg_pc_trace_serialize_state <= 0;
    endrule
-`else
+#else
    FIFOF #(Bit#(32)) f_misc_to_host = dummy_FIFOF;    // unused
-`endif
+#endif
 
    // ================================================================
    // To_Host value
@@ -499,10 +499,10 @@ module mkAWSteria_Core_Inner (AWSteria_Core_Inner_IFC);
 
    // GPR access
    interface Server hart0_gpr_mem_server = tve_wrapper.hart0_gpr_mem_server;
-`ifdef ISA_F
+#ifdef ISA_F
    // FPR access
    interface Server hart0_fpr_mem_server = tve_wrapper.hart0_fpr_mem_server;
-`endif
+#endif
    // CSR access
    interface Server hart0_csr_mem_server = tve_wrapper.hart0_csr_mem_server;
 
@@ -512,7 +512,7 @@ module mkAWSteria_Core_Inner (AWSteria_Core_Inner_IFC);
    // ----------------------------------------------------------------
    // Interfaces for mkHost_Control_Status
 
-`ifdef INCLUDE_PC_TRACE
+#ifdef INCLUDE_PC_TRACE
    // PC Trace control
    interface FIFOF_I fi_pc_trace_control;
       method Action enq (Tuple2 #(Bool, Bit#(64)) x);
@@ -520,9 +520,9 @@ module mkAWSteria_Core_Inner (AWSteria_Core_Inner_IFC);
       endmethod
       method notFull = True;
    endinterface
-`else
+#else
    interface FIFOF_I fi_pc_trace_control = dummy_FIFOF_I;
-`endif
+#endif
 
    // ----------------------------------------------------------------
    // To CPU
@@ -541,7 +541,7 @@ module mkAWSteria_Core_Inner (AWSteria_Core_Inner_IFC);
    // ----------------
    // Set watch-tohost on/off with tohost address
 
-`ifdef WATCH_TOHOST
+#ifdef WATCH_TOHOST
    interface FIFOF_I fi_watch_tohost_control;
       method Action enq (Tuple2 #(Bool, Bit#(64)) xy);
 	 match { .watch_tohost, .tohost_addr } = xy;
@@ -552,7 +552,7 @@ module mkAWSteria_Core_Inner (AWSteria_Core_Inner_IFC);
 
    // Get tohost value
    interface FIFOF_O fo_tohost_value = to_FIFOF_O (f_tohost_value);
-`endif
+#endif
 
 endmodule
 

@@ -8,9 +8,9 @@ package CPU;
 // - Optional Debug Module connection
 // - Optional Tandem Verification connection.
 
-`ifdef EXTERNAL_DEBUG_MODULE
-`undef INCLUDE_GDB_CONTROL
-`endif
+#ifdef EXTERNAL_DEBUG_MODULE
+#undef INCLUDE_GDB_CONTROL
+#endif
 
 // ================================================================
 // Exports
@@ -38,26 +38,26 @@ import Semi_FIFOF :: *;
 
 import AXI4_Types :: *;
 
-`ifdef INCLUDE_DMEM_SLAVE
+#ifdef INCLUDE_DMEM_SLAVE
 import AXI4_Lite_Types :: *;
-`endif
+#endif
 
 import isa_priv_M :: *;
 
 import tv_trace_data :: *;
 
 import GPR_RegFile :: *;
-`ifdef ISA_F
+#ifdef ISA_F
 import FPR_RegFile :: *;
-`endif
+#endif
 import CSR_RegFile :: *;
 import CPU_Globals :: *;
 import CPU_IFC     :: *;
 
-`ifdef ISA_C
+#ifdef ISA_C
 // 'C' extension (16b compressed instructions)
 import CPU_Fetch_C  :: *;
-`endif
+#endif
 
 import CPU_StageF :: *;    // Fetch
 import CPU_StageD :: *;    // Decode
@@ -67,18 +67,18 @@ import CPU_Stage3 :: *;    // Writeback
 
 import Near_Mem_IFC :: *;    // Caches or TCM
 
-`ifdef Near_Mem_Caches
+#ifdef NEAR_MEM_CACHES
 import Near_Mem_Caches :: *;
-`endif
+#endif
 
-`ifdef Near_Mem_TCM
+#ifdef Near_Mem_TCM
 import Near_Mem_TCM :: *;
-`endif
+#endif
 
-`ifdef INCLUDE_GDB_CONTROL
+#ifdef INCLUDE_GDB_CONTROL
 import Debug_Module   :: *;
 import DM_CPU_Req_Rsp :: *;
-`endif
+#endif
 
 // System address map and pc_reset value
 import SoC_Map :: *;
@@ -89,9 +89,9 @@ import SoC_Map :: *;
 typedef enum {CPU_RESET1,
 	      CPU_RESET2,
 
-`ifdef INCLUDE_GDB_CONTROL
+#ifdef INCLUDE_GDB_CONTROL
 	      CPU_GDB_PAUSING,      // On GDB breakpoint, while waiting for fence completion
-`endif
+#endif
 	      CPU_DEBUG_MODE,       // Stopped (normally for debugger)
 	      CPU_RUNNING,          // Normal operation
 	      CPU_TRAP,
@@ -110,10 +110,10 @@ deriving (Eq, Bits, FShow);
 function Bool fn_is_running (CPU_State  cpu_state);
    return (   (cpu_state != CPU_RESET1)
 	   && (cpu_state != CPU_RESET2)
-`ifdef INCLUDE_GDB_CONTROL
+#ifdef INCLUDE_GDB_CONTROL
 	   && (cpu_state != CPU_GDB_PAUSING)
 	   && (cpu_state != CPU_DEBUG_MODE)
-`endif
+#endif
 	   );
 endfunction
 
@@ -129,9 +129,9 @@ module mkCPU (CPU_IFC);
    // ----------------
    // General purpose registers and CSRs
    GPR_RegFile_IFC  gpr_regfile  <- mkGPR_RegFile;
-`ifdef ISA_F
+#ifdef ISA_F
    FPR_RegFile_IFC  fpr_regfile  <- mkFPR_RegFile;
-`endif
+#endif
 
    CSR_RegFile_IFC  csr_regfile  <- mkCSR_RegFile;
 
@@ -144,22 +144,22 @@ module mkCPU (CPU_IFC);
 
    // MSTATUS.MXR and SSTATUS.SUM for Virtual Memory access control
    Bit#(1) mstatus_MXR = mstatus [19];
-`ifdef ISA_PRIV_S
+#ifdef ISA_PRIV_S
    Bit#(1) sstatus_SUM = (csr_regfile.read_sstatus) [18];
-`else
+#else
    Bit#(1) sstatus_SUM = 0;
-`endif
+#endif
 
    // ----------------
    // Near mem (caches or TCM, for example)
    Near_Mem_IFC  near_mem <- mkNear_Mem;
 
    // Take imem as is from near_mem, or use wrapper for 'C' extension
-`ifdef ISA_C
+#ifdef ISA_C
    IMem_IFC imem <- mkCPU_Fetch_C (near_mem.imem);
-`else
+#else
    IMem_IFC imem = near_mem.imem;
-`endif
+#endif
 
    // ----------------
    // For debugging
@@ -183,9 +183,9 @@ module mkCPU (CPU_IFC);
    Reg #(TrapInfo)  rg_trap_info       <- mkRegU;
    Reg #(Bool)       rg_trap_interrupt  <- mkRegU;
    Reg #(InstrBits)      rg_trap_instr      <- mkRegU;
-`ifdef INCLUDE_TANDEM_VERIF
+#ifdef INCLUDE_TANDEM_VERIF
    Reg #(TraceData) rg_trap_trace_data <- mkRegU;
-`endif
+#endif
 
    // rg_next_pc is used for redirections (branches, non-pipe
    // instructions, traps, interrupts)
@@ -205,9 +205,9 @@ module mkCPU (CPU_IFC);
 
    CPU_Stage3_IFC stage3 <- mkCPU_Stage3 (cur_verbosity,
 					  gpr_regfile,
-`ifdef ISA_F
+#ifdef ISA_F
 					  fpr_regfile,
-`endif
+#endif
 					  csr_regfile);
 
    CPU_Stage2_IFC stage2 <- mkCPU_Stage2 (cur_verbosity, csr_regfile, near_mem.dmem);
@@ -216,11 +216,11 @@ module mkCPU (CPU_IFC);
 					   gpr_regfile,
 					   stage2.out.bypass,
 					   stage3.out.bypass,
-`ifdef ISA_F
+#ifdef ISA_F
 					   fpr_regfile,
 					   stage2.out.fbypass,
 					   stage3.out.fbypass,
-`endif
+#endif
 					   csr_regfile,
 					   rg_epoch,
 					   rg_cur_priv);
@@ -244,7 +244,7 @@ module mkCPU (CPU_IFC);
    // ----------------
    // Communication to/from External debug module
 
-`ifdef INCLUDE_GDB_CONTROL
+#ifdef INCLUDE_GDB_CONTROL
 
    // Debugger run-control
    FIFOF #(Bool)  f_run_halt_reqs <- mkFIFOF;
@@ -260,44 +260,44 @@ module mkCPU (CPU_IFC);
    FIFOF #(DM_CPU_Req #(5,  XLEN)) f_gpr_reqs <- mkFIFOF;
    FIFOF #(DM_CPU_Rsp #(XLEN))     f_gpr_rsps <- mkFIFOF;
 
-`ifdef ISA_F
+#ifdef ISA_F
    // Debugger FPR read/write request/response
    FIFOF #(DM_CPU_Req #(5,  FLEN)) f_fpr_reqs <- mkFIFOF;
    FIFOF #(DM_CPU_Rsp #(FLEN))     f_fpr_rsps <- mkFIFOF;
-`endif
+#endif
 
    // Debugger CSR read/write request/response
    FIFOF #(DM_CPU_Req #(12, XLEN)) f_csr_reqs <- mkFIFOF;
    FIFOF #(DM_CPU_Rsp #(XLEN))     f_csr_rsps <- mkFIFOF;
 
-`endif
+#endif
 
    // ----------------
    // PC trace output
 
-`ifdef INCLUDE_PC_TRACE
+#ifdef INCLUDE_PC_TRACE
    FIFOF #(PCTrace) f_pc_trace  <- mkFIFOF;
-`endif
+#endif
 
    // ----------------
    // Tandem Verification
 
-`ifdef INCLUDE_TANDEM_VERIF
+#ifdef INCLUDE_TANDEM_VERIF
    FIFOF #(TraceData) f_trace_data  <- mkFIFOF;
 
    // State for deciding if a MIP update needs to be sent into the trace file
    Reg #(WordXL) rg_prev_mip <- mkReg (0);
-`endif
+#endif
 
    function Bool mip_cmd_needed ();
-`ifdef INCLUDE_TANDEM_VERIF
+#ifdef INCLUDE_TANDEM_VERIF
       // If the MTIP, MSIP, or xEIP bits of MIP have changed, then send a MIP update
       WordXL new_mip = csr_regfile.csr_mip_read;
       Bool mip_has_changed = (new_mip != rg_prev_mip);
       return mip_has_changed;
-`else
+#else
       return False;
-`endif
+#endif
    endfunction: mip_cmd_needed
 
    // ================================================================
@@ -322,12 +322,12 @@ module mkCPU (CPU_IFC);
 	 rg_instret_reported <= instret;
 	 rg_pc_reported      <= pc;
 
-`ifdef INCLUDE_PC_TRACE
+#ifdef INCLUDE_PC_TRACE
 	 let pc_trace = PCTrace {cycle:   mcycle,
 				  instret: instret,
 				  pc:      zeroExtend (pc)};
 	 f_pc_trace.enq (pc_trace);
-`endif
+#endif
       endaction
    endfunction
 
@@ -408,18 +408,18 @@ module mkCPU (CPU_IFC);
 
       $display ("    Stage3: ", fshow (stage3.out));
       $display ("        Bypass  to Stage1: ", fshow (stage3.out.bypass));
-`ifdef ISA_F
+#ifdef ISA_F
       $display ("        FBypass to Stage1: ", fshow (stage3.out.fbypass));
-`endif
+#endif
       $display ("    Stage2: pc 0x%08h instr 0x%08h priv %0d",
 		stage2.out.data_to_stage3.pc,
 		stage2.out.data_to_stage3.instr,
 		stage2.out.data_to_stage3.priv);
       $display ("        ", fshow (stage2.out));
       $display ("        Bypass  to Stage1: ", fshow (stage2.out.bypass));
-`ifdef ISA_F
+#ifdef ISA_F
       $display ("        FBypass to Stage1: ", fshow (stage2.out.fbypass));
-`endif
+#endif
 
       $display ("    Stage1: pc 0x%08h instr 0x%08h priv %0d",
 		stage1.out.data_to_stage2.pc,
@@ -454,7 +454,7 @@ module mkCPU (CPU_IFC);
 
       $display ("================================================================");
       $write   ("CPU: Bluespec  RISC-V  Flute  v3.0");
-      if (rv_version == RV32)
+      if (xlen == 32)
 	 $display (" (RV32)");
       else
 	 $display (" (RV64)");
@@ -462,9 +462,9 @@ module mkCPU (CPU_IFC);
       $display ("================================================================");
 
       gpr_regfile.server_reset.request.put (?);
-`ifdef ISA_F
+#ifdef ISA_F
       fpr_regfile.server_reset.request.put (?);
-`endif
+#endif
       csr_regfile.server_reset.request.put (?);
       near_mem.server_reset.request.put (?);
 
@@ -478,34 +478,34 @@ module mkCPU (CPU_IFC);
       rg_state    <= CPU_RESET2;
       rg_epoch    <= 0;
 
-`ifdef INCLUDE_GDB_CONTROL
+#ifdef INCLUDE_GDB_CONTROL
       rg_stop_req   <= False;
       rg_step_count <= 0;
-`endif
+#endif
 
-`ifdef INCLUDE_TANDEM_VERIF
+#ifdef INCLUDE_TANDEM_VERIF
       let trace_data = mkTrace_RESET;
       f_trace_data.enq (trace_data);
 
       rg_prev_mip <= 0;
-`endif
+#endif
    endrule: rl_reset_start
 
    // ----------------
 
-`ifdef ISA_C
+#ifdef ISA_C
    // TODO: analyze this carefully; added to resolve a blockage.
    // imem_rl_fetch_next_32b is in CPU_Fetch_C.bsv, and calls imem32.req (near_mem.imem_req).
    // fa_stageF_redirect calls stageF.enq which also calls imem.req which calls imem32.req.
    // But cond_i32_odd_fetch_next should make these rules mutually exclusive; why doesn't bsc realize this?
    (* descending_urgency = "imem_rl_fetch_next_32b, rl_reset_complete" *)
-`endif
+#endif
 
    rule rl_reset_complete (rg_state == CPU_RESET2);
       let ack_gpr <- gpr_regfile.server_reset.response.get;
-`ifdef ISA_F
+#ifdef ISA_F
       let ack_fpr <- fpr_regfile.server_reset.response.get;
-`endif
+#endif
       let ack_csr <- csr_regfile.server_reset.response.get;
       let ack_nm  <- near_mem.server_reset.response.get;
 
@@ -527,10 +527,10 @@ module mkCPU (CPU_IFC);
       end
       else begin
 	 rg_state <= CPU_DEBUG_MODE;
-`ifdef INCLUDE_GDB_CONTROL
+#ifdef INCLUDE_GDB_CONTROL
 	 csr_regfile.write_dcsr_cause_priv (DCSR_CAUSE_HALTREQ, priv_M);
 	 csr_regfile.write_dpc (dpc);
-`endif
+#endif
 	 if (cur_verbosity != 0)
 	    $display ("%0d: %m.rl_reset_complete", mcycle);
 	 $display ("CPU: Entering DEBUG_MODE", mcycle);
@@ -560,12 +560,12 @@ module mkCPU (CPU_IFC);
 				     && (stage1.out.control != CONTROL_DISCARD))
 				 || (stage1.out.ostatus == OSTATUS_NONPIPE));
 
-`ifdef INCLUDE_GDB_CONTROL
+#ifdef INCLUDE_GDB_CONTROL
    Bool stop_step_req = (   rg_stop_req
 			 || rg_step_count == 1);
-`else
+#else
    Bool stop_step_req = False;
-`endif
+#endif
 
    // Debugger stop and step should only happen on architectural instructions
    Bool stop_step_halt = stage1_has_arch_instr && stop_step_req;
@@ -599,7 +599,7 @@ module mkCPU (CPU_IFC);
 
    function Action fa_step_check;
       action
-`ifdef INCLUDE_GDB_CONTROL
+#ifdef INCLUDE_GDB_CONTROL
 	 if (   stage1_has_arch_instr
 	    && (   (! stage1.out.redirect)
 		|| (stageF.out.ostatus != OSTATUS_BUSY))
@@ -608,13 +608,13 @@ module mkCPU (CPU_IFC);
 
 	    rg_step_count <= 1;
 	 end
-`endif
+#endif
       endaction
    endfunction
 
    // ================================================================
 
-`ifdef INCLUDE_TANDEM_VERIF
+#ifdef INCLUDE_TANDEM_VERIF
    rule rl_stage1_mip_cmd (   (rg_state == CPU_RUNNING)
 			   && stage1_send_mip_cmd);
       WordXL new_mip = csr_regfile.csr_mip_read;
@@ -626,7 +626,7 @@ module mkCPU (CPU_IFC);
       if (cur_verbosity > 1)
 	 $display ("%0d: %m.rl_stage1_mip_cmd: MIP new 0x%0h, old 0x%0h", mcycle, new_mip, rg_prev_mip);
    endrule
-`endif
+#endif
 
    // ================================================================
    // PIPELINE BEHAVIOR (excluding nonpipe special instructions and exceptions)
@@ -638,13 +638,13 @@ module mkCPU (CPU_IFC);
    // a cycle before restarting the pipe by re-fetching the next
    // instr, since the fetch may need the just-written CSR value.
 
-`ifdef ISA_C
+#ifdef ISA_C
    // TODO: analyze this carefully; added to resolve a blockage
    // imem_rl_fetch_next_32b is in CPU_Fetch_C.bsv, and calls imem32.req (near_mem.imem_req).
    // fa_stageF_redirect calls stageF.enq which also calls imem.req which calls imem32.req.
    // But cond_i32_odd_fetch_next should make these rules mutually exclusive; why doesn't bsc realize this?
    (* descending_urgency = "imem_rl_fetch_next_32b, rl_pipe" *)
-`endif
+#endif
 
    rule rl_pipe (   (rg_state == CPU_RUNNING)
 		 && (! pipe_is_empty)
@@ -666,11 +666,11 @@ module mkCPU (CPU_IFC);
       if (stage3.out.ostatus == OSTATUS_PIPE) begin
 	 stage3.deq; stage3_full = False;
 
-`ifdef INCLUDE_TANDEM_VERIF
+#ifdef INCLUDE_TANDEM_VERIF
 	 // To Verifier
 	 let trace_data = stage3.out.trace_data;
 	 f_trace_data.enq (trace_data);
-`endif
+#endif
       end
 
       // ----------------
@@ -780,9 +780,9 @@ module mkCPU (CPU_IFC);
       rg_trap_info       <= stage2.out.trap_info;
       rg_trap_interrupt  <= False;
       rg_trap_instr      <= stage2.out.data_to_stage3.instr;
-`ifdef INCLUDE_TANDEM_VERIF
+#ifdef INCLUDE_TANDEM_VERIF
       rg_trap_trace_data <= stage2.out.data_to_stage3.trace_data;
-`endif
+#endif
 
       rg_state           <= CPU_TRAP;
    endrule: rl_stage2_nonpipe
@@ -790,12 +790,12 @@ module mkCPU (CPU_IFC);
    // ================================================================
    // Stage1: nonpipe traps (except BREAKs that enter Debug Mode)
 
-`ifdef INCLUDE_GDB_CONTROL
+#ifdef INCLUDE_GDB_CONTROL
    Bool break_into_Debug_Mode = (   (stage1.out.trap_info.exc_code == exc_code_BREAKPOINT)
 				 && csr_regfile.dcsr_break_enters_debug (rg_cur_priv));
-`else
+#else
    Bool break_into_Debug_Mode = False;
-`endif
+#endif
 
    rule rl_stage1_trap (   (rg_state == CPU_RUNNING)
 			&& (! halting)
@@ -811,9 +811,9 @@ module mkCPU (CPU_IFC);
       rg_trap_info       <= stage1.out.trap_info;
       rg_trap_interrupt  <= False;
       rg_trap_instr      <= stage1.out.data_to_stage2.instr;
-`ifdef INCLUDE_TANDEM_VERIF
+#ifdef INCLUDE_TANDEM_VERIF
       rg_trap_trace_data <= stage1.out.data_to_stage2.trace_data;
-`endif
+#endif
 
       rg_state           <= CPU_TRAP;
    endrule: rl_stage1_trap
@@ -860,7 +860,7 @@ module mkCPU (CPU_IFC);
       // csr_regfile.csr_minstret_incr;
 
       // Tandem Verification and Debug related actions
-`ifdef INCLUDE_TANDEM_VERIF
+#ifdef INCLUDE_TANDEM_VERIF
       // Trace data
       TraceData trace_data;
       if (is_interrupt)
@@ -879,17 +879,17 @@ module mkCPU (CPU_IFC);
 	 trace_data.word4 = tval;
       end
       f_trace_data.enq (trace_data);
-`endif
+#endif
 
       // Simulation heuristic: finish if trap back to this instr
-`ifndef INCLUDE_GDB_CONTROL
+#ifndef INCLUDE_GDB_CONTROL
       if (epc == next_pc) begin
 	 $display ("%0d: %m.rl_stage1_trap: Tight infinite trap loop: pc 0x%0x instr 0x%08x", mcycle,
 		   next_pc, instr);
 	 fa_report_CPI;
 	 $finish (0);
       end
-`endif
+#endif
 
       fa_emit_instr_trace (minstret, epc, instr, rg_cur_priv);
 
@@ -915,13 +915,13 @@ module mkCPU (CPU_IFC);
       rg_csr_pc  <= stage1.out.data_to_stage2.pc;
       rg_next_pc <= stage1.out.next_pc;
 
-`ifdef ISA_F
+#ifdef ISA_F
       // With FP, the val is always Bit#(64)
       // TODO: is this ifdef necessary? Can't we always use 'truncate'?
       rg_csr_val1 <= truncate (stage1.out.data_to_stage2.val1);
-`else
+#else
       rg_csr_val1 <= stage1.out.data_to_stage2.val1;
-`endif
+#endif
 
       // In case of trap (illegal CSRRW)
       rg_trap_info      <= TrapInfo {epc:      stage1.out.data_to_stage2.pc,
@@ -929,9 +929,9 @@ module mkCPU (CPU_IFC);
                                       tval:     stage1.out.trap_info.tval};
       rg_trap_interrupt <= False;
       rg_trap_instr     <= stage1.out.data_to_stage2.instr;    // Also used in successful CSSRW
-`ifdef INCLUDE_TANDEM_VERIF
+#ifdef INCLUDE_TANDEM_VERIF
       rg_trap_trace_data <= stage1.out.data_to_stage2.trace_data;
-`endif
+#endif
 
       rg_state <= CPU_CSRRW_2;
    endrule: rl_stage1_CSRR_W
@@ -989,7 +989,7 @@ module mkCPU (CPU_IFC);
 	 // Restart the pipe
 	 rg_state   <= CPU_CSRRX_RESTART;
 
-`ifdef INCLUDE_TANDEM_VERIF
+#ifdef INCLUDE_TANDEM_VERIF
 	 // Trace data
 	 let trace_data = mkTrace_CSRRX (
       rg_csr_pc,
@@ -1004,7 +1004,7 @@ module mkCPU (CPU_IFC);
       isValid (m_new_mstatus),
       fromMaybe (?, m_new_mstatus));
 	 f_trace_data.enq (trace_data);
-`endif
+#endif
 
 	 // Debug
 	 fa_emit_instr_trace (minstret, rg_csr_pc, instr, rg_cur_priv);
@@ -1031,13 +1031,13 @@ module mkCPU (CPU_IFC);
       rg_csr_pc  <= stage1.out.data_to_stage2.pc;
       rg_next_pc <= stage1.out.next_pc;
 
-`ifdef ISA_F
+#ifdef ISA_F
       // With FP, the val is always Bit#(64)
       // TODO: is this ifdef necessary? Can't we always use 'truncate'?
       rg_csr_val1 <= truncate (stage1.out.data_to_stage2.val1);
-`else
+#else
       rg_csr_val1 <= stage1.out.data_to_stage2.val1;
-`endif
+#endif
 
       // In case of trap (illegal CSRRW)
       rg_trap_info      <= TrapInfo {epc:      stage1.out.data_to_stage2.pc,
@@ -1045,9 +1045,9 @@ module mkCPU (CPU_IFC);
                                       tval:     stage1.out.trap_info.tval};
       rg_trap_interrupt <= False;
       rg_trap_instr     <= stage1.out.data_to_stage2.instr;    // TODO: this is also used for successful CSRRW
-`ifdef INCLUDE_TANDEM_VERIF
+#ifdef INCLUDE_TANDEM_VERIF
       rg_trap_trace_data <= stage1.out.data_to_stage2.trace_data;    // TODO: this is also used for successful CSRRW
-`endif
+#endif
 
       rg_state <= CPU_CSRR_S_or_C_2;
    endrule: rl_stage1_CSRR_S_or_C
@@ -1111,7 +1111,7 @@ module mkCPU (CPU_IFC);
 	 // Restart the pipe
 	 rg_state   <= CPU_CSRRX_RESTART;
 
-`ifdef INCLUDE_TANDEM_VERIF
+#ifdef INCLUDE_TANDEM_VERIF
 	 // Trace data
 	 let trace_data = mkTrace_CSRRX (
       rg_csr_pc,
@@ -1126,7 +1126,7 @@ module mkCPU (CPU_IFC);
       isValid (m_new_mstatus),
       fromMaybe (?, m_new_mstatus));
 	 f_trace_data.enq (trace_data);
-`endif
+#endif
 
 	 // Debug
 	 fa_emit_instr_trace (minstret, rg_csr_pc, instr, rg_cur_priv);
@@ -1186,12 +1186,12 @@ module mkCPU (CPU_IFC);
       // Accounting
       csr_regfile.csr_minstret_incr;
 
-`ifdef INCLUDE_TANDEM_VERIF
+#ifdef INCLUDE_TANDEM_VERIF
       // Trace data
       let td  = stage1.out.data_to_stage2.trace_data;
       let td1 = mkTrace_RET (stage1.out.data_to_stage2.pc, next_pc, td.instr_sz, td.instr, new_priv, new_mstatus);
       f_trace_data.enq (td1);
-`endif
+#endif
 
       // Debug
       fa_emit_instr_trace (minstret, stage1.out.data_to_stage2.pc, stage1.out.data_to_stage2.instr, rg_cur_priv);
@@ -1233,10 +1233,10 @@ module mkCPU (CPU_IFC);
 			   stage1.out.data_to_stage2.pc,
 			   stage1.out.data_to_stage2.instr,
 			   rg_cur_priv);
-`ifdef INCLUDE_TANDEM_VERIF
+#ifdef INCLUDE_TANDEM_VERIF
       let trace_data = stage1.out.data_to_stage2.trace_data;
       f_trace_data.enq (trace_data);
-`endif
+#endif
       // Resume pipe
       stageD.set_full (False);
       stage1.set_full (False);    fa_step_check;
@@ -1275,11 +1275,11 @@ module mkCPU (CPU_IFC);
       fa_emit_instr_trace (minstret, stage1.out.data_to_stage2.pc,
 			   stage1.out.data_to_stage2.instr,
 			   rg_cur_priv);
-`ifdef INCLUDE_TANDEM_VERIF
+#ifdef INCLUDE_TANDEM_VERIF
       // Trace data
       let trace_data = stage1.out.data_to_stage2.trace_data;
       f_trace_data.enq (trace_data);
-`endif
+#endif
 
       // Resume pipe
       stageD.set_full (False);
@@ -1290,14 +1290,14 @@ module mkCPU (CPU_IFC);
    // ================================================================
    // Stage1: nonpipe special: SFENCE.VMA
 
-`ifdef ISA_PRIV_S
-`ifdef ISA_C
+#ifdef ISA_PRIV_S
+#ifdef ISA_C
    // TODO: analyze this carefully; added to resolve a blockage
    // imem_rl_fetch_next_32b is in CPU_Fetch_C.bsv, and calls imem32.req (near_mem.imem_req).
    // fa_stageF_redirect calls stageF.enq which also calls imem.req which calls imem32.req.
    // But cond_i32_odd_fetch_next should make these rules mutually exclusive; why doesn't bsc realize this?
    (* descending_urgency = "imem_rl_fetch_next_32b, rl_stage1_SFENCE_VMA" *)
-`endif
+#endif
 
    rule rl_stage1_SFENCE_VMA (   (rg_state== CPU_RUNNING)
 			      && (! halting)
@@ -1329,17 +1329,17 @@ module mkCPU (CPU_IFC);
 			   stage1.out.data_to_stage2.pc,
 			   stage1.out.data_to_stage2.instr,
 			   rg_cur_priv);
-`ifdef INCLUDE_TANDEM_VERIF
+#ifdef INCLUDE_TANDEM_VERIF
       // Trace data
       let trace_data = stage1.out.data_to_stage2.trace_data;
       f_trace_data.enq (trace_data);
-`endif
+#endif
       // Resume pipe
       stageD.set_full (False);
       stage1.set_full (False);    fa_step_check;
       fa_stageF_redirect (rg_next_pc);
    endrule: rl_finish_SFENCE_VMA
-`endif
+#endif
 
    // ================================================================
    // Stage1: nonpipe special: WFI
@@ -1364,11 +1364,11 @@ module mkCPU (CPU_IFC);
       // Accounting
       csr_regfile.csr_minstret_incr;
 
-`ifdef INCLUDE_TANDEM_VERIF
+#ifdef INCLUDE_TANDEM_VERIF
       // Trace data
       let trace_data = stage1.out.data_to_stage2.trace_data;
       f_trace_data.enq (trace_data);
-`endif
+#endif
 
       // Debug
       fa_emit_instr_trace (minstret, stage1.out.data_to_stage2.pc, stage1.out.data_to_stage2.instr, rg_cur_priv);
@@ -1433,7 +1433,7 @@ module mkCPU (CPU_IFC);
    // Not setting tval, as we are breaking to the debugger.
    // TODO: Does the spec say anything about this?
 
-`ifdef INCLUDE_GDB_CONTROL
+#ifdef INCLUDE_GDB_CONTROL
    rule rl_trap_BREAK_to_Debug_Mode (   (rg_state == CPU_RUNNING)
 				     && (! halting)
 				     && (stage3.out.ostatus == OSTATUS_EMPTY)
@@ -1489,7 +1489,7 @@ module mkCPU (CPU_IFC);
       $display ("    At: %m.rl_reset_from_Debug_Module");
       rg_state <= CPU_RESET1;
    endrule
-`endif
+#endif
 
    // ================================================================
    // EXTERNAL and GDB INTERRUPTS while running
@@ -1515,9 +1515,9 @@ module mkCPU (CPU_IFC);
       rg_trap_interrupt  <= True;
       rg_trap_instr      <= stage1.out.data_to_stage2.instr;
 
-`ifdef INCLUDE_TANDEM_VERIF
+#ifdef INCLUDE_TANDEM_VERIF
       // rg_trap_trace_data <= ?;    // Will be filled in in rl_trap
-`endif
+#endif
 
       rg_state           <= CPU_TRAP;
    endrule: rl_stage1_interrupt
@@ -1527,7 +1527,7 @@ module mkCPU (CPU_IFC);
    // and no interrupt pending.  Stage1 has an architectural instruction,
    // and stage2 and stage3 are empty, and stageF is not BUSY.
 
-`ifdef INCLUDE_GDB_CONTROL
+#ifdef INCLUDE_GDB_CONTROL
    rule rl_stage1_stop (   (rg_state== CPU_RUNNING)
 			&& stage1_stop
 			&& (stageF.out.ostatus != OSTATUS_BUSY));
@@ -1559,7 +1559,7 @@ module mkCPU (CPU_IFC);
 
       // Accounting: none (instruction is abandoned)
    endrule: rl_stage1_stop
-`endif
+#endif
 
    // ================================================================
    // ================================================================
@@ -1569,7 +1569,7 @@ module mkCPU (CPU_IFC);
    // ----------------
    // Debug Module Run/Halt control
 
-`ifdef INCLUDE_GDB_CONTROL
+#ifdef INCLUDE_GDB_CONTROL
    rule rl_debug_run ((f_run_halt_reqs.first == True) && (rg_state == CPU_DEBUG_MODE));
       f_run_halt_reqs.deq;
 
@@ -1678,7 +1678,7 @@ module mkCPU (CPU_IFC);
    // ----------------
    // Debug Module FPR read/write
 
-`ifdef ISA_F
+#ifdef ISA_F
    rule rl_debug_read_fpr ((rg_state == CPU_DEBUG_MODE) && (! f_fpr_reqs.first.write));
       let req <- pop (f_fpr_reqs);
       Bit#(5) regname = req.address;
@@ -1720,7 +1720,7 @@ module mkCPU (CPU_IFC);
 	 $display ("    %0d: Rule rl_debug_fpr_access_busy", mcycle);
       end
    endrule
-`endif
+#endif
 
    // ----------------
    // Debug Module CSR read/write
@@ -1768,7 +1768,7 @@ module mkCPU (CPU_IFC);
 	 $display ("    %0d: Rule rl_debug_csr_access_busy", mcycle);
       end
    endrule
-`endif
+#endif
 
    // ================================================================
    // ================================================================
@@ -1790,9 +1790,9 @@ module mkCPU (CPU_IFC);
    // ----------------------------------------------------------------
    // Optional AXI4-Lite D-cache slave interface
 
-`ifdef INCLUDE_DMEM_SLAVE
+#ifdef INCLUDE_DMEM_SLAVE
    interface  dmem_slave = near_mem.dmem_slave;
-`endif
+#endif
 
    // ----------------
    // Interface to 'coherent DMA' port of optional L2 cache
@@ -1827,21 +1827,21 @@ module mkCPU (CPU_IFC);
    // Optional PC trace interface
    // Outputs a stream of 2-tuples: (cycle_count, pc)
 
-`ifdef INCLUDE_PC_TRACE
+#ifdef INCLUDE_PC_TRACE
    interface Get  g_pc_trace = toGet (f_pc_trace);
-`endif
+#endif
 
    // ----------------
    // Optional interface to Tandem Verifier
 
-`ifdef INCLUDE_TANDEM_VERIF
+#ifdef INCLUDE_TANDEM_VERIF
    interface Get  trace_data_out = toGet (f_trace_data);
-`endif
+#endif
 
    // ----------------
    // Optional interface to Debug Module
 
-`ifdef INCLUDE_GDB_CONTROL
+#ifdef INCLUDE_GDB_CONTROL
    // run-control, other
    interface Server  hart0_server_run_halt = toGPServer (f_run_halt_reqs, f_run_halt_rsps);
 
@@ -1854,14 +1854,14 @@ module mkCPU (CPU_IFC);
    // GPR access
    interface Server  hart0_gpr_mem_server = toGPServer (f_gpr_reqs, f_gpr_rsps);
 
-`ifdef ISA_F
+#ifdef ISA_F
    // FPR access
    interface Server  hart0_fpr_mem_server = toGPServer (f_fpr_reqs, f_fpr_rsps);
-`endif
+#endif
 
    // CSR access
    interface Server  hart0_csr_mem_server = toGPServer (f_csr_reqs, f_csr_rsps);
-`endif
+#endif
 
    // ----------------------------------------------------------------
    // Misc. control and status
@@ -1881,13 +1881,13 @@ module mkCPU (CPU_IFC);
    // ----------------
    // For ISA tests: watch memory writes to <tohost> addr
 
-`ifdef WATCH_TOHOST
+#ifdef WATCH_TOHOST
    method Action set_watch_tohost (Bool watch_tohost, Bit#(64) tohost_addr);
       near_mem.set_watch_tohost (watch_tohost, tohost_addr);
    endmethod
 
    method Bit#(64) mv_tohost_value = near_mem.mv_tohost_value;
-`endif
+#endif
 
    // Inform core that DDR4 has been initialized and is ready to accept requests
    method Action ma_ddr4_ready;

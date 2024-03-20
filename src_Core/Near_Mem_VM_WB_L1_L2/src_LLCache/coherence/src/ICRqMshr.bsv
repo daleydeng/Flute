@@ -215,7 +215,7 @@ module mkICRqMshrSafe#(
         end
     endrule
 
-`ifdef CHECK_DEADLOCK
+#ifdef CHECK_DEADLOCK
     MshrDeadlockChecker#(cRqNum) checker <- mkMshrDeadlockChecker;
     FIFO#(ICRqMshrStuck#(reqT)) stuckQ <- mkFIFO1;
 
@@ -230,7 +230,7 @@ module mkICRqMshrSafe#(
             });
         end
     endrule
-`endif
+#endif
 
     method ActionValue#(cRqIndexT) getEmptyEntryInit(reqT r) if(inited);
         emptyEntryQ.deq;
@@ -240,9 +240,9 @@ module mkICRqMshrSafe#(
         resultVec[n][cRqTransfer_port] <= Invalid;
         succValidVec[n][cRqTransfer_port] <= False;
         reqVec[n][cRqTransfer_port] <= r;
-`ifdef CHECK_DEADLOCK
+#ifdef CHECK_DEADLOCK
         checker.initEntry(n);
-`endif
+#endif
         return n;
     endmethod
 
@@ -250,9 +250,9 @@ module mkICRqMshrSafe#(
         method Action releaseEntry(cRqIndexT n) if(inited);
             emptyEntryQ.enq(n);
             stateVec[n][sendRsToC_port] <= Empty;
-`ifdef CHECK_DEADLOCK
+#ifdef CHECK_DEADLOCK
             checker.releaseEntry(n);
-`endif
+#endif
         endmethod
 
         method Maybe#(resultT) getResult(Bit#(TLog#(cRqNum)) n);
@@ -333,11 +333,11 @@ module mkICRqMshrSafe#(
         return all(isEmpty, idxVec);
     endmethod
 
-`ifdef CHECK_DEADLOCK
+#ifdef CHECK_DEADLOCK
     interface stuck = toGet(stuckQ);
-`else
+#else
     interface stuck = nullGet;
-`endif
+#endif
 endmodule
 
 // exported version

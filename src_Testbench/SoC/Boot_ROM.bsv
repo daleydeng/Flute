@@ -33,13 +33,13 @@ import Fabric_Defs :: *;
 // ================================================================
 // Include the auto-generated BSV-include file with the ROM function
 
-`ifdef RV32
-`include  "fn_read_ROM_RV32.bsvi"
-`endif
+#ifdef RV32
+#include  "fn_read_ROM_RV32.bsvi"
+#endif
 
-`ifdef RV64
-`include  "fn_read_ROM_RV64.bsvi"
-`endif
+#ifdef RV64
+#include  "fn_read_ROM_RV64.bsvi"
+#endif
 
 // ================================================================
 // Interface

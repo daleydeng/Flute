@@ -83,10 +83,10 @@ import SoC_Map      :: *;
 
 import MMU_Cache_Common :: *;
 
-`ifdef ISA_PRIV_S
+#ifdef ISA_PRIV_S
 import TLB :: *;
 import PTW :: *;
-`endif
+#endif
 
 import Cache                  :: *;
 import MMIO                   :: *;
@@ -107,9 +107,9 @@ interface D_MMU_Cache_IFC;
    (* always_ready *)
    method Action  req (CacheOp    op,
 		       Bit#(3)   f3,
-`ifdef ISA_A
+#ifdef ISA_A
 		       Bit#(7)   amo_funct7,
-`endif
+#endif
 		       WordXL     va,
 		       Bit#(64)  st_value,
 		       // The following  args for VM
@@ -130,14 +130,14 @@ interface D_MMU_Cache_IFC;
    // Cache flush request/response
    interface Server #(Bit#(1), Token) flush_server;
 
-`ifdef ISA_PRIV_S
+#ifdef ISA_PRIV_S
    // TLB flush
    method Action tlb_flush;
 
    // PTW and PTE-writeback requests from I_MMU_Cache are serviced by D_MMU_Cache
    interface Server #(PTW_Req, PTW_Rsp)  imem_ptw_server;
    interface Put #(Tuple2 #(PA, WordXL)) imem_pte_writeback_p;
-`endif
+#endif
 
    // Fabric master interface
    interface AXI4_Master_IFC #(Wd_Id, Wd_Addr, Wd_Data, Wd_User) mem_master;
@@ -145,13 +145,13 @@ interface D_MMU_Cache_IFC;
    // ----------------------------------------------------------------
    // Misc. control and status
 
-`ifdef WATCH_TOHOST
+#ifdef WATCH_TOHOST
    // ----------------
    // For ISA tests: watch memory writes to <tohost> addr (see NOTE: "tohost" above)
 
    method Action set_watch_tohost (Bool watch_tohost, Bit#(64) tohost_addr);
    method Bit#(64) mv_tohost_value;
-`endif
+#endif
 
    // Inform core that DDR4 has been initialized and is ready to accept requests
    method Action ma_ddr4_ready;
@@ -180,10 +180,10 @@ typedef enum {FSM_MAIN_IDLE,          // No active request
 	      FSM_MAIN_CACHE_WAIT,    // On cache miss wait for cache to refill
 	      FSM_MAIN_MMIO_WAIT      // Wait for MMIO response
 
-`ifdef ISA_PRIV_S
+#ifdef ISA_PRIV_S
 	    , FSM_MAIN_PTW_START,     // Send PTW request
 	      FSM_MAIN_PTW_FINISHED   // Resume after PTW response
-`endif
+#endif
    } FSM_MAIN_State
 deriving (Bits, Eq, FShow);
 
@@ -204,7 +204,7 @@ deriving (Bits, Eq, FShow);
 // ----------------
 // Memory requests to the cache during Page-Table-Walks (PTWs)
 
-`ifdef ISA_PRIV_S
+#ifdef ISA_PRIV_S
 typedef enum {FSM_PTW_IDLE,           // No active PTW mem request
 	      FSM_PTW_MEM_REQ_PA,     // Finish cache access. Hit: respond to PTW -> A; Miss -> C
 	      FSM_PTW_MEM_REQ_WAIT    // Cache refill finished; ok: -> B, err: respond to PTW -> B
@@ -219,7 +219,7 @@ typedef enum {FSM_PTE_WB_IDLE,    // No active PTE mem request
 	      FSM_PTE_WB_WAIT     // Cache refill finished; ok: -> B, err: assertion failure
    } FSM_PTE_WB_State
 deriving (Bits, Eq, FShow);
-`endif
+#endif
 
 // ----------------
 // Exception codes depending on the kind of request
@@ -257,10 +257,10 @@ module mkD_MMU_Cache (D_MMU_Cache_IFC);
    Integer verbosity_axi4_adapter = 0;
 
    // Major sub-modules
-`ifdef ISA_PRIV_S
+#ifdef ISA_PRIV_S
    TLB_IFC                     tlb          <- mkTLB;
    PTW_IFC                     ptw          <- mkPTW;
-`endif
+#endif
    Cache_IFC                   cache        <- mkCache (fromInteger (verbosity_cache));
    MMIO_IFC                    mmio         <- mkMMIO;
    MMU_Cache_AXI4_Adapter_IFC  axi4_adapter <- mkMMU_Cache_AXI4_Adapter (fromInteger (verbosity_axi4_adapter));
@@ -284,10 +284,10 @@ module mkD_MMU_Cache (D_MMU_Cache_IFC);
    Reg #(FSM_MAIN_State)   rg_fsm_main_state   <- mkReg (FSM_MAIN_IDLE);
    Reg #(FSM_Flush_State)  rg_fsm_flush_state  <- mkReg (FSM_FLUSH_IDLE);
 
-`ifdef ISA_PRIV_S
+#ifdef ISA_PRIV_S
    Reg #(FSM_PTW_State)    rg_fsm_ptw_state    <- mkReg (FSM_PTW_IDLE);
    Reg #(FSM_PTE_WB_State) rg_fsm_pte_wb_state <- mkReg (FSM_PTE_WB_IDLE);
-`endif
+#endif
 
    // SoC_Map is needed for method 'm_is_mem_addr' to distinguish mem
    // (cached) and other (non-cached) addrs
@@ -318,14 +318,14 @@ module mkD_MMU_Cache (D_MMU_Cache_IFC);
    Reg #(Bit#(64)) dw_ld_val       <- mkDWire (?);
    Reg #(Bit#(64)) dw_final_st_val <- mkDWire (?);
 
-`ifdef WATCH_TOHOST
+#ifdef WATCH_TOHOST
    // See NOTE: "tohost" above.
    // "tohost" addr on which to monitor writes, for standard ISA tests.
    // These are set by the 'set_watch_tohost' method but are otherwise read-only.
    Reg #(Bool)      rg_watch_tohost <- mkReg (False);
    Reg #(Bit#(64)) rg_tohost_addr  <- mkReg ('h_8000_1000);
    Reg #(Bit#(64)) rg_tohost_value <- mkReg (0);
-`endif
+#endif
 
    // ****************************************************************
    // ****************************************************************
@@ -353,7 +353,7 @@ module mkD_MMU_Cache (D_MMU_Cache_IFC);
 	       $display (" ld_val %0h, final_st_val %0h", ld_val, final_st_val);
 	 end
 
-`ifdef WATCH_TOHOST
+#ifdef WATCH_TOHOST
 	 // ----------------
 	 // "tohost" addr on which to monitor writes, for standard ISA tests.
 	 // See NOTE: "tohost" above.
@@ -373,7 +373,7 @@ module mkD_MMU_Cache (D_MMU_Cache_IFC);
 		  $display ("  (<tohost>  addr %0h  data %0h)", rg_pa, final_st_val);
 	       end
 	    end
-`endif
+#endif
       endaction
    endfunction
 
@@ -428,7 +428,7 @@ module mkD_MMU_Cache (D_MMU_Cache_IFC);
       end
    endrule
 
-`ifdef ISA_PRIV_S
+#ifdef ISA_PRIV_S
    // VM translation (VA to PA)
    VM_Xlate_Result vm_xlate_result = tlb.mv_vm_xlate (rg_req.va,
 						      rg_req.satp,
@@ -438,11 +438,11 @@ module mkD_MMU_Cache (D_MMU_Cache_IFC);
 						      rg_req.priv,
 						      rg_req.sstatus_SUM,
 						      rg_req.mstatus_MXR);
-`else
+#else
    // In non-VM, translation result (PA) is same as VA
    VM_Xlate_Result vm_xlate_result = VM_Xlate_Result {outcome: VM_XLATE_OK,
 						      pa:      rg_req.va};
-`endif
+#endif
 
    // Note: PTW and PTE Writebacks from I_MMU_Cache arrive
    // asynchronously w.r.t. data stream, and may be occupying the
@@ -453,12 +453,12 @@ module mkD_MMU_Cache (D_MMU_Cache_IFC);
       rg_ctr <= rg_ctr + 1;
    endrule
 
-`ifdef ISA_PRIV_S
+#ifdef ISA_PRIV_S
    Bool pt_idle = ((rg_fsm_ptw_state == FSM_PTW_IDLE)
 		   && (rg_fsm_pte_wb_state == FSM_PTE_WB_IDLE));
-`else
+#else
    Bool pt_idle = True;
-`endif
+#endif
 
    rule rl_fsm_main_PA ((rg_fsm_main_state == FSM_MAIN_PA)
 			&& (rg_ctr != 0)
@@ -471,7 +471,7 @@ module mkD_MMU_Cache (D_MMU_Cache_IFC);
 	 $display ("    ", fshow_VM_Xlate_Result (vm_xlate_result));
       rg_pa <= vm_xlate_result.pa;
 
-`ifdef ISA_PRIV_S
+#ifdef ISA_PRIV_S
       // ---- TLB miss
       if (vm_xlate_result.outcome == VM_XLATE_TLB_MISS) begin
 	 rg_fsm_main_state <= FSM_MAIN_PTW_START;
@@ -487,11 +487,11 @@ module mkD_MMU_Cache (D_MMU_Cache_IFC);
 
       // ---- TLB success
       else
-`endif
+#endif
 	 begin
 	    dynamicAssert ((vm_xlate_result.outcome == VM_XLATE_OK), "FAIL: unknown vm_xlate result");
 
-`ifdef ISA_PRIV_S
+#ifdef ISA_PRIV_S
 	    // If PTE A, D bits modified ...
 	    if (vm_xlate_result.pte_modified) begin
 	       // Update the TLB
@@ -510,7 +510,7 @@ module mkD_MMU_Cache (D_MMU_Cache_IFC);
 			    vm_xlate_result.pte_pa,
 			    vm_xlate_result.pte);
 	    end
-`endif
+#endif
 	    // Triage cached (memory) vs. uncached (IO, other non-mem) addresses
 	    let is_mem_addr = soc_map.m_is_mem_addr (fv_PA_to_Fabric_Addr (vm_xlate_result.pa));
 
@@ -596,7 +596,7 @@ module mkD_MMU_Cache (D_MMU_Cache_IFC);
    // ================================================================
    // On TLB miss, do a PTW, then try again or go to exception.
 
-`ifdef ISA_PRIV_S
+#ifdef ISA_PRIV_S
    rule rl_fsm_main_PTW_start (rg_fsm_main_state == FSM_MAIN_PTW_START);
       let ptw_req = PTW_Req {va: rg_req.va, satp: rg_req.satp};
       ptw.dmem_server.request.put (ptw_req);
@@ -637,7 +637,7 @@ module mkD_MMU_Cache (D_MMU_Cache_IFC);
 	 rg_fsm_main_state <= FSM_MAIN_IDLE;
       end
    endrule
-`endif
+#endif
 
    // ****************************************************************
    // ****************************************************************
@@ -674,7 +674,7 @@ module mkD_MMU_Cache (D_MMU_Cache_IFC);
    // FSM_PTW: service PTW memory requests (which are reads, only)
    // from the cache
 
-`ifdef ISA_PRIV_S
+#ifdef ISA_PRIV_S
    // Holds request between _A and _B rules
    // TODO: if PTW had a SemiFIFOF interface instead of Get, we wouldn't need this reg.
    Reg #(PTW_Mem_Req) rg_ptw_mem_req <- mkRegU;
@@ -738,13 +738,13 @@ module mkD_MMU_Cache (D_MMU_Cache_IFC);
 	 rg_fsm_ptw_state <= FSM_PTW_IDLE;
       end
    endrule
-`endif
+#endif
 
    // ****************************************************************
    // ****************************************************************
    // FSM_PTE_WB: Service PTE writebacks to the cache
 
-`ifdef ISA_PRIV_S
+#ifdef ISA_PRIV_S
    // ----------------
    // Merge PTE writeback requests from IMem and DMem
    // From I_MMU_Cache
@@ -821,7 +821,7 @@ module mkD_MMU_Cache (D_MMU_Cache_IFC);
       end
       rg_fsm_pte_wb_state <= FSM_PTE_WB_PA;
    endrule
-`endif
+#endif
 
    // ****************************************************************
    // ****************************************************************
@@ -834,9 +834,9 @@ module mkD_MMU_Cache (D_MMU_Cache_IFC);
    // As soon as this method is called, the module starts working on this new request.
    method Action  req (CacheOp    op,
 		       Bit#(3)   f3,
-`ifdef ISA_A
+#ifdef ISA_A
 		       Bit#(7)   amo_funct7,
-`endif
+#endif
 		       WordXL     va,
 		       Bit#(64)  st_value,
 		       // The following  args for VM
@@ -849,15 +849,15 @@ module mkD_MMU_Cache (D_MMU_Cache_IFC);
 				     f3:          f3,
 				     va:          va,
 				     st_value:    st_value
-`ifdef ISA_A
+#ifdef ISA_A
 				   , amo_funct7:  amo_funct7
-`endif
-`ifdef ISA_PRIV_S
+#endif
+#ifdef ISA_PRIV_S
 				   , priv:        priv,
 				     sstatus_SUM: sstatus_SUM,
 				     mstatus_MXR: mstatus_MXR,
 				     satp:        satp
-`endif
+#endif
 				     };
       wire_mmu_cache_req <= cache_req;
    endmethod
@@ -889,7 +889,7 @@ module mkD_MMU_Cache (D_MMU_Cache_IFC);
    // Flush request/response
    interface Server flush_server = toGPServer (f_cache_flush_reqs, f_cache_flush_rsps);
 
-`ifdef ISA_PRIV_S
+#ifdef ISA_PRIV_S
    // TLB flush
    method Action tlb_flush () = tlb.ma_flush;
 
@@ -898,7 +898,7 @@ module mkD_MMU_Cache (D_MMU_Cache_IFC);
 
    // Service PTE-writeback requests from I_MMU_Cache
    interface Put    imem_pte_writeback_p = toPut (f_imem_pte_writebacks);
-`endif
+#endif
 
    // Fabric master interface
    interface AXI4_Master_IFC mem_master = axi4_adapter.mem_master;
@@ -909,7 +909,7 @@ module mkD_MMU_Cache (D_MMU_Cache_IFC);
    // ----------------
    // For ISA tests: watch memory writes to <tohost> addr (see NOTE: "tohost" above)
 
-`ifdef WATCH_TOHOST
+#ifdef WATCH_TOHOST
    method Action set_watch_tohost (Bool watch_tohost, Bit#(64) tohost_addr);
       rg_watch_tohost <= watch_tohost;
       rg_tohost_addr  <= tohost_addr;
@@ -920,7 +920,7 @@ module mkD_MMU_Cache (D_MMU_Cache_IFC);
    method Bit#(64) mv_tohost_value;
       return rg_tohost_value;
    endmethod
-`endif
+#endif
 
    // Signal that DDR4 has been initialized and is ready to accept requests
    method Action ma_ddr4_ready;

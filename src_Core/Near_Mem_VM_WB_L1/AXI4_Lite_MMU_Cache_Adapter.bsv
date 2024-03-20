@@ -78,7 +78,7 @@ module mkAXI4_Lite_MMU_Cache_Adapter #(MMU_Cache_IFC cache)
       Bit#(3)    f3      = f3_SB;
       Bool        natural = False;
       case (wrd.wstrb)
-`ifdef FABRIC64
+#ifdef FABRIC64
 	 'hFF: begin offset=0; mask = 'hFFFF_FFFF_FFFF_FFFF; f3=f3_SD; natural=True; end
 	 'hF0: begin offset=4; mask =           'hFFFF_FFFF; f3=f3_SW; natural=True; end
 	 'hC0: begin offset=6; mask =                'hFFFF; f3=f3_SH; natural=True; end
@@ -87,7 +87,7 @@ module mkAXI4_Lite_MMU_Cache_Adapter #(MMU_Cache_IFC cache)
 	 'h40: begin offset=6; mask =                  'hFF; f3=f3_SB; natural=True; end
 	 'h20: begin offset=5; mask =                  'hFF; f3=f3_SB; natural=True; end
 	 'h10: begin offset=4; mask =                  'hFF; f3=f3_SB; natural=True; end
-`endif
+#endif
 	 'hF:  begin offset=0; mask =           'hFFFF_FFFF; f3=f3_SW; natural=True; end
 	 'hC:  begin offset=2; mask =                'hFFFF; f3=f3_SH; natural=True; end
 	 'h3:  begin offset=0; mask =                'hFFFF; f3=f3_SH; natural=True; end
@@ -102,9 +102,9 @@ module mkAXI4_Lite_MMU_Cache_Adapter #(MMU_Cache_IFC cache)
       if (natural || (wrd.wstrb [0] == 1'b1)) begin
 	 cache.req (CACHE_ST,
 		    f3,
-`ifdef ISA_A
+#ifdef ISA_A
 		    ?,
-`endif
+#endif
 		    truncate (addr64),
 		    st_value,
 		    priv_M,
@@ -167,9 +167,9 @@ module mkAXI4_Lite_MMU_Cache_Adapter #(MMU_Cache_IFC cache)
 	 if (wstrb [offset] == 1'b1) begin
 	    cache.req (CACHE_ST,
 		       f3_SB,
-`ifdef ISA_A
+#ifdef ISA_A
 		       ?,
-`endif
+#endif
 		       truncate (addr64),
 		       st_value,
 		       priv_M,
@@ -185,20 +185,20 @@ module mkAXI4_Lite_MMU_Cache_Adapter #(MMU_Cache_IFC cache)
    rule rl_rd_xaction;
       AXI4_Lite_Rd_Addr #(Wd_Addr, Wd_User) rda <- pop_o (xactor_from_master.o_rd_addr);
 
-`ifdef FABRIC32
+#ifdef FABRIC32
       Bit#(3) f3 = f3_LW;
-`endif
-`ifdef FABRIC64
+#endif
+#ifdef FABRIC64
       Bit#(3) f3 = f3_LD;
-`endif
+#endif
       Bit#(64) addr64 = zeroExtend (rda.araddr);
       Bit#(ZLSBs_Aligned_Fabric_Addr) offset = 0;
       addr64 [zlsbs_aligned_fabric_addr-1:0] = offset;
       cache.req (CACHE_LD,
 		 f3,
-`ifdef ISA_A
+#ifdef ISA_A
 		 ?,
-`endif
+#endif
 		 truncate (addr64),
 		 ?,
 		 priv_M,

@@ -303,7 +303,7 @@ def make_build_dir (repo, repobase, arch, privs, cache_org, sim, tohost, debug, 
     # fo.write ("\t-D MULT_SERIAL    \\\n")
 
     # Bluespec HW implementation choice for "near-mem"
-    fo.write ("\t-D Near_Mem_Caches    \\\n")
+    fo.write ("\t-D NEAR_MEM_CACHES    \\\n")
 
     # Bluespec HW implementation choice for fabric data width
     fo.write ("\t-D FABRIC64    \\\n")

@@ -35,21 +35,21 @@ interface CSR_MIE_IFC;
    (* always_ready *)
    method ActionValue #(WordXL) mav_write (MISA  misa, WordXL  wordxl);
 
-`ifdef ISA_PRIV_S
+#ifdef ISA_PRIV_S
    // SIE is a view of MIE, when 'S' extension is implemented.
    (* always_ready *)
    method WordXL mv_sie_read;
    (* always_ready *)
    method ActionValue #(WordXL) mav_sie_write (MISA  misa, WordXL  wordxl);
-`endif
+#endif
 
-`ifdef ISA_N
+#ifdef ISA_N
    // UIE is a view of MIE, when 'N' extension is implemented.
    (* always_ready *)
    method WordXL mv_uie_read;
    (* always_ready *)
    method ActionValue #(WordXL) mav_uie_write (MISA  misa, WordXL  wordxl);
-`endif
+#endif
 endinterface
 
 // ================================================================
@@ -81,7 +81,7 @@ module mkCSR_MIE (CSR_MIE_IFC);
       return zeroExtend (mie);
    endmethod
 
-`ifdef ISA_PRIV_S
+#ifdef ISA_PRIV_S
    // SIE is a view of MIE, when 'S' extension is implemented.
    method WordXL mv_sie_read;
       return zeroExtend (fv_mie_to_sie (rg_mie));
@@ -97,9 +97,9 @@ module mkCSR_MIE (CSR_MIE_IFC);
       WordXL result = zeroExtend (fv_mie_to_sie (new_mie));
       return result;
    endmethod
-`endif
+#endif
 
-`ifdef ISA_N
+#ifdef ISA_N
    // UIE is a view of MIE, when 'U' extension is implemented.
    method WordXL mv_uie_read;
       return zeroExtend (fv_mie_to_uie (rg_mie));
@@ -115,7 +115,7 @@ module mkCSR_MIE (CSR_MIE_IFC);
       WordXL result = zeroExtend (fv_mie_to_uie (new_mie));
       return result;
    endmethod
-`endif
+#endif
 
 endmodule
 

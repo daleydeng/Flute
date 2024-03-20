@@ -107,14 +107,14 @@ module mkPLIC (PLIC_IFC #(t_n_external_sources, t_n_targets, t_max_priority))
 
    // Source_Ids and Priorities are read and written over the memory interface
    // and should fit within the data bus width, currently 32/64 bits.
-`ifdef FABRIC32
+#ifdef FABRIC32
    staticAssert ((valueOf (TLog #(t_n_sources))               <= 32), "PLIC: t_n_sources parameter too large");
    staticAssert ((valueOf (TLog #(TAdd #(t_max_priority, 1))) <= 32), "PLIC: t_max_priority parameter too large");
-`endif
-`ifdef FABRIC64
+#endif
+#ifdef FABRIC64
    staticAssert ((valueOf (TLog #(t_n_sources))               <= 64), "PLIC: t_n_sources parameter too large");
    staticAssert ((valueOf (TLog #(TAdd #(t_max_priority, 1))) <= 64), "PLIC: t_max_priority parameter too large");
-`endif
+#endif
 
    Integer  n_sources = valueOf (t_n_sources);
    Integer  n_targets = valueOf (t_n_targets);
@@ -372,10 +372,10 @@ module mkPLIC (PLIC_IFC #(t_n_external_sources, t_n_targets, t_max_priority))
 	 $display ("            ", fshow (rda));
       end
 
-`ifdef FABRIC64
+#ifdef FABRIC64
       if (((addr_offset & 'h7) == 'h4))
 	 rdata = { rdata [31:0], 32'h0 };
-`endif
+#endif
 
       // Send read-response to bus
       Fabric_Data x = truncate (rdata);

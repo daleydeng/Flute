@@ -29,20 +29,20 @@ import Near_Mem_IFC :: *;
 import AXI4_Types   :: *;
 import Fabric_Defs  :: *;
 
-`ifdef INCLUDE_DMEM_SLAVE
+#ifdef INCLUDE_DMEM_SLAVE
 import AXI4_Lite_Types :: *;
-`endif
+#endif
 
 // External interrupt request interface
 import PLIC  :: *;
 
-`ifdef INCLUDE_TANDEM_VERIF
+#ifdef INCLUDE_TANDEM_VERIF
 import tv_buffer  :: *;
-`endif
+#endif
 
-`ifdef INCLUDE_GDB_CONTROL
+#ifdef INCLUDE_GDB_CONTROL
 import Debug_Module  :: *;
-`endif
+#endif
 
 // ================================================================
 // The Core interface
@@ -67,9 +67,9 @@ interface Core_IFC #(numeric type t_n_interrupt_sources);
    // ----------------------------------------------------------------
    // Optional AXI4-Lite D-cache slave interface
 
-`ifdef INCLUDE_DMEM_SLAVE
+#ifdef INCLUDE_DMEM_SLAVE
    interface AXI4_Lite_Slave_IFC #(Wd_Addr, Wd_Data, Wd_User) cpu_dmem_slave;
-`endif
+#endif
 
    // ----------------------------------------------------------------
    // Interface to 'coherent DMA' port of optional L2 cache
@@ -92,14 +92,14 @@ interface Core_IFC #(numeric type t_n_interrupt_sources);
    // where 'vb' is a vector of bytes
    // with relevant bytes in locations [0]..[n-1]
 
-`ifdef INCLUDE_TANDEM_VERIF
+#ifdef INCLUDE_TANDEM_VERIF
    interface Get #(TVBuffer)  tv_verifier_info_get;
-`endif
+#endif
 
    // ----------------------------------------------------------------
    // Optional Debug Module interfaces
 
-`ifdef INCLUDE_GDB_CONTROL
+#ifdef INCLUDE_GDB_CONTROL
    // ----------------
    // DMI (Debug Module Interface) facing remote debugger
 
@@ -111,7 +111,7 @@ interface Core_IFC #(numeric type t_n_interrupt_sources);
    // Bool indicates 'running' hart state.
 
    interface Client #(Bool, Bool) ndm_reset_client;
-`endif
+#endif
 
    // ----------------------------------------------------------------
    // Misc. control and status
@@ -124,10 +124,10 @@ interface Core_IFC #(numeric type t_n_interrupt_sources);
    // ----------------
    // For ISA tests: watch memory writes to <tohost> addr
 
-`ifdef WATCH_TOHOST
+#ifdef WATCH_TOHOST
    method Action set_watch_tohost (Bool watch_tohost, Fabric_Addr tohost_addr);
    method Fabric_Data mv_tohost_value;
-`endif
+#endif
 
    // Inform core that DDR4 has been initialized and is ready to accept requests
    method Action ma_ddr4_ready;

@@ -143,7 +143,7 @@ module mkMMIO #(parameter Bit#(3)  verbosity)
 	    if (verbosity >= 1)
 	      $display ("    Load or LR: f3 %0h ld_val %0h", rg_req.f3, ld_val);
 	 end
-`ifdef ISA_A
+#ifdef ISA_A
 	 // AMO read-modify-write
 	 else begin
 	    match {.final_ld_val,
@@ -162,7 +162,7 @@ module mkMMIO #(parameter Bit#(3)  verbosity)
 	    rg_ld_val       <= final_ld_val;
 	    rg_final_st_val <= final_st_val;
 	 end
-`endif
+#endif
 	 rg_fsm_state    <= FSM_IDLE;
       end
    endrule

@@ -18,9 +18,9 @@ import ConfigReg    :: *;
 import Cur_Cycle :: *;
 
 import isa_priv_M        :: *;
-`ifdef ISA_C
+#ifdef ISA_C
 import convert_instr_c     :: *;
-`endif
+#endif
 
 import CPU_Globals      :: *;
 import Near_Mem_IFC     :: *;
@@ -62,11 +62,11 @@ module mkCPU_StageD #(Bit#(4)  verbosity, MISA misa)
    Bit#(2) xl = ((xlen == 32) ? misa_mxl_32 : misa_mxl_64);
 
    InstrBits instr = rg_data.instr;
-`ifdef ISA_C
+#ifdef ISA_C
    InstrCBits instr_C = instr [15:0];
    if (! rg_data.is_i32_not_i16)
       instr = convert_instr_C (misa, xl, instr_C);
-`endif
+#endif
 
    // ----------------------------------------------------------------
    // BEHAVIOR
@@ -99,9 +99,9 @@ module mkCPU_StageD #(Bit#(4)  verbosity, MISA misa)
 							       exc_code:       rg_data.exc_code,
 							       tval:           rg_data.tval,
 							       instr:          instr,
-`ifdef ISA_C
+#ifdef ISA_C
 							       instr_C:        instr_C,
-`endif
+#endif
 							       pred_pc:        rg_data.pred_pc,
                             instruction: instruction};
       end

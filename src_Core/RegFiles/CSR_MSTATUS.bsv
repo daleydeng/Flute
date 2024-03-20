@@ -35,19 +35,19 @@ interface CSR_MSTATUS_IFC;
    // Fixup wordxl and write, and return actual value written
    method ActionValue #(WordXL) mav_write (MISA  misa, WordXL  wordxl);
 
-`ifdef ISA_PRIV_U
+#ifdef ISA_PRIV_U
    // UStatus is a view of MStatus, when 'U' extension is implemented.
    method WordXL mv_ustatus_read;
    method Action ma_ustatus_write (MISA  misa, WordXL  wordxl);
    method ActionValue #(WordXL) mav_ustatus_write (MISA  misa, WordXL  wordxl);
-`endif
+#endif
 
-`ifdef ISA_PRIV_S
+#ifdef ISA_PRIV_S
    // SStatus is a view of MStatus, when 'S' extension is implemented.
    method WordXL mv_sstatus_read;
    method Action ma_sstatus_write (MISA  misa, WordXL  wordxl);
    method ActionValue #(WordXL) mav_sstatus_write (MISA  misa, WordXL  wordxl);
-`endif
+#endif
 endinterface
 
 // ================================================================
@@ -84,7 +84,7 @@ module mkCSR_MSTATUS #(parameter MISA misa_reset_value) (CSR_MSTATUS_IFC);
       return wordxl1;
    endmethod
 
-`ifdef ISA_PRIV_S
+#ifdef ISA_PRIV_S
    // SStatus is a view of MStatus, when 'S' extension is implemented.
    method WordXL mv_sstatus_read;
       return fv_mstatus_to_sstatus (rg_mstatus);
@@ -105,9 +105,9 @@ module mkCSR_MSTATUS #(parameter MISA misa_reset_value) (CSR_MSTATUS_IFC);
       rg_mstatus <= new_mstatus;
       return fv_mstatus_to_sstatus (new_mstatus);
    endmethod
-`endif
+#endif
 
-`ifdef ISA_PRIV_U
+#ifdef ISA_PRIV_U
    // UStatus is a view of MStatus, when 'U' extension is implemented.
    method WordXL mv_ustatus_read;
       return fv_mstatus_to_ustatus (rg_mstatus);
@@ -128,7 +128,7 @@ module mkCSR_MSTATUS #(parameter MISA misa_reset_value) (CSR_MSTATUS_IFC);
       rg_mstatus <= wordxl1;
       return wordxl1;
    endmethod
-`endif
+#endif
 
 endmodule
 
@@ -147,10 +147,10 @@ function WordXL fv_mstatus_reset_value (MISA misa);
 
    mstatus = set_bits (mstatus, fromInteger (mstatus_mpp_bitpos), priv_U);
 
-`ifdef ISA_F
+#ifdef ISA_F
    // When F/D is present, FS bit needs to be set to initial value on reset
    mstatus = set_bits (mstatus, fromInteger (mstatus_fs_bitpos), fs_xs_initial);
-`endif
+#endif
    return mstatus;
 endfunction
 

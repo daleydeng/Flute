@@ -5,7 +5,7 @@ package Mem_Controller;
 // ================================================================
 // This module is a slave on the interconnect Fabric.
 //
-// On the back side of the Mem_Controller is a ``raw'' memory
+// On the back side of the Mem_Controller is a ##raw'' memory
 // interface, a simple, wide, R/W interface,
 // which is connected to real memory in hardware (BRAM, DRAM, ...)
 // and to a model thereof in simulation.
@@ -115,13 +115,13 @@ typedef Bit#(Bits_per_Word64_in_Raw_Mem_Word)         Word64_in_Raw_Mem_Word;
 typedef TDiv #(Bytes_per_Raw_Mem_Word, Bytes_per_Fabric_Data)  Fabric_Data_per_Raw_Mem_Word;
 
 // Index of bit that selects a fabric data word in an address
-`ifdef FABRIC32
+#ifdef FABRIC32
 Integer  lo_fabric_data = 2;
-`endif
+#endif
 
-`ifdef FABRIC64
+#ifdef FABRIC64
 Integer  lo_fabric_data = 3;
-`endif
+#endif
 
 // ================================================================
 
@@ -166,9 +166,9 @@ endfunction
 
 // Module state
 typedef enum {STATE_POWER_ON_RESET,
-`ifdef INCLUDE_INITIAL_MEMZERO
+#ifdef INCLUDE_INITIAL_MEMZERO
 	      STATE_ZEROING_MEM,           // while zero-ing out memory
-`endif
+#endif
 	      STATE_RESET_RELOAD_CACHE,    // on reset, start reload on reset
 	      STATE_RELOADING,             // while reloading the raw-mem word cache
 	      STATE_READY                  // while handling requests
@@ -200,10 +200,10 @@ interface Mem_Controller_IFC;
    (* always_ready *)
    method Bit#(8) status;
 
-`ifdef WATCH_TOHOST
+#ifdef WATCH_TOHOST
    // For ISA tests: watch memory writes to <tohost> addr
    method Action set_watch_tohost (Bool watch_tohost, Fabric_Addr tohost_addr);
-`endif
+#endif
 endinterface
 
 // ================================================================
@@ -270,13 +270,13 @@ module mkMem_Controller (Mem_Controller_IFC);
    Reg #(Raw_Mem_Addr)  rg_cached_raw_mem_addr <- mkRegU;
    Reg #(Raw_Mem_Word)  rg_cached_raw_mem_word <- mkRegU;
 
-`ifdef WATCH_TOHOST
+#ifdef WATCH_TOHOST
    // Ad hoc ISA-test simulation support: watch <tohost> and stop on non-zero write.
    // The default tohost_addr here is fragile (may change on recompilation of tests).
    // Proper value can be provided with 'set_watch_tohost' method from symbol table
    Reg #(Bool)        rg_watch_tohost <- mkReg (False);
    Reg #(Fabric_Addr) rg_tohost_addr  <- mkReg ('h_8000_1000);
-`endif
+#endif
 
    // Catch-all status
    Reg #(Bit#(8)) rg_status <- mkReg (0);
@@ -541,7 +541,7 @@ module mkMem_Controller (Mem_Controller_IFC);
 	 $display ("     => ", fshow (wrr));
       end
 
-`ifdef WATCH_TOHOST
+#ifdef WATCH_TOHOST
       // For simulation testing of riscv-tests/isa only:
       if ((rg_watch_tohost)
 	  && (f_reqs.first.addr == rg_tohost_addr)
@@ -557,7 +557,7 @@ module mkMem_Controller (Mem_Controller_IFC);
 	       $display ("FAIL %0d", exit_value);
 	    rg_status <= fromInteger (status_mem_controller_terminated);
 	 end
-`endif
+#endif
    endrule
 
    // ================================================================
@@ -567,7 +567,7 @@ module mkMem_Controller (Mem_Controller_IFC);
    //     rg_cached_raw_mem_addr <= 0;
    //     rg_state               <= STATE_ZEROING_MEM;
 
-`ifdef INCLUDE_INITIAL_MEMZERO
+#ifdef INCLUDE_INITIAL_MEMZERO
    rule rl_zero_mem (rg_state == STATE_ZEROING_MEM);
       let raw_mem_req = MemoryRequest {write:   True,
 				       byteen:  '1,
@@ -590,7 +590,7 @@ module mkMem_Controller (Mem_Controller_IFC);
       else
 	 rg_cached_raw_mem_addr <= rg_cached_raw_mem_addr + 1;
    endrule
-`endif
+#endif
 
    // ================================================================
    // Invalid address
@@ -649,12 +649,12 @@ module mkMem_Controller (Mem_Controller_IFC);
       $display ("%0d: Mem_Controller.set_addr_map: addr_base 0x%0h addr_lim 0x%0h",
 		cur_cycle, addr_base, addr_lim);
 
-`ifdef INCLUDE_INITIAL_MEMZERO
+#ifdef INCLUDE_INITIAL_MEMZERO
       rg_cached_raw_mem_addr <= 0;
       rg_state               <= STATE_ZEROING_MEM;
       $display ("%0d: Mem_Controller.set_addr_map: zeroing memory from 0x%0h to 0x%0h",
 		cur_cycle, addr_base, addr_lim);
-`endif
+#endif
    endmethod
 
    // Main Fabric Reqs/Rsps
@@ -668,13 +668,13 @@ module mkMem_Controller (Mem_Controller_IFC);
       return rg_status;
    endmethod
 
-`ifdef WATCH_TOHOST
+#ifdef WATCH_TOHOST
    // For ISA tests: watch memory writes to <tohost> addr
    method Action set_watch_tohost (Bool watch_tohost, Fabric_Addr tohost_addr);
       rg_watch_tohost <= watch_tohost;
       rg_tohost_addr  <= tohost_addr;
    endmethod
-`endif
+#endif
 endmodule
 
 // ================================================================

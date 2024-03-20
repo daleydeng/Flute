@@ -211,27 +211,27 @@ endinterface
 typedef 0 ScSuccVal;
 typedef 1 ScFailVal;
 
-`ifdef DEBUG_ICACHE
+#ifdef DEBUG_ICACHE
 typedef struct {
     Bit#(64) id;
     Line line;
 } DebugICacheResp deriving(Bits, Eq, FShow);
-`endif
+#endif
 
 // I$ req/resp
 interface InstServer#(numeric type supSz);
     interface Put#(Addr) req;
     interface Get#(Vector#(supSz, Maybe#(Instruction))) resp;
-`ifdef DEBUG_ICACHE
+#ifdef DEBUG_ICACHE
     interface Get#(DebugICacheResp) done; // the id and cache line of the I$ req that truly performs
-`endif
+#endif
 endinterface
 
 typedef struct {
     Addr addr;
-`ifdef DEBUG_ICACHE
+#ifdef DEBUG_ICACHE
     Bit#(64) id; // incremening id for each incoming I$ req (0,1,...)
-`endif
+#endif
 } ProcRqToI deriving(Bits, Eq, FShow);
 
 // child/parent req/resp
@@ -349,13 +349,13 @@ interface DmaServer#(type dmaRqIdT);
     interface FifoEnq#(DmaRq#(dmaRqIdT)) memReq;
     interface FifoDeq#(DmaRs#(dmaRqIdT)) respLd;
     interface FifoDeq#(dmaRqIdT) respSt;
-`ifdef DEBUG_DMA
+#ifdef DEBUG_DMA
     // signal when DMA req really takes effect
     interface Get#(dmaRqIdT) wrMissResp;
     interface Get#(dmaRqIdT) wrHitResp;
     interface Get#(dmaRqIdT) rdMissResp;
     interface Get#(dmaRqIdT) rdHitResp;
-`endif
+#endif
 endinterface
 
 // memory interface

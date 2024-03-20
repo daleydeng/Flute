@@ -41,9 +41,9 @@ CSRAddr   csr_addr_satp       = 12'h180;    // Supervisor address translation an
 
 function Bit#(1) fn_sstatus_sd    (WordXL sstatus_val); return sstatus_val [xlen-1]; endfunction
 
-`ifdef RV64
+#ifdef RV64
 function Bit#(2) fn_sstatus_UXL   (WordXL sstatus_val); return sstatus_val [33:32]; endfunction
-`endif
+#endif
 
 function Bit#(1) fn_sstatus_SUM   (WordXL sstatus_val); return sstatus_val [19]; endfunction
 function Bit#(1) fn_sstatus_MXR   (WordXL sstatus_val); return sstatus_val [18]; endfunction
@@ -67,12 +67,12 @@ function Bit#(TSub #(XLEN,1)) scause_exception_code (WordXL scause_val); return 
 
 // ================================================================
 
-`ifdef ISA_PRIV_S
+#ifdef ISA_PRIV_S
 // ================================================================
 // SATP (supervisor address translation and protection)
 
 // ----------------
-`ifdef RV32
+#ifdef RV32
 
 typedef Bit#(1) VM_Mode;
 typedef Bit#(9) ASID;
@@ -85,7 +85,7 @@ function PPN      fn_satp_to_PPN      (Bit#(32) satp_val); return satp_val [21: 
 Bit#(1)  satp_mode_RV32_bare = 1'h_0;
 Bit#(1)  satp_mode_RV32_sv32 = 1'h_1;
 
-`elsif RV64
+#elif defined RV64
 
 typedef Bit#(4)  VM_Mode;
 typedef Bit#(16) ASID;
@@ -101,7 +101,7 @@ Bit#(4)  satp_mode_RV64_sv48 = 4'd__9;
 Bit#(4)  satp_mode_RV64_sv57 = 4'd_10;
 Bit#(4)  satp_mode_RV64_sv64 = 4'd_11;
 
-`endif
+#endif
 
 // ----------------------------------------------------------------
 // Virtual and Physical addresses, page numbers, offsets
@@ -112,7 +112,7 @@ Bit#(4)  satp_mode_RV64_sv64 = 4'd_11;
 // ----------------
 // RV32.Sv32
 
-`ifdef RV32
+#ifdef RV32
 
 // Virtual addrs
 typedef  32  VA_sz;
@@ -141,13 +141,13 @@ function VPN_J fn_Addr_to_VPN_0 (Bit#(n) addr) = addr [21:12];
 // RV64.Sv39
 
 // ifdef RV32
-`elsif RV64
+#elif defined RV64
 
 // ----------------
 // RV64.Sv39
 
 // ifdef RV32 .. elsif RV64
-`ifdef SV39
+#ifdef SV39
 
 // Virtual addrs
 typedef   39  VA_sz;
@@ -175,15 +175,15 @@ function VPN_J fn_Addr_to_VPN_1 (Bit#(n) addr) = addr [29:21];
 function VPN_J fn_Addr_to_VPN_0 (Bit#(n) addr) = addr [20:12];
 
 // ifdef RV32 .. elsif RV64 / ifdef SV39
-`else
+#else
 
 // TODO: RV64.SV48 definitions
 
 // ifdef RV32 .. elsif RV64 / ifdef SV39 .. else
-`endif
+#endif
 
 // ifdef RV32 .. elsif RV64
-`endif
+#endif
 
 // ----------------
 // Derived types and values
@@ -192,22 +192,22 @@ function VPN_J fn_Addr_to_VPN_0 (Bit#(n) addr) = addr [20:12];
 Integer  pa_sz = valueOf (PA_sz);  typedef Bit#(PA_sz)     PA;
 
 function PA fn_WordXL_to_PA (WordXL  eaddr);
-`ifdef RV32
+#ifdef RV32
    return extend (eaddr);
-`elsif RV64
+#elif defined RV64
    return truncate (eaddr);
-`endif
+#endif
 endfunction
 
 // Virtual addrs -- derived types and values
 Integer  va_sz = valueOf (VA_sz);  typedef Bit#(VA_sz)      VA;
 
 function VA fn_WordXL_to_VA (WordXL  eaddr);
-`ifdef RV32
+#ifdef RV32
    return eaddr;
-`elsif RV64
+#elif defined RV64
    return truncate (eaddr);
-`endif
+#endif
 endfunction
 
 // Page offsets
@@ -222,29 +222,29 @@ Integer  offset_sz = valueOf (Offset_sz);    typedef Bit#(Offset_sz)  Offset;
 
 // PPNs
 Integer  ppn_sz   = valueOf (PPN_sz);    typedef Bit#(PPN_sz)    PPN;
-`ifdef RV64
+#ifdef RV64
 Integer  ppn_2_sz = valueOf (PPN_2_sz);  typedef Bit#(PPN_2_sz)  PPN_2;
-`endif
+#endif
 Integer  ppn_1_sz = valueOf (PPN_1_sz);  typedef Bit#(PPN_1_sz)  PPN_1;
 Integer  ppn_0_sz = valueOf (PPN_0_sz);  typedef Bit#(PPN_0_sz)  PPN_0;
 
-`ifdef RV32
+#ifdef RV32
 typedef Bit#(PPN_1_sz)  PPN_MEGA;
-`elsif RV64
+#elif defined RV64
 typedef Bit#(TAdd #(PPN_2_sz, PPN_1_sz))  PPN_MEGA;
 typedef Bit#(PPN_2_sz)                    PPN_GIGA;
-`endif
+#endif
 
 function  PPN  fn_PA_to_PPN (PA pa);
    return pa [ppn_sz + offset_sz - 1: offset_sz];
 endfunction
 
 function PA fn_PPN_and_Offset_to_PA (PPN ppn, Offset offset);
-`ifdef RV32
+#ifdef RV32
    return {ppn, offset};
-`elsif RV64
+#elif defined RV64
    return zeroExtend ({ppn, offset});
-`endif
+#endif
 endfunction
 
 // ----------------
@@ -270,14 +270,14 @@ Integer  pte_A_offset    = 6;    // Accessed
 Integer  pte_D_offset    = 7;    // Dirty
 Integer  pte_RSW_offset  = 8;    // Reserved for supervisor SW
 
-`ifdef RV32
+#ifdef RV32
 Integer  pte_PPN_0_offset  = 10;
 Integer  pte_PPN_1_offset  = 20;
-`elsif RV64
+#elif defined RV64
 Integer  pte_PPN_0_offset  = 10;
 Integer  pte_PPN_1_offset  = 19;
 Integer  pte_PPN_2_offset  = 28;
-`endif
+#endif
 
 function Bit#(1) fn_PTE_to_V (PTE pte);
    return pte [pte_V_offset];
@@ -319,11 +319,11 @@ function PPN_MEGA  fn_PTE_to_PPN_mega (PTE pte);
    return pte [ppn_sz + pte_PPN_0_offset - 1 : pte_PPN_1_offset];
 endfunction
 
-`ifdef RV64
+#ifdef RV64
 function PPN_GIGA  fn_PTE_to_PPN_giga (PTE pte);
    return pte [ppn_sz + pte_PPN_0_offset - 1 : pte_PPN_2_offset];
 endfunction
-`endif
+#endif
 
 function PPN_0  fn_PTE_to_PPN_0 (PTE pte);
    return pte [pte_PPN_1_offset - 1 : pte_PPN_0_offset];
@@ -333,11 +333,11 @@ function PPN_1  fn_PTE_to_PPN_1 (PTE pte);
    return pte [ppn_1_sz + pte_PPN_1_offset - 1 : pte_PPN_1_offset];
 endfunction
 
-`ifdef RV64
+#ifdef RV64
 function PPN_2  fn_PTE_to_PPN_2 (PTE pte);
    return pte [ppn_2_sz + pte_PPN_2_offset - 1 : pte_PPN_2_offset];
 endfunction
-`endif
+#endif
 
 // ----------------
 // Check if a PTE is invalid (V bit clear, or improper R/W bits)
@@ -398,7 +398,7 @@ function Exc_Code  fn_page_fault_exc_code (Bool dmem_not_imem, Bool read_not_wri
 	     :                 exc_code_STORE_AMO_PAGE_FAULT));
 endfunction   
 
-`else // ifdef ISA_PRIV_S
+#else // ifdef ISA_PRIV_S
 // The below definitions are valid for cases where there is no VM
 // Physical addrs -- without VM, PA is same as WordXL
 typedef XLEN PA_sz;
@@ -410,7 +410,7 @@ function PA fn_WordXL_to_PA (WordXL  eaddr);
    return eaddr;
 endfunction
 
-`endif   // else-ifdef ISA_PRIV_S
+#endif   // else-ifdef ISA_PRIV_S
 
 // ----------------
 // Choose particular kind of access fault

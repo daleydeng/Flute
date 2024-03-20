@@ -143,7 +143,7 @@ module mkLLCRqMshrSecureModel#(
         return truncate(a >> valueof(LgLineSzBytes));
     endfunction
 
-`ifdef CHECK_DEADLOCK
+#ifdef CHECK_DEADLOCK
     MshrDeadlockChecker#(cRqNum) checker <- mkMshrDeadlockChecker;
     FIFO#(LLCRqMshrStuck#(dirPendT, reqT)) stuckQ <- mkFIFO1;
 
@@ -159,7 +159,7 @@ module mkLLCRqMshrSecureModel#(
             });
         end
     endrule
-`endif
+#endif
 
     function Action writeSlot(Integer ehrPort, cRqIndexT n, slotT s);
     action
@@ -191,9 +191,9 @@ module mkLLCRqMshrSecureModel#(
             dataVec[n][transfer_port] <= validValue(d);
             addrSuccValidVec[n][transfer_port] <= False;
             repSuccValidVec[n][transfer_port] <= False;
-`ifdef CHECK_DEADLOCK
+#ifdef CHECK_DEADLOCK
             checker.initEntry(n);
-`endif
+#endif
             return n;
         endmethod
 
@@ -237,9 +237,9 @@ module mkLLCRqMshrSecureModel#(
             bankIdT bank = getBankId(getAddrFromReq(reqVec[n][sendRsToDmaC_port]));
             emptyEntryQ[bank].enq(n);
             stateVec[n][sendRsToDmaC_port] <= Empty;
-`ifdef CHECK_DEADLOCK
+#ifdef CHECK_DEADLOCK
             checker.releaseEntry(n);
-`endif
+#endif
         endmethod
     endinterface
 
@@ -335,11 +335,11 @@ module mkLLCRqMshrSecureModel#(
         endmethod
     endinterface
 
-`ifdef CHECK_DEADLOCK
+#ifdef CHECK_DEADLOCK
     interface stuck = toGet(stuckQ);
-`else
+#else
     interface stuck = nullGet;
-`endif
+#endif
 
     endinterface
 endmodule
