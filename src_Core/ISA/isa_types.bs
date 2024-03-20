@@ -1,9 +1,6 @@
 package isa_types(
     package isa_types
-    ,package defines_bh
 ) where
-
-import defines_bh
 
 infixl 0 ??
 
@@ -12,6 +9,26 @@ a ?? b = if a then b else _
 
 (!=):: (Eq a) => a -> a -> Bool
 x != y = x /= y
+
+#ifdef RV32
+type XLEN = 32
+
+#elif defined RV64
+type XLEN = 64
+
+#elif defined RV128
+type XLEN = 128
+#endif
+
+#ifdef ISA_F
+
+#ifdef ISA_D
+type FLEN = 64
+#else
+type FLEN = 32
+#endif
+
+#endif
 
 type XLEN_2 = TMul XLEN 2
 type XLEN_MINUS_2 = TSub XLEN 2

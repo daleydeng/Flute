@@ -37,26 +37,27 @@ mkGPR_RegFile =
 --    -- The spec does not require this, but it's useful for debugging
 --    -- and tandem verification
 
--- `ifdef INCLUDE_TANDEM_VERIF
+#ifdef INCLUDE_TANDEM_VERIF
       rg_j:: Reg RegIdx <- mkRegU    -- reset loop index
--- #endif
+#endif
 
       rules
          "rl_reset_start": when rg_state == RF_RESET_START
-            ==> action rg_state := RF_RESETTING
+            ==> action 
+               rg_state := RF_RESETTING
+#ifdef INCLUDE_TANDEM_VERIF
+               rg_j := 1
+#endif
 
-         "rl_reset_loop": when rg_state == RF_RESETTING, kINCLUDE_TANDEM_VERIF == 0
-            ==> action rg_state := RF_RUNNING
-
-         "rl_reset_start": when rg_state == RF_RESET_START, kINCLUDE_TANDEM_VERIF == 1
-            ==> action rg_j := 1
-
-         "rl_reset_loop": when rg_state == RF_RESETTING, kINCLUDE_TANDEM_VERIF == 1
-            ==> action
-                  regfile.upd rg_j 0;
-                  rg_j := rg_j + 1;
-                  case rg_j of 31 -> rg_state := RF_RUNNING 
-
+         "rl_reset_loop": when rg_state == RF_RESETTING
+            ==> action 
+#ifdef INCLUDE_TANDEM_VERIF
+               regfile.upd rg_j 0;
+               rg_j := rg_j + 1;
+               case rg_j of 31 -> rg_state := RF_RUNNING 
+#else
+               rg_state := RF_RUNNING
+#endif
 
       mk_server_reset_request:: Put Token
       mk_server_reset_request <- 
